@@ -1,0 +1,7 @@
+{
+  "devDependencies": {},
+  "dependencies": {
+    "@magic-sdk/admin": "^1.4.1",
+    "aws-sdk": "^2.1121.0"
+  }
+}
