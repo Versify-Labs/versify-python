@@ -1,0 +1,35 @@
+services:
+  platform-service:
+    path: platform-service
+  analytics-service:
+    path: analytics-service
+    dependsOn:
+      - platform-service
+  billing-service:
+    path: billing-service
+    dependsOn:
+      - platform-service
+  merchant-service:
+    path: merchant-service
+    dependsOn:
+      - platform-service
+  notification-service:
+    path: notification-service
+    dependsOn:
+      - platform-service
+  order-service:
+    path: order-service
+    dependsOn:
+      - platform-service
+  payment-service:
+    path: payment-service
+    dependsOn:
+      - platform-service
+  timeline-service:
+    path: timeline-service
+    dependsOn:
+      - platform-service
+  wallet-service:
+    path: wallet-service
+    dependsOn:
+      - platform-service

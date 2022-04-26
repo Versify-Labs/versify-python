@@ -1,0 +1,146 @@
+org: versify
+app: versify
+service: wallet-service
+
+custom:
+  tableName: WalletServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /wallet: ${ssm:/versify/services/api/wallet/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: wallet-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  API-GetProfile:
+    handler: src.api.handler
+    name: WalletService-API-GetProfile
+    events:
+      - http:
+          method: get
+          path: /wallet/profile
+          operationId: GetProfile
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/wallet/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+  API-ListAccounts:
+    handler: src.api.handler
+    name: WalletService-API-ListAccounts
+    events:
+      - http:
+          method: get
+          path: /wallet/accounts
+          operationId: ListAccounts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/wallet/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+
+resources:
+  Resources:
+    WalletServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK # email
+            AttributeType: S
+          - AttributeName: SK # handle, account_id, etc
+            AttributeType: S
+          - AttributeName: object # profile, account, etc
+            AttributeType: S
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: byObject
+            KeySchema:
+              - AttributeName: PK # email
+                KeyType: HASH
+              - AttributeName: object # profile, account, etc
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    WalletServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/wallet/table/name
+        Type: String
+        Value: !Ref WalletServiceTable
+    WalletServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/wallet/table/arn
+        Type: String
+        Value: !GetAtt WalletServiceTable.Arn

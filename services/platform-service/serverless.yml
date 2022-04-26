@@ -1,0 +1,114 @@
+org: versify
+app: versify
+service: platform-service
+
+package:
+  include:
+    - src/index.js
+    - src/secrets.js
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    SECRET_NAME: /versify/platform/secret
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+
+layers:
+  Versify:
+    path: layers/versify
+    name: VersifyLayer
+    description: Shared code to be used in lambda functions
+    compatibleRuntimes:
+      - python3.9
+    retain: false
+
+functions:
+  WalletAuthorizer:
+    handler: src/index.handler
+    name: PlatformService-WalletAuthorizer
+    runtime: nodejs14.x
+
+resources:
+  Resources:
+    BaseApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: BaseApi
+    RestApiIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/id
+        Type: String
+        Value: !Ref BaseApi
+    BaseApiResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId: !Ref BaseApi
+    RootResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/root/resource/id
+        Type: String
+        Value: !GetAtt BaseApi.RootResourceId
+    WalletResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: BaseApi
+        ParentId:
+          Fn::GetAtt:
+            - BaseApi
+            - RootResourceId
+        PathPart: wallet
+    WalletResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/wallet/resource/id
+        Type: String
+        Value: !GetAtt WalletResource.ResourceId
+    WalletAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        AuthorizerUri: !Join
+          - ""
+          - - "arn:aws:apigateway:"
+            - !Ref "AWS::Region"
+            - ":lambda:path/2015-03-31/functions/"
+            - !GetAtt
+              - WalletAuthorizerLambdaFunction
+              - Arn
+            - /invocations
+        IdentitySource: method.request.header.Authorization
+        Name: WalletAuthorizer
+        RestApiId: !Ref BaseApi
+        Type: REQUEST
+    WalletAuthorizerArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/wallet/authorizer/arn
+        Type: String
+        Value: !GetAtt WalletAuthorizerLambdaFunction.Arn
+    WalletAuthorizerIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/wallet/authorizer/id
+        Type: String
+        Value: !GetAtt WalletAuthorizer.AuthorizerId
+    VesifyLambdaLayerArnParam:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Type: String
+        Value: !Ref VersifyLambdaLayer
+        Name: "/versify/services/versify/layer/arn"
