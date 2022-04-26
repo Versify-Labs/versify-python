@@ -1,0 +1,8 @@
+org: versify
+app: versify
+service: notification-service
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
