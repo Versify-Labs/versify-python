@@ -2,7 +2,407 @@ org: versify
 app: versify
 service: order-service
 
+custom:
+  tableName: OrderServiceTable
+
 provider:
   name: aws
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /admin: ${ssm:/versify/services/admin/api/resource/id}
+      /backend: ${ssm:/versify/services/backend/api/resource/id}
+      /wallet: ${ssm:/versify/services/wallet/api/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: order-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource:
+        - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/customers/*"
+        - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/organizations/*"
+        - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/products/*"
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  API-CreateAirdrop:
+    handler: src.api.handler
+    name: OrderService-API-CreateAirdrop
+    events:
+      - http:
+          method: post
+          path: /admin/airdrops
+          operationId: CreateAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+  API-CreateFulfillment:
+    handler: src.api.handler
+    name: OrderService-API-CreateFulfillment
+    events:
+      - http:
+          method: post
+          path: /wallet/orders/{id}/fulfillments
+          operationId: CreateFulfillment
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              paths:
+                id: true
+  API-ListFulfillments:
+    handler: src.api.handler
+    name: OrderService-API-ListFulfillments
+    events:
+      - http:
+          method: get
+          path: /admin/orders/{id}/fulfillments
+          operationId: ListFulfillments
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  API-CreateOrder:
+    handler: src.api.handler
+    name: OrderService-API-CreateOrder
+    events:
+      - http:
+          method: post
+          path: /admin/orders
+          operationId: CreateOrder
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+  API-ListOrders:
+    handler: src.api.handler
+    name: OrderService-API-ListOrders
+    events:
+      - http:
+          method: get
+          path: /admin/orders
+          operationId: ListOrders
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              querystrings:
+                active: false
+                customer: false
+                limit: false
+                starting_after: false
+      - http:
+          method: get
+          path: /wallet/orders
+          operationId: ListOrders
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  API-GetOrder:
+    handler: src.api.handler
+    name: OrderService-API-GetOrder
+    events:
+      - http:
+          method: get
+          path: /admin/orders/{id}
+          operationId: GetOrder
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /wallet/orders/{id}
+          operationId: GetOrder
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  OnAirdrop:
+    handler: src.subscribers.on_airdrop
+    name: OrderService-OnAirdrop
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - airdrop.created
+  OnFulfillment:
+    handler: src.subscribers.on_fulfillment
+    name: OrderService-OnFulfillment
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - fulfillment.created
+              - fulfillment.updated
+  OnTokenMinted:
+    handler: src.subscribers.on_token_minted
+    name: OrderService-OnTokenMinted
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - transaction.created
+              - transaction.updated
+            detail:
+              status:
+                - complete
+              success:
+                - True
+              metadata:
+                type:
+                  - MintToken
+
+resources:
+  Resources:
+    OrderServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+          - AttributeName: object
+            AttributeType: S
+          - AttributeName: order
+            AttributeType: S
+          - AttributeName: organization
+            AttributeType: S
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: ByOrganizationByObject
+            KeySchema:
+              - AttributeName: organization
+                KeyType: HASH
+              - AttributeName: object
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: ByEmailByObject
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+              - AttributeName: object
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: ByOrderByObject
+            KeySchema:
+              - AttributeName: order
+                KeyType: HASH
+              - AttributeName: object
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    OrderServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/order/table/name
+        Type: String
+        Value: !Ref OrderServiceTable
+    OrderServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/order/table/arn
+        Type: String
+        Value: !GetAtt OrderServiceTable.Arn
+    OrderServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/order/table/stream/arn
+        Type: String
+        Value: !GetAtt OrderServiceTable.StreamArn

@@ -1,0 +1,1 @@
+ssh -i ~/.ssh/keys/DH702XX00P.pem ec2-user@3.89.223.147

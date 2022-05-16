@@ -1,9 +1,5 @@
 {
   "devDependencies": {
-    "@serverless/compose": "^1.0.1"
-  },
-  "dependencies": {
-    "@magic-sdk/admin": "^1.4.1",
-    "aws-sdk": "^2.1121.0"
+    "@serverless/compose": "^1.0.3"
   }
 }

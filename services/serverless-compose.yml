@@ -1,16 +1,16 @@
 services:
   platform-service:
     path: platform-service
-  analytics-service:
-    path: analytics-service
+  blockchain-service:
+    path: blockchain-service
     dependsOn:
       - platform-service
-  billing-service:
-    path: billing-service
+  customer-service:
+    path: customer-service
     dependsOn:
       - platform-service
-  merchant-service:
-    path: merchant-service
+  integration-service:
+    path: integration-service
     dependsOn:
       - platform-service
   notification-service:
@@ -21,15 +21,22 @@ services:
     path: order-service
     dependsOn:
       - platform-service
-  payment-service:
-    path: payment-service
-    dependsOn:
-      - platform-service
-  timeline-service:
-    path: timeline-service
+  product-service:
+    path: product-service
     dependsOn:
       - platform-service
   wallet-service:
     path: wallet-service
     dependsOn:
       - platform-service
+  event-service:
+    path: event-service
+    dependsOn:
+      - platform-service
+      - blockchain-service
+      - customer-service
+      - integration-service
+      - notification-service
+      - order-service
+      - product-service
+      - wallet-service

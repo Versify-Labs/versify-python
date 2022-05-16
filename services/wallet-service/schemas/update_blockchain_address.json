@@ -1,0 +1,12 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "UpdateAccount",
+  "properties": {
+    "description": {
+      "description": "Label for the accout for the user to easily identify the address",
+      "type": "string"
+    }
+  }
+}

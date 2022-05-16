@@ -1,0 +1,265 @@
+org: versify
+app: versify
+service: customer-service
+
+custom:
+  tableName: CustomerServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /admin: ${ssm:/versify/services/admin/api/resource/id}
+      /backend: ${ssm:/versify/services/backend/api/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: customer-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  API-CreateCustomer:
+    handler: src.api.handler
+    name: CustomerService-API-CreateCustomer
+    events:
+      - http:
+          method: post
+          path: /admin/customers
+          operationId: CreateCustomer
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+            schemas:
+              application/json:
+                schema: ${file(schemas/create_customer.req.json)}
+                name: CreateCustomerModel
+                description: "Validation model for creating a customer"
+  API-ListCustomers:
+    handler: src.api.handler
+    name: CustomerService-API-ListCustomers
+    events:
+      - http:
+          method: get
+          path: /admin/customers
+          operationId: ListCustomers
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  API-GetCustomer:
+    handler: src.api.handler
+    name: CustomerService-API-GetCustomer
+    events:
+      - http:
+          method: get
+          path: /admin/customers/{id}
+          operationId: GetCustomer
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /backend/customers/{id}
+          operationId: GetCustomer
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+  API-UpdateCustomer:
+    handler: src.api.handler
+    name: CustomerService-API-UpdateCustomer
+    events:
+      - http:
+          method: put
+          path: /admin/customers/{id}
+          operationId: UpdateCustomer
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+            schemas:
+              application/json:
+                schema: ${file(schemas/update_customer.req.json)}
+                name: UpdateCustomerModel
+                description: "Validation model for updating a customer"
+  OnOrderCreated:
+    handler: src.subscribers.on_order_created
+    name: CustomerService-OnOrderCreated
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - order.created
+
+resources:
+  Resources:
+    CustomerServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+          - AttributeName: object
+            AttributeType: S
+          - AttributeName: organization
+            AttributeType: S
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: ByOrganizationByEmail
+            KeySchema:
+              - AttributeName: organization
+                KeyType: HASH
+              - AttributeName: email
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: ByOrganizationByObject
+            KeySchema:
+              - AttributeName: organization
+                KeyType: HASH
+              - AttributeName: object
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    CustomerServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/customer/table/name
+        Type: String
+        Value: !Ref CustomerServiceTable
+    CustomerServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/customer/table/arn
+        Type: String
+        Value: !GetAtt CustomerServiceTable.Arn
+    CustomerServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/customer/table/stream/arn
+        Type: String
+        Value: !GetAtt CustomerServiceTable.StreamArn

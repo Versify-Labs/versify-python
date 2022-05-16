@@ -13,7 +13,7 @@ provider:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
     restApiResources:
-      /wallet: ${ssm:/versify/services/api/wallet/resource/id}
+      /wallet: ${ssm:/versify/services/wallet/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
@@ -45,17 +45,42 @@ provider:
     lambda: true
 
 functions:
-  API-GetProfile:
+  API-Ping:
     handler: src.api.handler
-    name: WalletService-API-GetProfile
+    name: WalletService-API-Ping
     events:
       - http:
           method: get
-          path: /wallet/profile
-          operationId: GetProfile
+          path: /wallet/ping
+          operationId: Ping
+          # authorizer:
+          #   type: REQUEST
+          #   authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          # request:
+          #   parameters:
+          #     headers:
+          #       Authorization: true
+  API-GetWallet:
+    handler: src.api.handler
+    name: WalletService-API-GetWallet
+    events:
+      - http:
+          method: get
+          path: /wallet/me
+          operationId: GetWallet
           authorizer:
             type: REQUEST
-            authorizerId: ${ssm:/versify/services/api/wallet/authorizer/id}
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
           cors:
             origin: "*"
             headers:
@@ -70,17 +95,17 @@ functions:
             parameters:
               headers:
                 Authorization: true
-  API-ListAccounts:
+  API-ListBlockchainAddresses:
     handler: src.api.handler
-    name: WalletService-API-ListAccounts
+    name: WalletService-API-ListBlockchainAddresses
     events:
       - http:
           method: get
-          path: /wallet/accounts
-          operationId: ListAccounts
+          path: /wallet/blockchain_addresses
+          operationId: ListBlockchainAddresses
           authorizer:
             type: REQUEST
-            authorizerId: ${ssm:/versify/services/api/wallet/authorizer/id}
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
           cors:
             origin: "*"
             headers:
@@ -95,6 +120,35 @@ functions:
             parameters:
               headers:
                 Authorization: true
+  API-UpdateBlockchainAddress:
+    handler: src.api.handler
+    name: WalletService-API-UpdateBlockchainAddress
+    events:
+      - http:
+          method: put
+          path: /wallet/blockchain_addresses/{id}
+          operationId: UpdateBlockchainAddress
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/update_blockchain_address.json)}
 
 resources:
   Resources:
@@ -104,17 +158,19 @@ resources:
         AttributeDefinitions:
           - AttributeName: PK # email
             AttributeType: S
-          - AttributeName: SK # handle, account_id, etc
+          - AttributeName: SK # handle, blockchain_address_id, etc
             AttributeType: S
-          - AttributeName: object # profile, account, etc
+          - AttributeName: email # profile, blockchain_address, etc
+            AttributeType: S
+          - AttributeName: object # profile, blockchain_address, etc
             AttributeType: S
         BillingMode: PROVISIONED
         GlobalSecondaryIndexes:
-          - IndexName: byObject
+          - IndexName: ByEmailByObject
             KeySchema:
-              - AttributeName: PK # email
+              - AttributeName: email # email
                 KeyType: HASH
-              - AttributeName: object # profile, account, etc
+              - AttributeName: object # profile, blockchain_address, etc
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
@@ -144,3 +200,9 @@ resources:
         Name: !Sub /versify/services/wallet/table/arn
         Type: String
         Value: !GetAtt WalletServiceTable.Arn
+    WalletServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/wallet/table/stream/arn
+        Type: String
+        Value: !GetAtt WalletServiceTable.StreamArn

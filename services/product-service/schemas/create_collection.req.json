@@ -1,0 +1,30 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateCollectionModel",
+  "required": ["name", "network", "symbol", "type"],
+  "properties": {
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
+      "type": "object"
+    },
+    "name": {
+      "description": "The collections name. Contract symbol will be created based on this.",
+      "type": "string"
+    },
+    "network": {
+      "description": "The blockchain network to deploy the contract to.",
+      "type": "string"
+    },
+    "symbol": {
+      "description": "The collections name. Contract symbol will be created based on this.",
+      "type": "string"
+    },
+    "type": {
+      "description": "The type of contract to create. As of now, only semi_fungible_token is supported",
+      "type": "string"
+    }
+  }
+}

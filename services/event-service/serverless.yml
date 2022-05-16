@@ -1,0 +1,228 @@
+org: versify
+app: versify
+service: event-service
+
+custom:
+  eventBusName: versify
+  tableName: EventServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /webhook: ${ssm:/versify/services/webhook/api/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    EVENT_BUS_NAME: ${self:custom.eventBusName}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: event-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+    SECRET_NAME: /versify/platform/secret
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - events:PutEvents
+      Resource:
+        - arn:aws:events:${aws:region}:*:event-bus/${self:custom.eventBusName}
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/*"
+        - "arn:aws:dynamodb:${aws:region}:*:table/*/*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  #   API-PublishEvent:
+  #     handler: src.api.handler
+  #     name: EventService-API-PublishEvent
+  #     events:
+  #       - http:
+  #           method: post
+  #           path: /dashboard/events
+  #           operationId: PublishEvent
+  #           authorizer:
+  #             type: COGNITO_USER_POOLS
+  #             authorizerId: ${ssm:/versify/platform/api/dashboard/authorizer/id}
+  #           cors:
+  #             origin: "*"
+  #             headers:
+  #               - Authorization
+  #               - Content-Type
+  #               - Organization
+  #               - organization
+  #               - X-Amz-Date
+  #               - X-Api-Key
+  #               - X-Amz-Security-Token
+  #               - X-Amz-User-Agent
+  #             allowCredentials: false
+  API-AlchemyWebhook:
+    handler: src.api.handler
+    name: EventService-API-AlchemyWebhook
+    runtime: python3.9
+    events:
+      - http:
+          method: post
+          path: /webhook/alchemy
+  API-Auth0Webhook:
+    handler: src.api.handler
+    name: EventService-API-Auth0Webhook
+    runtime: python3.9
+    events:
+      - http:
+          method: post
+          path: /webhook/auth0
+  #   API-ContentfulWebhook:
+  #     handler: src.api.handler
+  #     name: EventService-API-ContentfulWebhook
+  #     runtime: python3.9
+  #     events:
+  #       - http:
+  #           method: post
+  #           path: /webhook/contentful
+  # API-StripeWebhook:
+  #   handler: src.api.handler
+  #   name: EventService-API-StripeWebhook
+  #   runtime: python3.9
+  #   events:
+  #     - http:
+  #         method: post
+  #         path: /webhook/stripe
+  #   API-StripeConnectWebhook:
+  #     handler: src.api.handler
+  #     name: EventService-API-StripeConnectWebhook
+  #     runtime: python3.9
+  #     events:
+  #       - http:
+  #           method: post
+  #           path: /webhook/stripe_connect
+  PublishDynamoEvent:
+    handler: src.subscribers.publish_dynamo_event
+    name: EventService-PublishDynamoEvent
+    events:
+      - stream:
+          arn: ${ssm:/versify/services/blockchain/table/stream/arn}
+          enabled: true
+          type: dynamodb
+      - stream:
+          arn: ${ssm:/versify/services/customer/table/stream/arn}
+          enabled: true
+          type: dynamodb
+      - stream:
+          arn: ${ssm:/versify/services/order/table/stream/arn}
+          enabled: true
+          type: dynamodb
+      - stream:
+          arn: ${ssm:/versify/services/product/table/stream/arn}
+          enabled: true
+          type: dynamodb
+      - stream:
+          arn: ${ssm:/versify/services/wallet/table/stream/arn}
+          enabled: true
+          type: dynamodb
+  SendSlackMessage:
+    handler: src.subscribers.send_slack_message
+    name: EventService-SendSlackMessage
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - auth0
+              - alchemy
+              - contentful
+              - stripe
+              - stripe.connect
+              - versify
+# resources:
+#   Resources:
+# EventServiceTable:
+#   Type: AWS::DynamoDB::Table
+#   Properties:
+#     AttributeDefinitions:
+#       - AttributeName: PK # email
+#         AttributeType: S
+#       - AttributeName: SK # handle, account_id, etc
+#         AttributeType: S
+#       - AttributeName: object_type
+#         AttributeType: S
+#       - AttributeName: object_id
+#         AttributeType: S
+#     BillingMode: PROVISIONED
+#     GlobalSecondaryIndexes:
+#       - IndexName: byObjectType
+#         KeySchema:
+#           - AttributeName: PK # email
+#             KeyType: HASH
+#           - AttributeName: object_type # account, product, customer, etc
+#             KeyType: RANGE
+#         Projection:
+#           ProjectionType: ALL
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 1
+#           WriteCapacityUnits: 1
+#       - IndexName: byObjectId
+#         KeySchema:
+#           - AttributeName: PK # email
+#             KeyType: HASH
+#           - AttributeName: object_id # product_123, customer_123, etc
+#             KeyType: RANGE
+#         Projection:
+#           ProjectionType: ALL
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 1
+#           WriteCapacityUnits: 1
+#     KeySchema:
+#       - AttributeName: PK
+#         KeyType: HASH
+#       - AttributeName: SK
+#         KeyType: RANGE
+#     ProvisionedThroughput:
+#       ReadCapacityUnits: 1
+#       WriteCapacityUnits: 1
+#     StreamSpecification:
+#       StreamViewType: NEW_IMAGE
+#     TableName: ${self:custom.tableName}
+# EventServiceTableNameParameter:
+#   Type: AWS::SSM::Parameter
+#   Properties:
+#     Name: !Sub /versify/services/event/table/name
+#     Type: String
+#     Value: !Ref EventServiceTable
+# EventServiceTableArnParameter:
+#   Type: AWS::SSM::Parameter
+#   Properties:
+#     Name: !Sub /versify/services/event/table/arn
+#     Type: String
+#     Value: !GetAtt EventServiceTable.Arn
+# EventServiceTableStreamArnParameter:
+#   Type: AWS::SSM::Parameter
+#   Properties:
+#     Name: !Sub /versify/services/event/table/stream/arn
+#     Type: String
+#     Value: !GetAtt EventServiceTable.StreamArn

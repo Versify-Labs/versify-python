@@ -2,9 +2,8 @@ import random
 import string
 
 from pynamodb.exceptions import DoesNotExist
-from versify.utilities.model import generate_uuid
 
-from .model import Account, Profile
+from .model import BlockchainAddress, Wallet
 
 
 class WalletService:
@@ -12,21 +11,7 @@ class WalletService:
     def __init__(self, email):
         self.email = email
 
-    def create_account(self, issuer, address=None, chain=None, description=''):
-        payload = {
-            'PK': self.email,
-            'SK': issuer,
-            'address': address,
-            'chain': chain,
-            'description': description,
-            'email': self.email,
-            'id': issuer,
-        }
-        account = Account(**payload)
-        account.save()
-        return account
-
-    def create_profile(self, phone=None):
+    def create_wallet(self, phone=None):
         seed = ''.join(random.choice(string.ascii_letters) for i in range(10))
         payload = {
             'PK': self.email,
@@ -37,42 +22,63 @@ class WalletService:
             'name': self.email.split('@')[0],
             'phone': phone
         }
-        profile = Profile(**payload)
-        profile.save()
-        return profile
+        wallet = Wallet(**payload)
+        wallet.save()
+        return wallet
 
-    def get_account(self, id):
+    def get_wallet(self):
         try:
-            return Account.get(self.email, id)
+            return Wallet.get(self.email, self.email)
         except DoesNotExist:
             return None
 
-    def get_profile(self):
+    def create_blockchain_address(self, issuer, address=None, chain=None, description=''):
+        payload = {
+            'PK': self.email,
+            'SK': issuer,
+            'address': address,
+            'chain': chain,
+            'description': description,
+            'email': self.email,
+            'id': issuer,
+        }
+        blockchain_address = BlockchainAddress(**payload)
+        blockchain_address.save()
+        return blockchain_address
+
+    def get_blockchain_address(self, id):
         try:
-            return Profile.get(self.email, self.email)
+            return BlockchainAddress.get(self.email, id)
         except DoesNotExist:
             return None
 
-    def list_accounts(self):
-        accounts = Account.object_index.query(
+    def list_blockchain_addresses(self):
+        blockchain_addresses = BlockchainAddress.by_email_by_object.query(
             hash_key=self.email,
-            range_key_condition=Account.object == 'account'
+            range_key_condition=BlockchainAddress.object == 'blockchain_address'
         )
-        return accounts
+        return blockchain_addresses
+
+    def update_blockchain_address(self, id, description):
+        blockchain_address = self.get_blockchain_address(id)
+        blockchain_address.update(
+            actions=[BlockchainAddress.description.set(description)])
+        return blockchain_address
 
     def sync_authorizer(self, authorizer):
         issuer = authorizer.get('issuer')
         phone = authorizer.get('phone')
         _, chain, address = issuer.split(':')
 
-        # Get profile / create if it doesnt exist
-        profile = self.get_profile()
-        if not profile:
-            profile = self.create_profile(phone)
+        # Get wallet / create if it doesnt exist
+        wallet = self.get_wallet()
+        if not wallet:
+            wallet = self.create_wallet(phone)
 
-        # Get account / create if it doesnt exist
-        account = self.get_account(issuer)
-        if not account:
-            account = self.create_account(issuer, address, chain)
+        # Get blockchain_address / create if it doesnt exist
+        blockchain_address = self.get_blockchain_address(issuer)
+        if not blockchain_address:
+            blockchain_address = self.create_blockchain_address(
+                issuer, address, chain)
 
         # TODO: Mint any unminted assets?

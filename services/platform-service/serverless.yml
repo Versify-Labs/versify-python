@@ -12,6 +12,13 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: platform-service
+    POWERTOOLS_TRACE_DISABLED: false
     SECRET_NAME: /versify/platform/secret
   iamRoleStatements:
     - Effect: Allow
@@ -19,6 +26,11 @@ provider:
         - secretsmanager:GetSecretValue
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  tracing:
+    lambda: true
 
 layers:
   Versify:
@@ -30,6 +42,14 @@ layers:
     retain: false
 
 functions:
+  AccountAuthorizer:
+    handler: src.authorizer.account_handler
+    name: PlatformService-AccountAuthorizer
+    runtime: python3.9
+  AdminAuthorizer:
+    handler: src.authorizer.admin_handler
+    name: PlatformService-AdminAuthorizer
+    runtime: python3.9
   WalletAuthorizer:
     handler: src/index.handler
     name: PlatformService-WalletAuthorizer
@@ -47,6 +67,7 @@ resources:
         Name: !Sub /versify/services/api/id
         Type: String
         Value: !Ref BaseApi
+
     BaseApiResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
@@ -55,12 +76,65 @@ resources:
           gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
         ResponseType: DEFAULT_4XX
         RestApiId: !Ref BaseApi
+
     RootResourceIdParameter:
       Type: AWS::SSM::Parameter
       Properties:
         Name: !Sub /versify/services/api/root/resource/id
         Type: String
         Value: !GetAtt BaseApi.RootResourceId
+
+    AccountResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: BaseApi
+        ParentId:
+          Fn::GetAtt:
+            - BaseApi
+            - RootResourceId
+        PathPart: account
+    AccountResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/account/api/resource/id
+        Type: String
+        Value: !GetAtt AccountResource.ResourceId
+
+    AdminResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: BaseApi
+        ParentId:
+          Fn::GetAtt:
+            - BaseApi
+            - RootResourceId
+        PathPart: admin
+    AdminResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/admin/api/resource/id
+        Type: String
+        Value: !GetAtt AdminResource.ResourceId
+
+    BackendResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: BaseApi
+        ParentId:
+          Fn::GetAtt:
+            - BaseApi
+            - RootResourceId
+        PathPart: backend
+    BackendResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/backend/api/resource/id
+        Type: String
+        Value: !GetAtt BackendResource.ResourceId
+
     WalletResource:
       Type: AWS::ApiGateway::Resource
       Properties:
@@ -74,9 +148,87 @@ resources:
     WalletResourceIdParameter:
       Type: AWS::SSM::Parameter
       Properties:
-        Name: !Sub /versify/services/api/wallet/resource/id
+        Name: !Sub /versify/services/wallet/api/resource/id
         Type: String
         Value: !GetAtt WalletResource.ResourceId
+
+    WebhookResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId:
+          Ref: BaseApi
+        ParentId:
+          Fn::GetAtt:
+            - BaseApi
+            - RootResourceId
+        PathPart: webhook
+    WebhookResourceIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/webhook/api/resource/id
+        Type: String
+        Value: !GetAtt WebhookResource.ResourceId
+
+    AccountAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        AuthorizerUri: !Join
+          - ""
+          - - "arn:aws:apigateway:"
+            - !Ref "AWS::Region"
+            - ":lambda:path/2015-03-31/functions/"
+            - !GetAtt
+              - AccountAuthorizerLambdaFunction
+              - Arn
+            - /invocations
+        IdentitySource: method.request.header.Authorization
+        Name: AccountAuthorizer
+        RestApiId: !Ref BaseApi
+        Type: REQUEST
+    AccountAuthorizerArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/account/api/authorizer/arn
+        Type: String
+        Value: !GetAtt AccountAuthorizerLambdaFunction.Arn
+    AccountAuthorizerIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/account/api/authorizer/id
+        Type: String
+        Value: !GetAtt AccountAuthorizer.AuthorizerId
+
+    AdminAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        AuthorizerUri: !Join
+          - ""
+          - - "arn:aws:apigateway:"
+            - !Ref "AWS::Region"
+            - ":lambda:path/2015-03-31/functions/"
+            - !GetAtt
+              - AdminAuthorizerLambdaFunction
+              - Arn
+            - /invocations
+        IdentitySource: method.request.header.Authorization
+        Name: AdminAuthorizer
+        RestApiId: !Ref BaseApi
+        Type: REQUEST
+    AdminAuthorizerArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/admin/api/authorizer/arn
+        Type: String
+        Value: !GetAtt AdminAuthorizerLambdaFunction.Arn
+    AdminAuthorizerIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/admin/api/authorizer/id
+        Type: String
+        Value: !GetAtt AdminAuthorizer.AuthorizerId
+
     WalletAuthorizer:
       Type: AWS::ApiGateway::Authorizer
       Properties:
@@ -97,18 +249,77 @@ resources:
     WalletAuthorizerArnParameter:
       Type: AWS::SSM::Parameter
       Properties:
-        Name: !Sub /versify/services/api/wallet/authorizer/arn
+        Name: !Sub /versify/services/wallet/api/authorizer/arn
         Type: String
         Value: !GetAtt WalletAuthorizerLambdaFunction.Arn
     WalletAuthorizerIdParameter:
       Type: AWS::SSM::Parameter
       Properties:
-        Name: !Sub /versify/services/api/wallet/authorizer/id
+        Name: !Sub /versify/services/wallet/api/authorizer/id
         Type: String
         Value: !GetAtt WalletAuthorizer.AuthorizerId
+
     VesifyLambdaLayerArnParam:
       Type: AWS::SSM::Parameter
       Properties:
         Type: String
         Value: !Ref VersifyLambdaLayer
         Name: "/versify/services/versify/layer/arn"
+
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: !Sub "versify"
+    EventBusNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/event-bus/name
+        Type: String
+        Value: !Ref EventBus
+    EventBusArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/event-bus/arn
+        Type: String
+        Value: !GetAtt EventBus.Arn
+    EventBusDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: EventBusDeadLetterQueue
+    DeadLetterQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Sid: OwnerStatement
+              Action:
+                - "sqs:*"
+              Effect: Allow
+              Resource: !GetAtt EventBusDeadLetterQueue.Arn
+              Principal:
+                AWS:
+                  - !Sub ${AWS::AccountId}
+            - Sid: EventRuleDlqStatement
+              Action:
+                - sqs:SendMessage
+              Effect: Allow
+              Resource: !GetAtt EventBusDeadLetterQueue.Arn
+              Principal:
+                Service: events.amazonaws.com
+              Condition:
+                ArnEquals:
+                  "aws:SourceArn": "*"
+        Queues:
+          - !Ref EventBusDeadLetterQueue
+    DeadLetterQueueArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/dlq/arn
+        Type: String
+        Value: !GetAtt EventBusDeadLetterQueue.Arn
+    DeadLetterQueueNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/dlq/name
+        Type: String
+        Value: !Ref EventBusDeadLetterQueue

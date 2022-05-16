@@ -45,10 +45,11 @@ const generatePolicy = (principalId, effect, resource, metadata = {}) => {
 };
 
 exports.handler = (event, context, callback) => {
-    if (!event.headers.Authorization) {
+    let authorization = event.headers.Authorization || event.headers.authorization
+    if (!authorization) {
         return callback('Missing token');
     }
-    const tokenParts = event.headers.Authorization.split(' ');
+    const tokenParts = authorization.split(' ');
     const DIDToken = tokenParts[1];
     if (!(tokenParts[0].toLowerCase() === 'bearer' && DIDToken)) {
         return callback('Missing token');

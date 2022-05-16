@@ -1,0 +1,402 @@
+org: versify
+app: versify
+service: product-service
+
+custom:
+  tableName: ProductServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /admin: ${ssm:/versify/services/admin/api/resource/id}
+      /backend: ${ssm:/versify/services/backend/api/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: product-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - "arn:aws:s3:::cdn.versifylabs.com"
+        - "arn:aws:s3:::cdn.versifylabs.com/*"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  API-CreateCollection:
+    handler: src.api.handler
+    name: ProductService-API-CreateCollection
+    events:
+      - http:
+          method: post
+          path: /admin/collections
+          operationId: CreateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+            schemas:
+              application/json:
+                schema: ${file(schemas/create_collection.req.json)}
+                name: CreateCollectionModel
+                description: "Validation model for creating a collection"
+  API-ListCollections:
+    handler: src.api.handler
+    name: ProductService-API-ListCollections
+    events:
+      - http:
+          method: get
+          path: /admin/collections
+          operationId: ListCollections
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  API-GetCollection:
+    handler: src.api.handler
+    name: ProductService-API-GetCollection
+    events:
+      - http:
+          method: get
+          path: /admin/collections/{id}
+          operationId: GetCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+  API-UpdateCollection:
+    handler: src.api.handler
+    name: ProductService-API-UpdateCollection
+    events:
+      - http:
+          method: put
+          path: /admin/collections/{id}
+          operationId: UpdateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+  API-CreateProduct:
+    handler: src.api.handler
+    name: ProductService-API-CreateProduct
+    events:
+      - http:
+          method: post
+          path: /admin/products
+          operationId: CreateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+            schemas:
+              application/json:
+                schema: ${file(schemas/create_product.req.json)}
+                name: CreateProductModel
+                description: "Validation model for creating a product"
+  API-ListProducts:
+    handler: src.api.handler
+    name: ProductService-API-ListProducts
+    events:
+      - http:
+          method: get
+          path: /admin/products
+          operationId: ListProducts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              querystrings:
+                active: false
+                limit: false
+                starting_after: false
+  API-GetProduct:
+    handler: src.api.handler
+    name: ProductService-API-GetProduct
+    events:
+      - http:
+          method: get
+          path: /admin/products/{id}
+          operationId: GetProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /backend/products/{id}
+          operationId: GetProduct
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+  API-UpdateProduct:
+    handler: src.api.handler
+    name: ProductService-API-UpdateProduct
+    events:
+      - http:
+          method: put
+          path: /admin/products/{id}
+          operationId: UpdateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/admin/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Organization
+              - Content-Type
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Organization: true
+              paths:
+                id: true
+  OnContractDeployed:
+    handler: src.subscribers.on_contract_deployed
+    name: ProductService-OnContractDeployed
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - transaction.created
+              - transaction.updated
+            detail:
+              status:
+                - complete
+              success:
+                - True
+              metadata:
+                type:
+                  - DeployContract
+  OnOrderCreated:
+    handler: src.subscribers.on_order_created
+    name: ProductService-OnOrderCreated
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - order.created
+
+resources:
+  Resources:
+    ProductServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: object
+            AttributeType: S
+          - AttributeName: organization
+            AttributeType: S
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: ByOrganizationByObject
+            KeySchema:
+              - AttributeName: organization
+                KeyType: HASH
+              - AttributeName: object
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    ProductServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/product/table/name
+        Type: String
+        Value: !Ref ProductServiceTable
+    ProductServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/product/table/arn
+        Type: String
+        Value: !GetAtt ProductServiceTable.Arn
+    ProductServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/product/table/stream/arn
+        Type: String
+        Value: !GetAtt ProductServiceTable.StreamArn

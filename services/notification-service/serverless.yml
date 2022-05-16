@@ -2,7 +2,117 @@ org: versify
 app: versify
 service: notification-service
 
+custom:
+  tableName: NotificationServiceTable
+
 provider:
   name: aws
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /admin: ${ssm:/versify/services/admin/api/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: notification-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  SendAirdropConfirmation:
+    handler: src.subscribers.send_airdrop_confirmation
+    name: NotificationService-SendAirdropConfirmation
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - order.created
+            detail:
+              type:
+                - airdrop
+
+# resources:
+#   Resources:
+#     NotificationServiceTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         AttributeDefinitions:
+#           - AttributeName: PK
+#             AttributeType: S
+#           - AttributeName: SK
+#             AttributeType: S
+#           - AttributeName: object
+#             AttributeType: S
+#           - AttributeName: organization
+#             AttributeType: S
+#         BillingMode: PROVISIONED
+#         GlobalSecondaryIndexes:
+#           - IndexName: ByOrganizationByObject
+#             KeySchema:
+#               - AttributeName: organization
+#                 KeyType: HASH
+#               - AttributeName: object
+#                 KeyType: RANGE
+#             Projection:
+#               ProjectionType: ALL
+#             ProvisionedThroughput:
+#               ReadCapacityUnits: 1
+#               WriteCapacityUnits: 1
+#         KeySchema:
+#           - AttributeName: PK
+#             KeyType: HASH
+#           - AttributeName: SK
+#             KeyType: RANGE
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 1
+#           WriteCapacityUnits: 1
+#         StreamSpecification:
+#           StreamViewType: NEW_IMAGE
+#         TableName: ${self:custom.tableName}
+#     NotificationServiceTableNameParameter:
+#       Type: AWS::SSM::Parameter
+#       Properties:
+#         Name: !Sub /versify/services/notification/table/name
+#         Type: String
+#         Value: !Ref NotificationServiceTable
+#     NotificationServiceTableArnParameter:
+#       Type: AWS::SSM::Parameter
+#       Properties:
+#         Name: !Sub /versify/services/notification/table/arn
+#         Type: String
+#         Value: !GetAtt NotificationServiceTable.Arn

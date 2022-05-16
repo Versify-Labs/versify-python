@@ -20,21 +20,38 @@ def sync(app):
     return service
 
 
-@app.get("/wallet/profile")
+@app.get("/wallet/ping")
 @tracer.capture_method
-def get_profile():
-    service = sync(app)
-    profile = service.get_profile()
-    return response('get', profile.to_dict())
+def ping():
+    return response('get', True)
 
 
-@app.get("/wallet/accounts")
+@app.get("/wallet/me")
 @tracer.capture_method
-def list_accounts():
+def get_wallet():
     service = sync(app)
-    accounts = service.list_accounts()
-    data = [account.to_dict() for account in accounts]
-    return response('list', data, 'account', '/accounts', False)
+    wallet = service.get_wallet()
+    return response('get', wallet.to_dict())
+
+
+@app.get("/wallet/blockchain_addresses")
+@tracer.capture_method
+def list_blockchain_addresses():
+    service = sync(app)
+    blockchain_addresses = service.list_blockchain_addresses()
+    data = [blockchain_address.to_dict()
+            for blockchain_address in blockchain_addresses]
+    return response('list', data, 'blockchain_address', '/blockchain_addresses', False)
+
+
+@app.put("/wallet/blockchain_addresses/<id>")
+@tracer.capture_method
+def update_blockchain_address(id):
+    service = sync(app)
+    payload = app.current_event.json_body
+    blockchain_address = service.update_blockchain_address(
+        id, payload['description'])
+    return response('update', blockchain_address.to_dict())
 
 
 @cors_headers
