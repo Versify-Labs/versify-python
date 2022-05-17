@@ -1,4 +1,5 @@
 import json
+import os
 
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.data_classes import (DynamoDBStreamEvent,
@@ -45,18 +46,21 @@ def send_slack_message(event, context):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*Event* {source} -> {detail_type}"
+                "text": f"*Event*: {source} -> {detail_type}"
             }
-        },
-        {
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": f"```{json.dumps(detail, indent = 2)}```"
-                }
-            ]
         }
     ]
+    if os.environ.get('ENVIRONMENT', 'dev') == 'dev':
+        blocks.append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"```{json.dumps(detail, indent = 2)}```"
+                    }
+                ]
+            }
+        )
     service = EventService()
     return service.post_slack_message(blocks)

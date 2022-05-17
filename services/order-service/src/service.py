@@ -1,3 +1,4 @@
+from audioop import add
 import os
 import time
 from typing import Tuple
@@ -52,6 +53,26 @@ def call_internal_api(path: str, body: dict = {}, organization: str = None) -> T
         "body": response.json()
     })
     return response.json()
+
+
+def get_customer(organization, id):
+    path = '/backend/customers/' + id
+    return call_internal_api(path, {}, organization)
+
+
+def get_merchant(organization, id):
+    path = '/backend/organizations/' + id
+    return call_internal_api(path, {}, organization)
+
+
+def get_product(organization, id):
+    path = '/backend/products/' + id
+    return call_internal_api(path, {}, organization)
+
+
+def list_wallet_addresses(email):
+    path = f'/backend/wallets/{email}/blockchain_addresses'
+    return call_internal_api(path, {})
 
 
 class Airdrops:
@@ -123,6 +144,12 @@ class Fulfillments:
         body['email'] = self.email
         body['object'] = 'fulfillment'
 
+        # Inject wallet data
+        # TODO: Only fetch same blockchain as the order products
+        addresses = list_wallet_addresses(self.email)
+        logger.info(addresses)
+        body['blockchain_address'] = addresses['data'][0]['address']
+
         # Inject order data
         order = self.get_order(body['order'])
         body['items'] = order['items']
@@ -184,23 +211,8 @@ class Orders:
     def to_list(self, items):
         return [item.to_dict() for item in items]
 
-    def get_customer(self, id):
-        path = '/backend/customers/' + id
-        organization = self.organization
-        return call_internal_api(path, {}, organization)
-
-    def get_merchant(self, id):
-        path = '/backend/organizations/' + id
-        organization = self.organization
-        return call_internal_api(path, {}, organization)
-
-    def get_product(self, id):
-        path = '/backend/products/' + id
-        organization = self.organization
-        return call_internal_api(path, {}, organization)
-
     def get_filter_condition(self, query):
-        params = ['customer']
+        params = ['customer', 'fulfillment_status']
         condition = None
         for k, v in query.items():
             if k in params:
@@ -225,16 +237,19 @@ class Orders:
         body['organization'] = self.organization
 
         # Inject customer data
-        body['customer_details'] = self.get_customer(body['customer'])
+        body['customer_details'] = get_customer(
+            self.organization, body['customer'])
         body['email'] = body['customer_details']['email']
 
         # Inject merchant data
         body['merchant'] = body['organization']
-        body['merchant_details'] = self.get_merchant(body['organization'])
+        body['merchant_details'] = get_merchant(
+            self.organization, body['organization'])
 
         # Inject item products data
         for item in body['items']:
-            item['product_details'] = self.get_product(item['product'])
+            item['product_details'] = get_product(
+                self.organization, item['product'])
 
         # Inject price data
         amount_total = 0

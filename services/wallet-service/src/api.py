@@ -44,6 +44,16 @@ def list_blockchain_addresses():
     return response('list', data, 'blockchain_address', '/blockchain_addresses', False)
 
 
+@app.get("/backend/wallets/<id>/blockchain_addresses")
+@tracer.capture_method
+def validate_blockchain_addresses(id):
+    service = WalletService(id)
+    blockchain_addresses = service.list_blockchain_addresses()
+    data = [blockchain_address.to_dict()
+            for blockchain_address in blockchain_addresses]
+    return response('list', data, 'blockchain_address', '/blockchain_addresses', False)
+
+
 @app.put("/wallet/blockchain_addresses/<id>")
 @tracer.capture_method
 def update_blockchain_address(id):

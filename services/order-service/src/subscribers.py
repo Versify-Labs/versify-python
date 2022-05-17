@@ -39,3 +39,26 @@ def on_token_minted(event, context):
     versify = Versify(organization=transaction['metadata']['organization'])
     fulfillment = versify.fulfillments.update_with_txn(transaction)
     return response('update', fulfillment)
+
+
+@event_source(data_class=EventBridgeEvent)
+@logger.inject_lambda_context(log_event=True)
+@tracer.capture_lambda_handler
+def on_wallet_update(event, context):
+    wallet = event.detail
+    versify = Versify(email=wallet['email'])
+
+    # Get unfulfilled orders for email
+    query = {'fulfillment_status': 'unfulfilled'}
+    unfulfilled_orders = versify.orders.list_by_email(query)
+    logger.info(unfulfilled_orders)
+
+    # fulfill them
+    for order in unfulfilled_orders:
+        order_id = order['id']
+        order_update_body = {'fulfillment_status': 'pending'}
+        versify.orders.update(order_id, order_update_body)
+        fulfillment = versify.fulfillments.create(order_id, {})
+        logger.info(fulfillment)
+
+    return True

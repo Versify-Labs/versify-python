@@ -35,13 +35,13 @@ TATUM_KMS_PASSWORD=XXXXPASSWORD
 docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms --help
 
 # Store the private key to an account
-docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms --testnet storemanagedprivatekey MATIC
+docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms storemanagedprivatekey MATIC
 
 # TEST MODE ONLY -> Take a look at the generated wallet
-docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms --testnet export
+docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms export
 
 # Enable daemon mode
-docker run -d --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms daemon --chain MATIC --testnet 
+docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms daemon --chain MATIC --externalUrl https://api.versifylabs.com/backend/signatures
 
 # TEST: Send MATIC to the new address
 

@@ -62,16 +62,16 @@ def list_wallet_orders():
     return response('list', orders, 'order', '/orders', False)
 
 
-@app.post("/wallet/orders/<id>/fulfillments")
-@tracer.capture_method
-def create_fulfillment(id):
-    authorizer = app.current_event.request_context.authorizer
-    publicAddress = authorizer.get('publicAddress')
-    versify = sync(app)
-    payload = app.current_event.json_body
-    payload['blockchain_address'] = publicAddress
-    fulfillment = versify.fulfillments.create(id, payload)
-    return response('create', fulfillment)
+# @app.post("/wallet/orders/<id>/fulfillments")
+# @tracer.capture_method
+# def create_fulfillment(id):
+#     authorizer = app.current_event.request_context.authorizer
+#     publicAddress = authorizer.get('publicAddress')
+#     versify = sync(app)
+#     payload = app.current_event.json_body
+#     payload['blockchain_address'] = publicAddress
+#     fulfillment = versify.fulfillments.create(id, payload)
+#     return response('create', fulfillment)
 
 
 @cors_headers

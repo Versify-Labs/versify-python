@@ -1,5 +1,6 @@
 import random
 import string
+import time
 
 from pynamodb.exceptions import DoesNotExist
 
@@ -31,6 +32,11 @@ class WalletService:
             return Wallet.get(self.email, self.email)
         except DoesNotExist:
             return None
+
+    def update_wallet_last_login(self):
+        wallet = self.get_wallet()
+        wallet.update(actions=[Wallet.last_login.set(int(time.time()))])
+        return wallet
 
     def create_blockchain_address(self, issuer, address=None, chain=None, description=''):
         payload = {
@@ -81,4 +87,5 @@ class WalletService:
             blockchain_address = self.create_blockchain_address(
                 issuer, address, chain)
 
-        # TODO: Mint any unminted assets?
+        # Update last login time
+        self.update_wallet_last_login()

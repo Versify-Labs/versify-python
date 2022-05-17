@@ -19,6 +19,7 @@ class Wallet(PlatformModel):
     date_updated = NumberAttribute(null=False, default=int(time.time()))
     email = UnicodeAttribute(null=False)
     handle = UnicodeAttribute(null=False)
+    last_login = NumberAttribute(null=True, default=int(time.time()))
     metadata = MapAttribute(null=False, default={})
     name = UnicodeAttribute(null=False)
     object = UnicodeAttribute(null=False, default='wallet')

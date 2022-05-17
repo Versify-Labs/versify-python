@@ -12,6 +12,8 @@ provider:
   apiGateway:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+    restApiResources:
+      /backend: ${ssm:/versify/services/backend/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
@@ -61,6 +63,18 @@ provider:
     lambda: true
 
 functions:
+  API-ValidateSignature:
+    handler: src.api.handler
+    name: BlockchainService-API-ValidateSignature
+    events:
+      - http:
+          method: get
+          path: /backend/signatures/{id}
+          operationId: ValidateSignature
+          request:
+            parameters:
+              paths:
+                id: true
   OnBlockchainTransaction:
     handler: src.subscribers.on_blockchain_transaction
     name: BlockchainService-OnBlockchainTransaction

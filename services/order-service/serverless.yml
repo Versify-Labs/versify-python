@@ -49,6 +49,7 @@ provider:
         - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/customers/*"
         - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/organizations/*"
         - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/products/*"
+        - "arn:aws:execute-api:us-east-1:*:*/*/GET/backend/wallets/*"
   runtime: python3.9
   timeout: 30
   tracing:
@@ -82,33 +83,33 @@ functions:
               headers:
                 Authorization: true
                 Organization: true
-  API-CreateFulfillment:
-    handler: src.api.handler
-    name: OrderService-API-CreateFulfillment
-    events:
-      - http:
-          method: post
-          path: /wallet/orders/{id}/fulfillments
-          operationId: CreateFulfillment
-          authorizer:
-            type: REQUEST
-            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
-          cors:
-            origin: "*"
-            headers:
-              - Authorization
-              - Content-Type
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-              paths:
-                id: true
+  # API-CreateFulfillment:
+  #   handler: src.api.handler
+  #   name: OrderService-API-CreateFulfillment
+  #   events:
+  #     - http:
+  #         method: post
+  #         path: /wallet/orders/{id}/fulfillments
+  #         operationId: CreateFulfillment
+  #         authorizer:
+  #           type: REQUEST
+  #           authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+  #         cors:
+  #           origin: "*"
+  #           headers:
+  #             - Authorization
+  #             - Content-Type
+  #             - X-Amz-Date
+  #             - X-Api-Key
+  #             - X-Amz-Security-Token
+  #             - X-Amz-User-Agent
+  #           allowCredentials: false
+  #         request:
+  #           parameters:
+  #             headers:
+  #               Authorization: true
+  #             paths:
+  #               id: true
   API-ListFulfillments:
     handler: src.api.handler
     name: OrderService-API-ListFulfillments
@@ -323,6 +324,17 @@ functions:
               metadata:
                 type:
                   - MintToken
+  OnWalletUpdate:
+    handler: src.subscribers.on_wallet_update
+    name: OrderService-OnWalletUpdate
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - wallet.updated
 
 resources:
   Resources:

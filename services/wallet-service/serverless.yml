@@ -13,6 +13,7 @@ provider:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
     restApiResources:
+      /backend: ${ssm:/versify/services/backend/api/resource/id}
       /wallet: ${ssm:/versify/services/wallet/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
@@ -53,9 +54,6 @@ functions:
           method: get
           path: /wallet/ping
           operationId: Ping
-          # authorizer:
-          #   type: REQUEST
-          #   authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
           cors:
             origin: "*"
             headers:
@@ -66,10 +64,6 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
-          # request:
-          #   parameters:
-          #     headers:
-          #       Authorization: true
   API-GetWallet:
     handler: src.api.handler
     name: WalletService-API-GetWallet
@@ -120,6 +114,16 @@ functions:
             parameters:
               headers:
                 Authorization: true
+      - http:
+          method: get
+          path: /backend/wallets/{id}/blockchain_addresses
+          operationId: ValidateBlockchainAddresses
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
   API-UpdateBlockchainAddress:
     handler: src.api.handler
     name: WalletService-API-UpdateBlockchainAddress

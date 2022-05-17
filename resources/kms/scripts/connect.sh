@@ -1,1 +1,1 @@
-ssh -i ~/.ssh/keys/DH702XX00P.pem ec2-user@3.89.223.147
+ssh -i ~/.ssh/keys/TS-MBP-prod.pem ec2-user@3.88.181.72
