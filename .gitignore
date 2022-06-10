@@ -122,5 +122,8 @@ dmypy.json
 **/.secrets.dev
 **/.secrets.prod
 
-
+.vscode/
+data/
 poc/
+services/_dpc/
+services/poc/

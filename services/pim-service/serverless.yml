@@ -1,0 +1,522 @@
+org: versify
+app: versify
+service: pim-service
+
+custom:
+  tableName: PimServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: pim-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - "arn:aws:s3:::cdn.versifylabs.com"
+        - "arn:aws:s3:::cdn.versifylabs.com/*"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  API-CreateCollection:
+    handler: src.api.handler
+    name: PimService-API-CreateCollection
+    events:
+      - http:
+          method: post
+          path: /pim/v1/collections
+          operationId: CreateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_collection.json)}
+  API-ListCollections:
+    handler: src.api.handler
+    name: PimService-API-ListCollections
+    events:
+      - http:
+          method: get
+          path: /pim/v1/collections
+          operationId: ListCollections
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-GetCollection:
+    handler: src.api.handler
+    name: PimService-API-GetCollection
+    events:
+      - http:
+          method: get
+          path: /pim/v1/collections/{collection_id}
+          operationId: GetCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                collection_id: true
+  API-UpdateCollection:
+    handler: src.api.handler
+    name: PimService-API-UpdateCollection
+    events:
+      - http:
+          method: put
+          path: /pim/v1/collections/{collection_id}
+          operationId: UpdateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                collection_id: true
+            schemas:
+              application/json: ${file(schemas/update_collection.json)}
+  API-ArchiveCollection:
+    handler: src.api.handler
+    name: CrmService-API-ArchiveCollection
+    events:
+      - http:
+          method: put
+          path: /pim/v1/collections/{collection_id}/actions/archive
+          operationId: ArchiveCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                collection_id: true
+  API-UnarchiveCollection:
+    handler: src.api.handler
+    name: CrmService-API-UnarchiveCollection
+    events:
+      - http:
+          method: put
+          path: /pim/v1/collections/{collection_id}/actions/unarchive
+          operationId: UnarchiveCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                collection_id: true
+  API-CreateProduct:
+    handler: src.api.handler
+    name: PimService-API-CreateProduct
+    events:
+      - http:
+          method: post
+          path: /pim/v1/products
+          operationId: CreateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_product.json)}
+  API-ListProducts:
+    handler: src.api.handler
+    name: PimService-API-ListProducts
+    events:
+      - http:
+          method: get
+          path: /pim/v1/products
+          operationId: ListProducts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-GetProduct:
+    handler: src.api.handler
+    name: PimService-API-GetProduct
+    events:
+      - http:
+          method: get
+          path: /pim/v1/products/{product_id}
+          operationId: GetProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                product_id: true
+      - http:
+          method: get
+          path: /pim/v1/backend/products/{product_id}
+          operationId: GetProduct
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              paths:
+                product_id: true
+  API-UpdateProduct:
+    handler: src.api.handler
+    name: PimService-API-UpdateProduct
+    events:
+      - http:
+          method: put
+          path: /pim/v1/products/{product_id}
+          operationId: UpdateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                product_id: true
+            schemas:
+              application/json: ${file(schemas/update_product.json)}
+  API-ArchiveProduct:
+    handler: src.api.handler
+    name: CrmService-API-ArchiveProduct
+    events:
+      - http:
+          method: put
+          path: /pim/v1/products/{product_id}/actions/archive
+          operationId: ArchiveProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                product_id: true
+  API-UnarchiveProduct:
+    handler: src.api.handler
+    name: CrmService-API-UnarchiveProduct
+    events:
+      - http:
+          method: put
+          path: /pim/v1/products/{product_id}/actions/unarchive
+          operationId: UnarchiveProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                product_id: true
+  OnContractDeployed:
+    handler: src.subscribers.on_contract_deployed
+    name: PimService-OnContractDeployed
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - transaction.created
+              - transaction.updated
+            detail:
+              status:
+                - complete
+              metadata:
+                type:
+                  - DeployContract
+
+resources:
+  Resources:
+    PimServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: date_created
+            AttributeType: N
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: ByDateCreated
+            KeySchema:
+              - AttributeName: PK
+                KeyType: HASH
+              - AttributeName: date_created
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: id
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    PimServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/pim/table/name
+        Type: String
+        Value: !Ref PimServiceTable
+    PimServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/pim/table/arn
+        Type: String
+        Value: !GetAtt PimServiceTable.Arn
+    PimServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/pim/table/stream/arn
+        Type: String
+        Value: !GetAtt PimServiceTable.StreamArn

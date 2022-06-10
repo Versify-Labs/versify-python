@@ -1,0 +1,26 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateCollection",
+  "required": ["description", "image", "name"],
+  "properties": {
+    "description": {
+      "description": "Explanation of what the collection should be used for",
+      "type": "string"
+    },
+    "image": {
+      "description": "The collections main image",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
+      "type": "object"
+    },
+    "name": {
+      "description": "The collections name. Contract symbol will be created based on this.",
+      "type": "string"
+    }
+  }
+}

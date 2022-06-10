@@ -100,7 +100,6 @@ class Signatures:
     def create(self, id: str, body: dict = {}, raw: bool = True):
         """Create a new signature"""
         body['PK'] = id
-        body['SK'] = id
         body['id'] = id
         signature = self.model(**body)
         signature.save()
@@ -158,7 +157,6 @@ class Transactions:
     def create(self, id: str, body: dict = {}, raw: bool = True):
         """Create a new transaction"""
         body['PK'] = id
-        body['SK'] = id
         body['id'] = id
         transaction = self.model(**body)
         transaction.save()

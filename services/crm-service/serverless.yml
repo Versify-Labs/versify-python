@@ -1,0 +1,491 @@
+org: versify
+app: versify
+service: crm-service
+
+custom:
+  tableName: CrmServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: crm-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  # Contact Endpoints
+  API-ListContacts:
+    handler: src.api.handler
+    name: CrmService-API-ListContacts
+    events:
+      - http:
+          method: get
+          path: /crm/v1/contacts
+          operationId: ListContacts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+      - http:
+          method: get
+          path: /crm/v1/backend/contacts
+          operationId: ListContacts
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              headers:
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-CreateContact:
+    handler: src.api.handler
+    name: CrmService-API-CreateContact
+    events:
+      - http:
+          method: post
+          path: /crm/v1/contacts
+          operationId: CreateContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_contact.json)}
+  API-GetContact:
+    handler: src.api.handler
+    name: CrmService-API-GetContact
+    events:
+      - http:
+          method: get
+          path: /crm/v1/contacts/{contact_id}
+          operationId: GetContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+  API-DeleteContact:
+    handler: src.api.handler
+    name: CrmService-API-DeleteContact
+    events:
+      - http:
+          method: delete
+          path: /crm/v1/contacts/{contact_id}
+          operationId: DeleteContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+  API-UpdateContact:
+    handler: src.api.handler
+    name: CrmService-API-UpdateContact
+    events:
+      - http:
+          method: put
+          path: /crm/v1/contacts/{contact_id}
+          operationId: UpdateContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+            schemas:
+              application/json: ${file(schemas/update_contact.json)}
+  API-ArchiveContact:
+    handler: src.api.handler
+    name: CrmService-API-ArchiveContact
+    events:
+      - http:
+          method: put
+          path: /crm/v1/contacts/{contact_id}/actions/archive
+          operationId: ArchiveContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+  API-UnarchiveContact:
+    handler: src.api.handler
+    name: CrmService-API-UnarchiveContact
+    events:
+      - http:
+          method: put
+          path: /crm/v1/contacts/{contact_id}/actions/unarchive
+          operationId: ArchiveContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+  API-CreateContactNote:
+    handler: src.api.handler
+    name: CrmService-API-CreateContactNote
+    events:
+      - http:
+          method: post
+          path: /crm/v1/contacts/{contact_id}/notes
+          operationId: CreateContactNote
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-ListContactNotes:
+    handler: src.api.handler
+    name: CrmService-API-ListContactNotes
+    events:
+      - http:
+          method: get
+          path: /crm/v1/contacts/{contact_id}/notes
+          operationId: ListContactNotes
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-DeleteContactNote:
+    handler: src.api.handler
+    name: CrmService-API-DeleteContactNote
+    events:
+      - http:
+          method: delete
+          path: /crm/v1/contacts/{contact_id}/notes/{note_id}
+          operationId: DeleteContactNote
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-ListContactTags:
+    handler: src.api.handler
+    name: CrmService-API-ListContactTags
+    events:
+      - http:
+          method: get
+          path: /crm/v1/contacts/{contact_id}/tags
+          operationId: ListContactTags
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-AddContactTags:
+    handler: src.api.handler
+    name: CrmService-API-AddContactTags
+    events:
+      - http:
+          method: post
+          path: /crm/v1/contacts/{contact_id}/tags
+          operationId: AddContactTags
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                contact_id: true
+            schemas:
+              application/json: ${file(schemas/create_tag.json)}
+  # Tag Endpoints
+  API-ListTags:
+    handler: src.api.handler
+    name: CrmService-API-ListTags
+    events:
+      - http:
+          method: get
+          path: /crm/v1/tags
+          operationId: ListTags
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-CreateTag:
+    handler: src.api.handler
+    name: CrmService-API-CreateTag
+    events:
+      - http:
+          method: post
+          path: /crm/v1/tags
+          operationId: CreateTag
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_tag.json)}
+  # Subscribers
+  OnAirdropCreated:
+    handler: src.subscribers.on_airdrop_created
+    name: CrmService-OnAirdropCreated
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - airdrop.created
+
+resources:
+  Resources:
+    CrmServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: date_created
+            AttributeType: N
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: ByDateCreated
+            KeySchema:
+              - AttributeName: PK
+                KeyType: HASH
+              - AttributeName: date_created
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: id
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    CrmServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/crm/table/name
+        Type: String
+        Value: !Ref CrmServiceTable
+    CrmServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/crm/table/arn
+        Type: String
+        Value: !GetAtt CrmServiceTable.Arn
+    CrmServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/crm/table/stream/arn
+        Type: String
+        Value: !GetAtt CrmServiceTable.StreamArn

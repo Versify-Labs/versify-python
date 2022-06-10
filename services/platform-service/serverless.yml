@@ -42,14 +42,6 @@ layers:
     retain: false
 
 functions:
-  AccountAuthorizer:
-    handler: src.authorizer.account_handler
-    name: PlatformService-AccountAuthorizer
-    runtime: python3.9
-  AdminAuthorizer:
-    handler: src.authorizer.admin_handler
-    name: PlatformService-AdminAuthorizer
-    runtime: python3.9
   WalletAuthorizer:
     handler: src/index.handler
     name: PlatformService-WalletAuthorizer
@@ -84,74 +76,6 @@ resources:
         Type: String
         Value: !GetAtt BaseApi.RootResourceId
 
-    AccountResource:
-      Type: AWS::ApiGateway::Resource
-      Properties:
-        RestApiId:
-          Ref: BaseApi
-        ParentId:
-          Fn::GetAtt:
-            - BaseApi
-            - RootResourceId
-        PathPart: account
-    AccountResourceIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/account/api/resource/id
-        Type: String
-        Value: !GetAtt AccountResource.ResourceId
-
-    AdminResource:
-      Type: AWS::ApiGateway::Resource
-      Properties:
-        RestApiId:
-          Ref: BaseApi
-        ParentId:
-          Fn::GetAtt:
-            - BaseApi
-            - RootResourceId
-        PathPart: admin
-    AdminResourceIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/admin/api/resource/id
-        Type: String
-        Value: !GetAtt AdminResource.ResourceId
-
-    BackendResource:
-      Type: AWS::ApiGateway::Resource
-      Properties:
-        RestApiId:
-          Ref: BaseApi
-        ParentId:
-          Fn::GetAtt:
-            - BaseApi
-            - RootResourceId
-        PathPart: backend
-    BackendResourceIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/backend/api/resource/id
-        Type: String
-        Value: !GetAtt BackendResource.ResourceId
-
-    WalletResource:
-      Type: AWS::ApiGateway::Resource
-      Properties:
-        RestApiId:
-          Ref: BaseApi
-        ParentId:
-          Fn::GetAtt:
-            - BaseApi
-            - RootResourceId
-        PathPart: wallet
-    WalletResourceIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/wallet/api/resource/id
-        Type: String
-        Value: !GetAtt WalletResource.ResourceId
-
     WebhookResource:
       Type: AWS::ApiGateway::Resource
       Properties:
@@ -168,66 +92,6 @@ resources:
         Name: !Sub /versify/services/webhook/api/resource/id
         Type: String
         Value: !GetAtt WebhookResource.ResourceId
-
-    AccountAuthorizer:
-      Type: AWS::ApiGateway::Authorizer
-      Properties:
-        AuthorizerResultTtlInSeconds: 0
-        AuthorizerUri: !Join
-          - ""
-          - - "arn:aws:apigateway:"
-            - !Ref "AWS::Region"
-            - ":lambda:path/2015-03-31/functions/"
-            - !GetAtt
-              - AccountAuthorizerLambdaFunction
-              - Arn
-            - /invocations
-        IdentitySource: method.request.header.Authorization
-        Name: AccountAuthorizer
-        RestApiId: !Ref BaseApi
-        Type: REQUEST
-    AccountAuthorizerArnParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/account/api/authorizer/arn
-        Type: String
-        Value: !GetAtt AccountAuthorizerLambdaFunction.Arn
-    AccountAuthorizerIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/account/api/authorizer/id
-        Type: String
-        Value: !GetAtt AccountAuthorizer.AuthorizerId
-
-    AdminAuthorizer:
-      Type: AWS::ApiGateway::Authorizer
-      Properties:
-        AuthorizerResultTtlInSeconds: 0
-        AuthorizerUri: !Join
-          - ""
-          - - "arn:aws:apigateway:"
-            - !Ref "AWS::Region"
-            - ":lambda:path/2015-03-31/functions/"
-            - !GetAtt
-              - AdminAuthorizerLambdaFunction
-              - Arn
-            - /invocations
-        IdentitySource: method.request.header.Authorization
-        Name: AdminAuthorizer
-        RestApiId: !Ref BaseApi
-        Type: REQUEST
-    AdminAuthorizerArnParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/admin/api/authorizer/arn
-        Type: String
-        Value: !GetAtt AdminAuthorizerLambdaFunction.Arn
-    AdminAuthorizerIdParameter:
-      Type: AWS::SSM::Parameter
-      Properties:
-        Name: !Sub /versify/services/admin/api/authorizer/id
-        Type: String
-        Value: !GetAtt AdminAuthorizer.AuthorizerId
 
     WalletAuthorizer:
       Type: AWS::ApiGateway::Authorizer

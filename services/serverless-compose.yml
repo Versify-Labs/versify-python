@@ -1,42 +1,51 @@
 services:
   platform-service:
     path: platform-service
+  auth-service:
+    path: auth-service
+    dependsOn:
+      - platform-service
   blockchain-service:
     path: blockchain-service
     dependsOn:
       - platform-service
-  customer-service:
-    path: customer-service
+      - auth-service
+  crm-service:
+    path: crm-service
     dependsOn:
       - platform-service
-  integration-service:
-    path: integration-service
-    dependsOn:
-      - platform-service
+      - auth-service
   notification-service:
     path: notification-service
     dependsOn:
       - platform-service
-  order-service:
-    path: order-service
+      - auth-service
+  pim-service:
+    path: pim-service
     dependsOn:
       - platform-service
-  product-service:
-    path: product-service
-    dependsOn:
-      - platform-service
+      - auth-service
+      - blockchain-service
   wallet-service:
     path: wallet-service
     dependsOn:
       - platform-service
+      - auth-service
+  campaign-service:
+    path: campaign-service
+    dependsOn:
+      - platform-service
+      - auth-service
+      - crm-service
+      - pim-service
   event-service:
     path: event-service
     dependsOn:
       - platform-service
+      - auth-service
       - blockchain-service
-      - customer-service
-      - integration-service
+      - crm-service
       - notification-service
-      - order-service
-      - product-service
+      - pim-service
       - wallet-service
+      - campaign-service

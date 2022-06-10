@@ -1,0 +1,22 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateTag",
+  "required": ["name"],
+  "properties": {
+    "description": {
+      "description": "The tags description",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
+      "type": "object"
+    },
+    "name": {
+      "description": "The tags name.",
+      "type": "string"
+    }
+  }
+}

@@ -41,7 +41,7 @@ docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms storema
 docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms export
 
 # Enable daemon mode
-docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms daemon --chain MATIC --externalUrl https://api.versifylabs.com/backend/signatures
+docker run -it --env-file .env -v $HOME:/root/.tatumrc tatumio/tatum-kms daemon --chain MATIC --externalUrl https://api.versifylabs.com/chain/v1/backend/signatures
 
 # TEST: Send MATIC to the new address
 

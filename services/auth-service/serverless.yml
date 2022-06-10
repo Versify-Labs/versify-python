@@ -1,0 +1,416 @@
+org: versify
+app: versify
+service: auth-service
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: auth-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  Authorizer:
+    handler: src.authorizer.handler
+    name: AuthService-Authorizer
+  API-Ping:
+    handler: src.api.handler
+    name: AuthService-API-Ping
+    events:
+      - http:
+          method: get
+          path: /auth/v1/ping
+          operationId: Ping
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+  API-GetOrganization:
+    handler: src.api.handler
+    name: AuthService-API-GetOrganization
+    events:
+      - http:
+          method: get
+          path: /auth/v1/organizations/{organization_id}
+          operationId: GetOrganization
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+  API-CreateOrganizationKey:
+    handler: src.api.handler
+    name: AuthService-API-CreateOrganizationKey
+    events:
+      - http:
+          method: post
+          path: /auth/v1/organizations/{organization_id}/keys
+          operationId: CreateOrganizationKey
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+  API-UpdateOrganization:
+    handler: src.api.handler
+    name: AuthService-API-UpdateOrganization
+    events:
+      - http:
+          method: put
+          path: /auth/v1/organizations/{organization_id}
+          operationId: UpdateOrganization
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+            schemas:
+              application/json: ${file(schemas/update_organization.json)}
+  API-CreateOrganizationInvitation:
+    handler: src.api.handler
+    name: AuthService-API-CreateOrganizationInvitation
+    events:
+      - http:
+          method: post
+          path: /auth/v1/organizations/{organization_id}/invitations
+          operationId: CreateOrganizationInvitation
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+            schemas:
+              application/json: ${file(schemas/create_invitation.json)}
+  API-ListOrganizationInvitations:
+    handler: src.api.handler
+    name: AuthService-API-ListOrganizationInvitations
+    events:
+      - http:
+          method: get
+          path: /auth/v1/organizations/{organization_id}/invitations
+          operationId: ListOrganizationInvitations
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+  API-ListOrganizationMembers:
+    handler: src.api.handler
+    name: AuthService-API-ListOrganizationMembers
+    events:
+      - http:
+          method: get
+          path: /auth/v1/organizations/{organization_id}/members
+          operationId: ListOrganizationMembers
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+  API-ListOrganizationMemberRoles:
+    handler: src.api.handler
+    name: AuthService-API-ListOrganizationMemberRoles
+    events:
+      - http:
+          method: get
+          path: /auth/v1/organizations/{organization_id}/members/{user_id}/roles
+          operationId: ListOrganizationMemberRoles
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                organization_id: true
+                user_id: true
+  API-GetUser:
+    handler: src.api.handler
+    name: AuthService-API-GetUser
+    events:
+      - http:
+          method: get
+          path: /auth/v1/users/{user_id}
+          operationId: GetUser
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: false
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                user_id: true
+  API-UpdateUser:
+    handler: src.api.handler
+    name: AuthService-API-UpdateUser
+    events:
+      - http:
+          method: put
+          path: /auth/v1/users/{user_id}
+          operationId: UpdateUser
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                user_id: true
+            schemas:
+              application/json: ${file(schemas/update_user.json)}
+  API-ListUserOrganizations:
+    handler: src.api.handler
+    name: AuthService-API-ListUserOrganizations
+    events:
+      - http:
+          method: get
+          path: /auth/v1/users/{user_id}/organizations
+          operationId: ListUserOrganizations
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers:
+              - Authorization
+              - Content-Type
+              - X-Amz-Date
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                user_id: true
+
+resources:
+  Resources:
+    Authorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        AuthorizerUri: !Join
+          - ""
+          - - "arn:aws:apigateway:"
+            - !Ref "AWS::Region"
+            - ":lambda:path/2015-03-31/functions/"
+            - !GetAtt
+              - AuthorizerLambdaFunction
+              - Arn
+            - /invocations
+        Name: Auth
+        RestApiId: ${self:provider.apiGateway.restApiId}
+        Type: REQUEST
+    AuthorizerArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/authorizer/arn
+        Type: String
+        Value: !GetAtt AuthorizerLambdaFunction.Arn
+    AuthorizerIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/api/authorizer/id
+        Type: String
+        Value: !GetAtt Authorizer.AuthorizerId

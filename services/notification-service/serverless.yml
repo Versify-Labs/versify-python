@@ -12,8 +12,6 @@ provider:
   apiGateway:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
-    restApiResources:
-      /admin: ${ssm:/versify/services/admin/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
@@ -51,9 +49,9 @@ provider:
     lambda: true
 
 functions:
-  SendAirdropConfirmation:
-    handler: src.subscribers.send_airdrop_confirmation
-    name: NotificationService-SendAirdropConfirmation
+  SendAirdropNotification:
+    handler: src.subscribers.send_airdrop_notification
+    name: NotificationService-SendAirdropNotification
     events:
       - eventBridge:
           eventBus: ${ssm:/versify/services/event-bus/arn}
@@ -61,11 +59,7 @@ functions:
             source:
               - versify
             detail-type:
-              - order.created
-            detail:
-              type:
-                - airdrop
-
+              - airdrop.created
 # resources:
 #   Resources:
 #     NotificationServiceTable:

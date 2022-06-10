@@ -12,8 +12,6 @@ provider:
   apiGateway:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
-    restApiResources:
-      /backend: ${ssm:/versify/services/backend/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
@@ -46,31 +44,20 @@ provider:
         - secretsmanager:GetSecretValue
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
-    - Effect: Allow
-      Action:
-        - s3:ListBucket
-        - s3:GetObject
-        - s3:PutObject
-        - s3:ListObjects
-      Resource:
-        - "arn:aws:s3:::cdn.versifylabs.com"
-        - "arn:aws:s3:::cdn.versifylabs.com/*"
-        - "arn:aws:s3:::cdn-dev.versifylabs.com"
-        - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
   runtime: python3.9
   timeout: 30
   tracing:
     lambda: true
 
 functions:
-  API-ValidateSignature:
+  API-GetSignature:
     handler: src.api.handler
-    name: BlockchainService-API-ValidateSignature
+    name: BlockchainService-API-GetSignature
     events:
       - http:
           method: get
-          path: /backend/signatures/{id}
-          operationId: ValidateSignature
+          path: /chain/v1/backend/signatures/{id}
+          operationId: GetSignature
           request:
             parameters:
               paths:
@@ -95,9 +82,9 @@ functions:
               - versify
             detail-type:
               - collection.created
-  OnFulfillmentCreated:
-    handler: src.subscribers.on_fulfillment_created
-    name: BlockchainService-OnFulfillmentCreated
+  OnAirdropPending:
+    handler: src.subscribers.on_airdrop_pending
+    name: BlockchainService-OnAirdropPending
     events:
       - eventBridge:
           eventBus: ${ssm:/versify/services/event-bus/arn}
@@ -105,7 +92,10 @@ functions:
             source:
               - versify
             detail-type:
-              - fulfillment.created
+              - airdrop.updated
+            detail:
+              status:
+                - pending
 
 resources:
   Resources:
@@ -115,7 +105,7 @@ resources:
         AttributeDefinitions:
           - AttributeName: PK
             AttributeType: S
-          - AttributeName: SK
+          - AttributeName: id
             AttributeType: S
           - AttributeName: object
             AttributeType: S
@@ -137,7 +127,7 @@ resources:
         KeySchema:
           - AttributeName: PK
             KeyType: HASH
-          - AttributeName: SK
+          - AttributeName: id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

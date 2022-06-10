@@ -1,0 +1,17 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "FulfillAirdrop",
+  "required": ["address", "email"],
+  "properties": {
+    "address": {
+      "description": "The address to mint to.",
+      "type": "string"
+    },
+    "email": {
+      "description": "The email to mint to",
+      "type": "string"
+    }
+  }
+}

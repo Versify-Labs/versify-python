@@ -46,12 +46,14 @@ def generate_deny(principalId, resource):
     return generate_policy(principalId, 'Deny', resource)
 
 
-def get_token(event):
-    authorization_lo = event['headers'].get('authorization')
-    authorization_up = event['headers'].get('Authorization')
-    authorization = authorization_lo or authorization_up
-    token = authorization.split(' ')[1]
-    return token
+def get_header_value(event, key):
+    headers = {k.lower(): v for k, v in event['headers'].items()}
+    value = headers.get(key)
+    logger.info({
+        'key': key,
+        'value': value
+    })
+    return value
 
 
 def get_required_scope(event):
@@ -65,29 +67,79 @@ def get_required_scope(event):
         'DELETE': 'write'
     }
     resource_map = {
-        '/account/integrations/auth0/users/{id}/organizations': 'organizations',
         '/admin/airdrops': 'airdrops',
-        '/admin/collections': 'collections',
-        '/admin/collections/{id}': 'collections',
-        '/admin/customers': 'customers',
-        '/admin/customers/{id}': 'customers',
         '/admin/events': 'events',
         '/admin/events/{id}': 'events',
-        '/admin/integrations/auth0/organizations/{id}': 'organizations',
-        '/admin/integrations/auth0/organizations/{id}/invitations': 'organizations',
-        '/admin/integrations/auth0/organizations/{id}/members': 'organizations',
-        '/admin/integrations/auth0/organizations/{id}/members/{user_id}/roles': 'organizations',
         '/admin/orders': 'orders',
         '/admin/orders/{id}': 'orders',
         '/admin/orders/{id}/fulfillments': 'orders',
-        '/admin/products': 'products',
-        '/admin/products/{id}': 'products',
         '/admin/notifications': 'notifications',
         '/admin/notifications/{id}': 'notifications',
+
+        '/auth/v1/ping': 'organizations',
+        '/auth/v1/organizations': 'organizations',
+        '/auth/v1/organizations/{organization_id}': 'organizations',
+        '/auth/v1/organizations/{organization_id}/keys': 'organizations',
+        '/auth/v1/organizations/{organization_id}/keys/{user_id}': 'organizations',
+        '/auth/v1/organizations/{organization_id}/members': 'organizations',
+        '/auth/v1/organizations/{organization_id}/members/{user_id}': 'organizations',
+        '/auth/v1/organizations/{organization_id}/members/{user_id}/roles': 'organizations',
+        '/auth/v1/users/{user_id}': 'organizations',
+        '/auth/v1/users/{user_id}/organizations': 'organizations',
+
+        '/billing/v1/invoice': 'organizations',
+        '/billing/v1/invoice/{invoice_id}': 'organizations',
+        '/billing/v1/plan': 'organizations',
+        '/billing/v1/plan/{plan_id}': 'organizations',
+        '/billing/v1/subscription': 'organizations',
+        '/billing/v1/subscription/{subscription_id}': 'organizations',
+        '/billing/v1/usage': 'organizations',
+        '/billing/v1/usage/{usage_id}': 'organizations',
+
+        '/cms/v1/pages': 'organizations',
+        '/cms/v1/pages/{page_id}': 'organizations',
+
+        '/crm/v1/contacts': 'organizations',
+        '/crm/v1/contacts/{contact_id}': 'organizations',
+        '/crm/v1/contacts/{contact_id}/activity': 'organizations',
+        '/crm/v1/contacts/{contact_id}/activity/{activity_id}': 'organizations',
+        '/crm/v1/contacts/{contact_id}/actions/archive': 'organizations',
+        '/crm/v1/contacts/{contact_id}/notes': 'organizations',
+        '/crm/v1/contacts/{contact_id}/notes/{note_id}': 'organizations',
+        '/crm/v1/contacts/{contact_id}/tags': 'organizations',
+        '/crm/v1/contacts/{contact_id}/tags/{tag_id}': 'organizations',
+        '/crm/v1/tags': 'organizations',
+        '/crm/v1/tags/{tag_id}': 'organizations',
+
+        '/oms/v1/airdrops': 'organizations',
+        '/oms/v1/airdrops/{airdrop_id}': 'organizations',
+        '/oms/v1/orders': 'organizations',
+        '/oms/v1/orders/{collection_id}': 'organizations',
+
+        '/pim/v1/collections': 'organizations',
+        '/pim/v1/collections/{collection_id}': 'organizations',
+        '/pim/v1/collections/{collection_id}/actions/archive': 'organizations',
+        '/pim/v1/collections/{collection_id}/actions/publish': 'organizations',
+        '/pim/v1/collections/{collection_id}/actions/unarchive': 'organizations',
+        '/pim/v1/products': 'organizations',
+        '/pim/v1/products/{product_id}': 'organizations',
+        '/pim/v1/products/{product_id}/actions/archive': 'organizations',
+        '/pim/v1/products/{product_id}/actions/publish': 'organizations',
+        '/pim/v1/products/{product_id}/actions/unarchive': 'organizations',
+
+        '/blockchain/v1/transactions': 'organizations',
+        '/blockchain/v1/transactions/{transaction_id}': 'organizations',
+
     }
     access = method_map[api_method]
     resource = resource_map[api_resource]
     return f'{access}:{resource}'
+
+
+def is_valid_api_key(api_key, organization):
+    """Determines if the api_key has access to the organization requested in the header"""
+    # TODO: Match up API key with Organization
+    return api_key == f'{organization}_superSecretKey'
 
 
 def is_valid_token(token, audience):
@@ -138,9 +190,27 @@ def is_valid_permission(token, required_scope):
 
 
 def is_valid_organization(token, organization):
-    """Determines if the organization requested in the header is in the Access Token"""
+    """Determines if the Access Token has access to the organization requested in the header"""
     unverified_claims = jwt.get_unverified_claims(token)
     return organization == unverified_claims.get("org_id")
+
+
+def account_token_auth(token, scope, resource):
+    claims = jwt.get_unverified_claims(token)
+    user_id = claims.get('sub')
+    audience = VERSIFY_ACCOUNT_API
+
+    if not is_valid_token(token, audience):
+        logger.info('Invalid Token')
+        return generate_deny(user_id, resource)
+
+    if not is_valid_scope(token, scope) and not is_valid_permission(token, scope):
+        logger.info('Invalid Permissions')
+        return generate_deny(user_id, resource)
+
+    # Congrats! You are authorized!
+    auth_context = {'user_id': user_id}
+    return generate_allow(user_id, resource, auth_context)
 
 
 @logger.inject_lambda_context(log_event=True)
@@ -148,36 +218,58 @@ def is_valid_organization(token, organization):
 def account_handler(event, context):
 
     # Who are you?
-    token = get_token(event)
-    unverified_claims = jwt.get_unverified_claims(token)
-    user_id = unverified_claims.get('sub')
-    if not token:
-        logger.info('Missing Token')
-        return generate_deny(user_id, event['methodArn'])
+    token = get_header_value(event, 'x-authorization')
+    token = token.split(' ')[1]
 
-    # But are you really them?
-    audience = VERSIFY_ACCOUNT_API
+    # What are you requesting?
+    resource = event['methodArn']
+    scope = get_required_scope(event)
+
+    # Determine if auth type is API Key or Access Token and check if has access
+    if token:
+        return account_token_auth(token, scope, resource)
+    else:
+        return generate_deny('unknown', resource)
+
+
+def admin_token_auth(token, organization, scope, resource):
+    token = token.split(' ')[1]
+    claims = jwt.get_unverified_claims(token)
+    user_id = claims.get('sub')
+    audience = VERSIFY_ADMIN_API
+
     if not is_valid_token(token, audience):
         logger.info('Invalid Token')
-        return generate_deny(user_id, event['methodArn'])
+        return generate_deny(user_id, resource)
 
-    # What are your requesting?
-    required_scope = get_required_scope(event)
+    if not is_valid_organization(token, organization):
+        logger.info('Invalid Organization')
+        return generate_deny(user_id, resource)
 
-    # Should you have access to what you are requesting?
-    # TODO: Implement adding role (User) inside Auth0 Rule
-    # if not is_valid_scope(token, required_scope) and not is_valid_permission(token, required_scope):
-    #     logger.info('Invalid Permissions')
-    #     return generate_deny(user_id, event['methodArn'])
+    # TODO: VALIDATE THAT THE ORGANIZATION PLAN HAS ACCESS TO THE SCOPE
+    if not is_valid_scope(token, scope) and not is_valid_permission(token, scope):
+        logger.info('Invalid Permissions')
+        return generate_deny(user_id, resource)
 
     # Congrats! You are authorized!
-    unverified_claims = jwt.get_unverified_claims(token)
-    auth_context = {
-        'user_id': unverified_claims.get('sub'),
-        'org_id': unverified_claims.get('org_id')
-    }
-    user_id = unverified_claims.get('sub')
-    return generate_allow(user_id, event['methodArn'], auth_context)
+    auth_context = {'user_id': user_id,  'org_id': organization}
+    return generate_allow(user_id, resource, auth_context)
+
+
+def admin_api_key_auth(api_key, organization, scope, resource):
+
+    if not is_valid_api_key(api_key, organization):
+        logger.info('Invalid API Key')
+        return generate_deny(organization, resource)
+
+    # TODO: VALIDATE THAT THE ORGANIZATION PLAN HAS ACCESS TO THE SCOPE
+
+    # Should you have access to what you are requesting?
+    # TODO: Check that Organization has granted API Key permission to this specific scope
+
+    # Congrats! You are authorized!
+    auth_context = {'org_id': organization}
+    return generate_allow(organization, resource, auth_context)
 
 
 @logger.inject_lambda_context(log_event=True)
@@ -185,42 +277,18 @@ def account_handler(event, context):
 def admin_handler(event, context):
 
     # Who are you?
-    token = get_token(event)
-    unverified_claims = jwt.get_unverified_claims(token)
-    user_id = unverified_claims.get('sub')
-    if not token:
-        logger.info('Missing Token')
-        return generate_deny(user_id, event['methodArn'])
+    api_key = get_header_value(event, 'x-api-key')
+    token = get_header_value(event, 'x-authorization')
 
-    # But are you really them?
-    audience = VERSIFY_ADMIN_API
-    if not is_valid_token(token, audience):
-        logger.info('Invalid Token')
-        return generate_deny(user_id, event['methodArn'])
+    # What are you requesting?
+    organization = get_header_value(event, 'x-organization')
+    resource = event['methodArn']
+    scope = get_required_scope(event)
 
-    # What are your requesting?
-    required_scope = get_required_scope(event)
-
-    # Are you requesting on behalf of an organization?
-    organization_lo = event['headers'].get('organization')
-    organization_up = event['headers'].get('Organization')
-    organization = organization_lo or organization_up
-    if organization and not is_valid_organization(token, organization):
-        logger.info('Invalid Organization')
-        return generate_deny(user_id, event['methodArn'])
-
-    # TODO: VALIDATE THAT THE ORGANIZATION PLAN HAS ACCESS TO THE SCOPE
-
-    # Should you have access to what you are requesting?
-    if not is_valid_scope(token, required_scope) and not is_valid_permission(token, required_scope):
-        logger.info('Invalid Permissions')
-        return generate_deny(user_id, event['methodArn'])
-
-    # Congrats! You are authorized!
-    unverified_claims = jwt.get_unverified_claims(token)
-    auth_context = {
-        'user_id': unverified_claims.get('sub'),
-        'org_id': unverified_claims.get('org_id')
-    }
-    user_id = unverified_claims.get('sub')
-    return generate_allow(user_id, event['methodArn'], auth_context)
+    # Determine if auth type is API Key or Access Token and check if has access
+    if api_key and organization:
+        return admin_api_key_auth(api_key, organization, scope, resource)
+    elif token and organization:
+        return admin_token_auth(token, organization, scope, resource)
+    else:
+        return generate_deny('unknown', resource)

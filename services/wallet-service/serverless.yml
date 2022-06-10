@@ -12,9 +12,6 @@ provider:
   apiGateway:
     restApiId: ${ssm:/versify/services/api/id}
     restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
-    restApiResources:
-      /backend: ${ssm:/versify/services/backend/api/resource/id}
-      /wallet: ${ssm:/versify/services/wallet/api/resource/id}
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
@@ -46,113 +43,96 @@ provider:
     lambda: true
 
 functions:
-  API-Ping:
+  API-CreateAccount:
     handler: src.api.handler
-    name: WalletService-API-Ping
+    name: WalletService-API-CreateAccount
     events:
       - http:
-          method: get
-          path: /wallet/ping
-          operationId: Ping
-          cors:
-            origin: "*"
-            headers:
-              - Authorization
-              - Content-Type
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-  API-GetWallet:
-    handler: src.api.handler
-    name: WalletService-API-GetWallet
-    events:
-      - http:
-          method: get
-          path: /wallet/me
-          operationId: GetWallet
+          method: post
+          path: /wallet/v1/accounts
+          operationId: CreateAccount
           authorizer:
             type: REQUEST
-            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
           cors:
             origin: "*"
             headers:
-              - Authorization
               - Content-Type
               - X-Amz-Date
-              - X-Api-Key
               - X-Amz-Security-Token
               - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
             allowCredentials: false
           request:
             parameters:
               headers:
-                Authorization: true
-  API-ListBlockchainAddresses:
+                X-Authorization: false
+                X-Api-Key: false
+                X-Organization: false
+            schemas:
+              application/json: ${file(schemas/create_account.json)}
+  API-ListAccounts:
     handler: src.api.handler
-    name: WalletService-API-ListBlockchainAddresses
+    name: WalletService-API-ListAccounts
     events:
       - http:
           method: get
-          path: /wallet/blockchain_addresses
-          operationId: ListBlockchainAddresses
+          path: /wallet/v1/accounts
+          operationId: ListAccounts
           authorizer:
             type: REQUEST
-            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
           cors:
             origin: "*"
             headers:
-              - Authorization
               - Content-Type
               - X-Amz-Date
-              - X-Api-Key
               - X-Amz-Security-Token
               - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
             allowCredentials: false
           request:
             parameters:
               headers:
-                Authorization: true
-      - http:
-          method: get
-          path: /backend/wallets/{id}/blockchain_addresses
-          operationId: ValidateBlockchainAddresses
-          authorizer:
-            type: aws_iam
-          request:
-            parameters:
-              paths:
-                id: true
-  API-UpdateBlockchainAddress:
+                X-Authorization: true
+                X-Api-Key: false
+                X-Organization: false
+  API-UpdateAccount:
     handler: src.api.handler
-    name: WalletService-API-UpdateBlockchainAddress
+    name: WalletService-API-UpdateAccount
     events:
       - http:
           method: put
-          path: /wallet/blockchain_addresses/{id}
-          operationId: UpdateBlockchainAddress
+          path: /wallet/v1/accounts/{account_id}
+          operationId: UpdateAccount
           authorizer:
             type: REQUEST
-            authorizerId: ${ssm:/versify/services/wallet/api/authorizer/id}
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
           cors:
             origin: "*"
             headers:
-              - Authorization
               - Content-Type
               - X-Amz-Date
-              - X-Api-Key
               - X-Amz-Security-Token
               - X-Amz-User-Agent
+              - X-Api-Key
+              - X-Authorization
+              - X-Organization
             allowCredentials: false
           request:
             parameters:
               headers:
-                Authorization: true
+                X-Authorization: true
+                X-Api-Key: false
+                X-Organization: false
               paths:
-                id: true
+                account_id: true
             schemas:
-              application/json: ${file(schemas/update_blockchain_address.json)}
+              application/json: ${file(schemas/update_account.json)}
 
 resources:
   Resources:
@@ -160,21 +140,19 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: PK # email
+          - AttributeName: PK
             AttributeType: S
-          - AttributeName: SK # handle, blockchain_address_id, etc
+          - AttributeName: id
             AttributeType: S
-          - AttributeName: email # profile, blockchain_address, etc
-            AttributeType: S
-          - AttributeName: object # profile, blockchain_address, etc
-            AttributeType: S
+          - AttributeName: date_created
+            AttributeType: N
         BillingMode: PROVISIONED
         GlobalSecondaryIndexes:
-          - IndexName: ByEmailByObject
+          - IndexName: ByDateCreated
             KeySchema:
-              - AttributeName: email # email
+              - AttributeName: PK
                 KeyType: HASH
-              - AttributeName: object # profile, blockchain_address, etc
+              - AttributeName: date_created
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
@@ -184,7 +162,7 @@ resources:
         KeySchema:
           - AttributeName: PK
             KeyType: HASH
-          - AttributeName: SK
+          - AttributeName: id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

@@ -11,7 +11,7 @@ logger = Logger()
 app = APIGatewayRestResolver()
 
 
-@app.get("/backend/signatures/<id>")
+@app.get("/chain/v1/backend/signatures/<id>")
 @tracer.capture_method
 def get_signature(id):
     versify = Versify()

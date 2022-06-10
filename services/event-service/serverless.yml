@@ -130,15 +130,15 @@ functions:
           enabled: true
           type: dynamodb
       - stream:
-          arn: ${ssm:/versify/services/customer/table/stream/arn}
+          arn: ${ssm:/versify/services/campaign/table/stream/arn}
           enabled: true
           type: dynamodb
       - stream:
-          arn: ${ssm:/versify/services/order/table/stream/arn}
+          arn: ${ssm:/versify/services/crm/table/stream/arn}
           enabled: true
           type: dynamodb
       - stream:
-          arn: ${ssm:/versify/services/product/table/stream/arn}
+          arn: ${ssm:/versify/services/pim/table/stream/arn}
           enabled: true
           type: dynamodb
       - stream:

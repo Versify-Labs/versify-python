@@ -21,46 +21,76 @@ try:
 except ApiClientError as error:
     logger.error('An exception occurred: {}'.format(error.text))
 
-wallet_url = 'https://wallet.versifylabs.com/'
-if ENV == 'dev':
-    wallet_url = 'https://wallet-dev.versifylabs.com/'
-
 
 @event_source(data_class=EventBridgeEvent)
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
-def send_airdrop_confirmation(event, context):
-    order = event.detail
-    email = order.get('email', '')
-    merchant_name = order['merchant_details']['display_name']
-    merchant_logo = order['merchant_details']['branding']['logo_url']
-    product_image = order['items'][0]['product_details']['image']
-    product_name = order['items'][0]['product_details']['name']
+def send_airdrop_notification(event, context):
+    airdrop = event.detail
+    campaign = airdrop['campaign_details']
+    product = airdrop['product_details']
+
+    to_email = airdrop['contact_details']['email']
+    to_name = airdrop['contact_details'].get('first_name')
+    greeting = 'Hi there'
+    if to_name:
+        greeting = 'Hi ' + to_name.capitalize()
+
+    subject_line = campaign['email_settings']['subject_line']
+    preview_text = campaign['email_settings']['preview_text']
+
+    from_name = campaign['email_settings']['from_name']
+    from_image = campaign['email_settings']['from_image']
+
+    product_description = product['description']
+    product_name = product['name']
+    product_image = product['image']
+
+    message = campaign['email_settings']['content']
+    claim_url = airdrop['mint_details']['link']
+
     body = {
-        'template_name': 'order-confirmation-airdrop',
+        'template_name': 'airdrop',
         'template_content': [],
         'message': {
-            'from_email': 'orders@versifylabs.com',
-            'subject': 'Airdrop Received',
+            'from_email': 'claims@versifylabs.com',
+            'from_name': from_name,
+            'subject': subject_line,
             'to': [
                 {
-                    'email': email,
+                    'email': to_email,
                     'type': 'to'
                 }
             ],
             'merge_language': 'handlebars',
             'global_merge_vars': [
                 {
-                    'name': 'MERCHANT_NAME',
-                    'content': merchant_name
+                    'name': 'CLAIM_URL',
+                    'content': claim_url
                 },
                 {
-                    'name': 'MERCHANT_LOGO',
-                    'content': merchant_logo
+                    'name': 'FROM_NAME',
+                    'content': from_name
+                },
+                {
+                    'name': 'FROM_IMAGE',
+                    'content': from_image
+                },
+                {
+                    'name': 'GREETING',
+                    'content': greeting
+                },
+                {
+                    'name': 'MESSAGE',
+                    'content': message
                 },
                 {
                     'name': 'PREVIEW_TEXT',
-                    'content': 'Airdrop Received'
+                    'content': preview_text
+                },
+                {
+                    'name': 'PRODUCT_DESCRIPTION',
+                    'content': product_description
                 },
                 {
                     'name': 'PRODUCT_IMAGE',
@@ -69,10 +99,6 @@ def send_airdrop_confirmation(event, context):
                 {
                     'name': 'PRODUCT_NAME',
                     'content': product_name
-                },
-                {
-                    'name': 'WALLET_URL',
-                    'content': wallet_url
                 }
             ]
         }

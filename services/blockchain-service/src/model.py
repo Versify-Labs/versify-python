@@ -1,14 +1,14 @@
 import os
 import time
 
-from pynamodb.attributes import (BooleanAttribute, ListAttribute, MapAttribute,
+from pynamodb.attributes import (BooleanAttribute, MapAttribute,
                                  NumberAttribute, UnicodeAttribute,
                                  VersionAttribute)
 from pynamodb.indexes import AllProjection, GlobalSecondaryIndex
 from versify.utilities.model import PlatformModel
 
 
-class SignatureByObjectByStatus(GlobalSecondaryIndex):
+class ListSignaturesByStatus(GlobalSecondaryIndex):
     class Meta:
         index_name = 'ByObjectByStatus'
         projection = AllProjection()
@@ -22,14 +22,13 @@ class SignatureModel(PlatformModel):
         table_name = os.environ['TABLE_NAME']
 
     PK = UnicodeAttribute(hash_key=True, null=False)
-    SK = UnicodeAttribute(range_key=True, null=False)
-    id = UnicodeAttribute(null=False)
+    id = UnicodeAttribute(range_key=True, null=False)
     metadata = MapAttribute(null=False, default={})
     object = UnicodeAttribute(null=False, default='signature')
     status = UnicodeAttribute(null=False, default='pending')
     transaction = UnicodeAttribute(null=True)
     version = VersionAttribute()
-    by_object_by_status = SignatureByObjectByStatus()
+    by_object_by_status = ListSignaturesByStatus()
 
 
 class TransactionModel(PlatformModel):
@@ -37,12 +36,11 @@ class TransactionModel(PlatformModel):
         table_name = os.environ['TABLE_NAME']
 
     PK = UnicodeAttribute(hash_key=True, null=False)
-    SK = UnicodeAttribute(range_key=True, null=False)
+    id = UnicodeAttribute(range_key=True, null=False)
     block_hash = UnicodeAttribute(null=True)
     block_num = NumberAttribute(null=True)
     contract_address = UnicodeAttribute(null=True)
     from_address = UnicodeAttribute(null=True)
-    id = UnicodeAttribute(null=False)
     metadata = MapAttribute(null=False, default={})
     object = UnicodeAttribute(null=False, default='transaction')
     signature = UnicodeAttribute(null=True)

@@ -37,11 +37,11 @@ def publish_dynamo_event(event, context):
 def send_slack_message(event, context):
     source = event.source
     detail_type = event.detail_type
-    detail = event.detail
+    # detail = event.detail
     blocks = [
-        {
-            "type": "divider"
-        },
+        # {
+        #     "type": "divider"
+        # },
         {
             "type": "section",
             "text": {
@@ -50,17 +50,17 @@ def send_slack_message(event, context):
             }
         }
     ]
-    if os.environ.get('ENVIRONMENT', 'dev') == 'dev':
-        blocks.append(
-            {
-                "type": "context",
-                "elements": [
-                    {
-                        "type": "mrkdwn",
-                        "text": f"```{json.dumps(detail, indent = 2)}```"
-                    }
-                ]
-            }
-        )
+    # if os.environ.get('ENVIRONMENT', 'dev') == 'dev':
+    #     blocks.append(
+    #         {
+    #             "type": "context",
+    #             "elements": [
+    #                 {
+    #                     "type": "mrkdwn",
+    #                     "text": f"```{json.dumps(detail, indent = 2)}```"
+    #                 }
+    #             ]
+    #         }
+    #     )
     service = EventService()
     return service.post_slack_message(blocks)

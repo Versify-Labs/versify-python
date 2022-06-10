@@ -1,0 +1,477 @@
+org: versify
+app: versify
+service: campaign-service
+
+custom:
+  tableName: CampaignServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: campaign-service
+    POWERTOOLS_TRACE_DISABLED: false
+    TABLE_NAME: ${self:custom.tableName}
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:BatchGetItem
+      Resource:
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}"
+        - "arn:aws:dynamodb:${aws:region}:*:table/${self:custom.tableName}/*"
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource:
+        - "arn:aws:execute-api:us-east-1:*:*/*/GET/*"
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  # Airdrop Endpoints
+  API-ListAirdrops:
+    handler: src.api.handler
+    name: CampaignService-API-ListAirdrops
+    events:
+      - http:
+          method: get
+          path: /campaign/v1/airdrops
+          operationId: ListAirdrops
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-CreateAirdrop:
+    handler: src.api.handler
+    name: CampaignService-API-CreateAirdrop
+    events:
+      - http:
+          method: post
+          path: /campaign/v1/airdrops
+          operationId: CreateAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-DeleteAirdrop:
+    handler: src.api.handler
+    name: CampaignService-API-DeleteAirdrop
+    events:
+      - http:
+          method: delete
+          path: /campaign/v1/airdrops/{airdrop_id}
+          operationId: DeleteAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                airdrop_id: true
+  API-GetAirdrop:
+    handler: src.api.handler
+    name: CampaignService-API-GetAirdrop
+    events:
+      - http:
+          method: get
+          path: /campaign/v1/airdrops/{airdrop_id}
+          operationId: GetAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                airdrop_id: true
+  API-UpdateAirdrop:
+    handler: src.api.handler
+    name: CampaignService-API-UpdateAirdrop
+    events:
+      - http:
+          method: put
+          path: /campaign/v1/airdrops/{airdrop_id}
+          operationId: UpdateAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                airdrop_id: true
+  API-FulfillAirdrop:
+    handler: src.api.handler
+    name: CampaignService-API-FulfillAirdrop
+    events:
+      - http:
+          method: put
+          path: /campaign/v1/airdrops/{airdrop_id}/actions/fulfill
+          operationId: FulfillAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                airdrop_id: true
+            schemas:
+              application/json: ${file(schemas/fulfill_airdrop.json)}
+  # Campaign Endpoints
+  API-ListCampaigns:
+    handler: src.api.handler
+    name: CampaignService-API-ListCampaigns
+    events:
+      - http:
+          method: get
+          path: /campaign/v1/campaigns
+          operationId: ListCampaigns
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  API-CreateCampaign:
+    handler: src.api.handler
+    name: CampaignService-API-CreateCampaign
+    events:
+      - http:
+          method: post
+          path: /campaign/v1/campaigns
+          operationId: CreateCampaign
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_campaign.json)}
+  API-DeleteCampaign:
+    handler: src.api.handler
+    name: CampaignService-API-DeleteCampaign
+    events:
+      - http:
+          method: delete
+          path: /campaign/v1/campaigns/{campaign_id}
+          operationId: DeleteCampaign
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                campaign_id: true
+  API-GetCampaign:
+    handler: src.api.handler
+    name: CampaignService-API-GetCampaign
+    events:
+      - http:
+          method: get
+          path: /campaign/v1/campaigns/{campaign_id}
+          operationId: GetCampaign
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                campaign_id: true
+  API-UpdateCampaign:
+    handler: src.api.handler
+    name: CampaignService-API-UpdateCampaign
+    events:
+      - http:
+          method: put
+          path: /campaign/v1/campaigns/{campaign_id}
+          operationId: UpdateCampaign
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                campaign_id: true
+            schemas:
+              application/json: ${file(schemas/update_campaign.json)}
+  API-SendCampaign:
+    handler: src.api.handler
+    name: CampaignService-API-SendCampaign
+    events:
+      - http:
+          method: put
+          path: /campaign/v1/campaigns/{campaign_id}/actions/send
+          operationId: SendCampaign
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                campaign_id: true
+  API-ListCampaignAirdrops:
+    handler: src.api.handler
+    name: CampaignService-API-ListCampaignAirdrops
+    events:
+      - http:
+          method: get
+          path: /campaign/v1/campaigns/{campaign_id}/airdrops
+          operationId: ListCampaignAirdrops
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                campaign_id: true
+              querystrings:
+                filters: false
+                limit: false
+                page: false
+                query: false
+                starting_after: false
+                starting_before: false
+                sort: false
+                sort_by: false
+                view: false
+  # Subscribers
+  Subscriber-OnCampaignSend:
+    handler: src.subscribers.on_campaign_send
+    name: CampaignService-OnCampaignSend
+    memorySize: 2048
+    timeout: 120
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - campaign.updated
+            detail:
+              status:
+                - sending
+  OnAirdropMinted:
+    handler: src.subscribers.on_airdrop_minted
+    name: CampaignService-OnAirdropMinted
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - transaction.created
+              - transaction.updated
+            detail:
+              status:
+                - complete
+              metadata:
+                type:
+                  - MintToken
+
+resources:
+  Resources:
+    CampaignServiceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: GSI1PK
+            AttributeType: S
+          - AttributeName: GSI1SK
+            AttributeType: N
+          - AttributeName: GSI2PK
+            AttributeType: S
+          - AttributeName: GSI2SK
+            AttributeType: N
+        BillingMode: PROVISIONED
+        GlobalSecondaryIndexes:
+          - IndexName: GSI1
+            KeySchema:
+              - AttributeName: GSI1PK
+                KeyType: HASH
+              - AttributeName: GSI1SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: GSI2
+            KeySchema:
+              - AttributeName: GSI2PK
+                KeyType: HASH
+              - AttributeName: GSI2SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TableName: ${self:custom.tableName}
+    CampaignServiceTableNameParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/campaign/table/name
+        Type: String
+        Value: !Ref CampaignServiceTable
+    CampaignServiceTableArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/campaign/table/arn
+        Type: String
+        Value: !GetAtt CampaignServiceTable.Arn
+    CampaignServiceTableStreamArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/campaign/table/stream/arn
+        Type: String
+        Value: !GetAtt CampaignServiceTable.StreamArn

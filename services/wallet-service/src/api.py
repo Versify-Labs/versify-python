@@ -3,8 +3,8 @@ from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.logging import correlation_paths
 from lambda_decorators import cors_headers
 from versify.utilities.model import response
-
-from .service import WalletService
+from aws_lambda_powertools.event_handler.exceptions import BadRequestError
+from .service import Versify
 
 tracer = Tracer()
 logger = Logger()
@@ -15,53 +15,36 @@ app = APIGatewayRestResolver()
 def sync(app):
     authorizer = app.current_event.request_context.authorizer
     email = authorizer.get('email')
-    service = WalletService(email)
-    service.sync_authorizer(authorizer)
+    if not email:
+        raise BadRequestError('Email is required for all wallet endpoints')
+    service = Versify(email)
     return service
 
 
-@app.get("/wallet/ping")
+@app.post("/wallet/v1/accounts")
 @tracer.capture_method
-def ping():
-    return response('get', True)
-
-
-@app.get("/wallet/me")
-@tracer.capture_method
-def get_wallet():
-    service = sync(app)
-    wallet = service.get_wallet()
-    return response('get', wallet.to_dict())
-
-
-@app.get("/wallet/blockchain_addresses")
-@tracer.capture_method
-def list_blockchain_addresses():
-    service = sync(app)
-    blockchain_addresses = service.list_blockchain_addresses()
-    data = [blockchain_address.to_dict()
-            for blockchain_address in blockchain_addresses]
-    return response('list', data, 'blockchain_address', '/blockchain_addresses', False)
-
-
-@app.get("/backend/wallets/<id>/blockchain_addresses")
-@tracer.capture_method
-def validate_blockchain_addresses(id):
-    service = WalletService(id)
-    blockchain_addresses = service.list_blockchain_addresses()
-    data = [blockchain_address.to_dict()
-            for blockchain_address in blockchain_addresses]
-    return response('list', data, 'blockchain_address', '/blockchain_addresses', False)
-
-
-@app.put("/wallet/blockchain_addresses/<id>")
-@tracer.capture_method
-def update_blockchain_address(id):
-    service = sync(app)
+def create_account():
+    versify = sync(app)
     payload = app.current_event.json_body
-    blockchain_address = service.update_blockchain_address(
-        id, payload['description'])
-    return response('update', blockchain_address.to_dict())
+    account = versify.accounts.create(payload)
+    return response('create', account)
+
+
+@app.get("/wallet/v1/accounts")
+@tracer.capture_method
+def list_accounts():
+    versify = sync(app)
+    accounts = versify.accounts.list()
+    return response('list', accounts, 'account', '/accounts', False)
+
+
+@app.put("/wallet/v1/accounts/<account_id>")
+@tracer.capture_method
+def update_account(account_id):
+    versify = sync(app)
+    payload = app.current_event.json_body
+    account = versify.accounts.update(account_id, payload)
+    return response('update', account.to_dict())
 
 
 @cors_headers

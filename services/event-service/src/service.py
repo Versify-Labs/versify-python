@@ -37,34 +37,38 @@ class EventService:
                 'signature': 'signature',
                 'transaction': 'transaction'
             },
-            'CustomerServiceTable': {
-                'customer': 'customer'
-            },
-            'OrderServiceTable': {
+            'CampaignServiceTable': {
                 'airdrop': 'airdrop',
-                'cart': 'cart',
-                'fulfillment': 'fulfillment',
-                'order': 'order',
-                'payment': 'payment',
+                'campaign': 'campaign'
             },
-            'ProductServiceTable': {
+            'CrmServiceTable': {
+                'contact': 'contact',
+                'activity': 'contact.activity',
+                'note': 'contact.note',
+                'tag': 'tag',
+            },
+            'PimServiceTable': {
                 'collection': 'collection',
                 'product': 'product',
             },
             'WalletServiceTable': {
-                'blockchain_address': 'blockchain_address',
-                'wallet': 'wallet',
+                'account': 'account'
             }
         }
         table_name = table_arn.split('/')[-1]
 
         # Get resource
+        resource = 'resource'
+
         if event_name in ['INSERT', 'MODIFY']:
             object = detail['object']
-        elif event_name == 'REMOVE' and 'Wallet' in table_name and '@' in detail['SK']:
-            object = 'wallet'
-        elif event_name == 'REMOVE' and 'Wallet' in table_name and 'did' in detail['SK']:
-            object = 'blockchain_address'
+        elif event_name == 'REMOVE' and 'Wallet' in table_name and 'did' in detail['id']:
+            object = 'account'
+        elif event_name == 'REMOVE':
+            try:
+                object = detail.get('id').split('_')[0]
+            except:
+                object = 'object'
         else:
             object = 'object'
         try:
@@ -76,7 +80,6 @@ class EventService:
         # Get action
         action = action_map[event_name]
 
-        resource = re.sub(r'(?<!^)(?=[A-Z])', '_', resource).lower()
         return f'{resource}.{action}'
 
     def publish_event(self, detail_type, detail, source='versify', resources=[], timestamp=None):

@@ -71,7 +71,7 @@ def on_collection_created(event, context):
     collection = event.detail
     logger.info(collection)
 
-    token_uri = collection['token_uri']
+    token_uri = collection['contract_details']['token_uri']
 
     response = tatum.deploy_contract(token_uri)
     logger.info(response)
@@ -101,42 +101,41 @@ def on_collection_created(event, context):
 @event_source(data_class=EventBridgeEvent)
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
-def on_fulfillment_created(event, context):
+def on_airdrop_pending(event, context):
     """Mint a token to the collections contract"""
-    fulfillment = event.detail
-    logger.info(fulfillment)
+    airdrop = event.detail
+    logger.info(airdrop)
 
-    to = fulfillment['blockchain_address']
-    items = fulfillment['items']
+    product = airdrop['product_details']
+    contract_address = product['collection_details']['contract']
+    token_id = product['token']
+    to_address = airdrop['mint_details']['address']
+    to_email = airdrop['mint_details'].get('email', '')
 
-    for item in items:
-        product = item['product_details']
-        contract = product['contract_address']
-        token = product['token_id']
+    response = tatum.mint_token(contract_address, token_id, to_address)
+    logger.info(response)
 
-        response = tatum.mint_token(contract, token, to)
-        logger.info(response)
+    signature_id = response.get('signatureId')
+    if not signature_id:
+        logger.error(response)
+        return False
 
-        signature_id = response.get('signatureId')
-        if not signature_id:
-            logger.error(response)
-            return False
-
-        try:
-            payload = {
-                'metadata': {
-                    'type': 'MintToken',
-                    'collection': product['collection'],
-                    'fulfillment': fulfillment['id'],
-                    'order': fulfillment['order'],
-                    'organization': product['organization'],
-                    'product': product['id'],
-                }
+    try:
+        payload = {
+            'metadata': {
+                'type': 'MintToken',
+                'airdrop': airdrop['id'],
+                'campaign': airdrop['campaign'],
+                'collection': product['collection'],
+                'organization': product['organization'],
+                'product': product['id'],
+                'to_address': to_address,
+                'to_email': to_email
             }
-            sig = versify.signatures.create(signature_id, payload)
-            logger.info(sig)
-        except:
-            logger.error('Error creating signature')
-            continue
+        }
+        sig = versify.signatures.create(signature_id, payload)
+        logger.info(sig)
+    except:
+        logger.error('Error creating signature')
 
     return True
