@@ -96,6 +96,18 @@ functions:
                 X-Organization: true
               paths:
                 organization_id: true
+      - http:
+          method: get
+          path: /auth/v1/backend/organizations/{organization_id}
+          operationId: GetOrganization
+          authorizer:
+            type: aws_iam
+          request:
+            parameters:
+              headers:
+                X-Organization: true
+              paths:
+                organization_id: true
   API-CreateOrganizationKey:
     handler: src.api.handler
     name: AuthService-API-CreateOrganizationKey

@@ -50,6 +50,7 @@ class Airdrop(PlatformModel):
     mint_details = MapAttribute(null=False, default=True)
     object = UnicodeAttribute(null=False, default='airdrop')
     organization = UnicodeAttribute(null=False)
+    organization_details = MapAttribute(null=False, default={})
     product = UnicodeAttribute(null=False)
     product_details = MapAttribute(null=False, default={})
     # Defaults to open, changes to pending -> closed
@@ -91,6 +92,7 @@ class Campaign(PlatformModel):
     name = UnicodeAttribute(null=False, default="")
     object = UnicodeAttribute(null=False, default='campaign')
     organization = UnicodeAttribute(null=False)
+    organization_details = MapAttribute(null=False, default={})
     product = UnicodeAttribute(null=False)
     product_details = MapAttribute(null=False, default={})
     # recipients.count: Count of the recipients of the associated segment options. Saved on create/update

@@ -18,16 +18,6 @@ SECRET = parameters.get_secret(os.environ['SECRET_NAME'])
 SECRET = json.loads(SECRET)
 AUTH0_WEBHOOK_SECRET = SECRET["AUTH0_WEBHOOK_SECRET"]
 
-# @app.post("/dashboard/events")
-# @tracer.capture_method
-# def create_event():
-#     service = EventService()
-#     payload = app.current_event.json_body
-#     detail_type = payload['detail_type']
-#     detail = payload['detail']
-#     source = payload['source']
-#     return service.publish_event(detail_type, detail, source)
-
 
 @app.post("/webhook/alchemy")
 @tracer.capture_method
@@ -53,59 +43,6 @@ def auth0_webhook():
     logger.info(payload)
     logs = payload.get('logs', [])
     return service.process_auth_events(logs)
-
-# @app.post("/webhook/contentful")
-# @tracer.capture_method
-# def contentful_webhook():
-#     service = EventService()
-#     topic = app.current_event.get_header_value('X-Contentful-Topic')
-#     _, resource, action = topic.split('.')
-#     detail_type = f'{resource}.{action}'.lower()
-#     detail = app.current_event.json_body
-#     source = 'contentful'
-#     return service.publish_event(detail_type, detail, source)
-
-
-# @app.post("/webhook/stripe")
-# @tracer.capture_method
-# def stripe_webhook():
-#     service = EventService()
-#     signature = app.current_event.get_header_value("Stripe-Signature")
-#     payload = app.current_event.raw_event['body']
-#     wh_secret = SECRET['STRIPE_PLATFORM_WEBHOOK_SECRET']
-#     detail_type = ''
-#     detail = {}
-#     source = 'stripe'
-#     try:
-#         event = stripe.Webhook.construct_event(payload, signature, wh_secret)
-#         detail_type = event['type']
-#         detail = event['data']['object']
-#     except ValueError as e:
-#         raise e
-#     except stripe.error.SignatureVerificationError as e:
-#         raise e
-#     return service.publish_event(detail_type, detail, source)
-
-
-# @app.post("/webhook/stripe_connect")
-# @tracer.capture_method
-# def stripe_connect_webhook():
-#     service = EventService()
-#     signature = app.current_event.get_header_value("Stripe-Signature")
-#     payload = app.current_event.raw_event['body']
-#     wh_secret = SECRET['STRIPE_CONNECT_WEBHOOK_SECRET']
-#     detail_type = ''
-#     detail = {}
-#     source = 'stripe'
-#     try:
-#         event = stripe.Webhook.construct_event(payload, signature, wh_secret)
-#         detail_type = event['type']
-#         detail = event['data']['object']
-#     except ValueError as e:
-#         raise e
-#     except stripe.error.SignatureVerificationError as e:
-#         raise e
-#     return service.publish_event(detail_type, detail, source)
 
 
 @cors_headers

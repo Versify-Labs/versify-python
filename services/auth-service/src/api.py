@@ -12,17 +12,9 @@ logger = Logger()
 app = APIGatewayRestResolver()
 auth0 = init_auth0()
 
-
-@app.get("/auth/v1/tests/1")
-@tracer.capture_method
-def test1():
-    return 'Success from test 1'
-
-
-@app.get("/auth/v1/tests/2")
-@tracer.capture_method
-def test2():
-    return 'Success from test 2'
+"""
+Ping Endpoints
+"""
 
 
 @app.get("/auth/v1/ping")
@@ -35,6 +27,11 @@ def ping():
         'name': org.get('name', ''),
         'display_name': org.get('display_name', ''),
     }
+
+
+"""
+Organization Endpoints
+"""
 
 
 @app.get("/auth/v1/organizations/<organization_id>")
@@ -99,6 +96,11 @@ def list_organization_member_roles(organization_id, user_id):
     return auth0.organizations.all_organization_member_roles(organization_id, user_id)
 
 
+"""
+User Endpoints
+"""
+
+
 @app.get("/auth/v1/users/<user_id>")
 @tracer.capture_method
 def get_user(user_id):
@@ -119,6 +121,19 @@ def update_user(user_id):
 @tracer.capture_method
 def list_user_organizations(user_id):
     return auth0.users.list_organizations(user_id)
+
+
+"""
+Backend Endpoints
+"""
+
+
+@app.get("/auth/v1/backend/organizations/<organization_id>")
+@tracer.capture_method
+def get_organization(organization_id):
+    org = auth0.organizations.get_organization(organization_id)
+    logger.info(org)
+    return org
 
 
 @cors_headers()

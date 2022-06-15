@@ -5,6 +5,10 @@ services:
     path: auth-service
     dependsOn:
       - platform-service
+  billing-service:
+    path: billing-service
+    dependsOn:
+      - platform-service
   blockchain-service:
     path: blockchain-service
     dependsOn:
@@ -43,6 +47,7 @@ services:
     dependsOn:
       - platform-service
       - auth-service
+      - billing-service
       - blockchain-service
       - crm-service
       - notification-service

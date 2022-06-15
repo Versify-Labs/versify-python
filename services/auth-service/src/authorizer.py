@@ -97,14 +97,24 @@ def create_principal_id(api_key=None, token=None, organization=None):
 def create_auth_context(api_key=None, token=None, organization=None):
     context = {}
     namespace = 'https://versifylabs.com'
-    if organization:
-        context['organization'] = organization
+
     if token:
         claims = jwt.get_unverified_claims(token)
         logger.info(claims)
-        context['email'] = claims.get(f'{namespace}/email')
-        context['roles'] = ','.join(claims.get(f'{namespace}/roles') or [])
-        context['user'] = claims.get('sub')
+
+        email = claims.get(f'{namespace}/email')
+        roles = ','.join(claims.get(f'{namespace}/roles') or [])
+        user = claims.get('sub')
+        organization = claims.get(f'{namespace}/organization', {})
+        organization_id = organization.get('id')
+        stripe_customer = organization['metadata'].get('stripe_customer')
+
+        context['email'] = email
+        context['roles'] = roles
+        context['user'] = user
+        context['organization'] = organization_id
+        context['stripe_customer'] = stripe_customer
+
     return context
 
 
@@ -121,8 +131,6 @@ def get_requested_scope(event):
     requested_path = event['path']
     requested_path_segments = requested_path.split('/')
     resource = requested_path_segments[3]
-    if '_' in resource:
-        resource = resource.split('_')[0] + 's'
     return f'{access}:{resource}'
 
 

@@ -1,0 +1,248 @@
+org: versify
+app: versify
+service: billing-service
+
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  eventBusName: versify
+  tableName: BillingServiceTable
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId: ${ssm:/versify/services/api/id}
+    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    EVENT_BUS_NAME: ${self:custom.eventBusName}
+    LOG_LEVEL: INFO
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: billing-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    TABLE_NAME: ${self:custom.tableName}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - events:PutEvents
+      Resource:
+        - arn:aws:events:${aws:region}:*:event-bus/${self:custom.eventBusName}
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  layers:
+    - ${ssm:/versify/services/versify/layer/arn}
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  API-GetConfig:
+    handler: src.api.handler
+    name: BillingService-API-GetConfig
+    events:
+      - http:
+          method: get
+          path: /billing/v1/config
+          operationId: GetConfig
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-GetCustomer:
+    handler: src.api.handler
+    name: BillingService-API-GetCustomer
+    events:
+      - http:
+          method: get
+          path: /billing/v1/customer
+          operationId: GetCustomer
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-ListInvoices:
+    handler: src.api.handler
+    name: BillingService-API-ListInvoices
+    events:
+      - http:
+          method: get
+          path: /billing/v1/invoices
+          operationId: ListInvoices
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-CreatePaymentMethod:
+    handler: src.api.handler
+    name: BillingService-API-CreatePaymentMethod
+    events:
+      - http:
+          method: post
+          path: /billing/v1/payment_methods
+          operationId: CreatePaymentMethod
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_payment_method.json)}
+  API-ListSubscriptions:
+    handler: src.api.handler
+    name: BillingService-API-ListSubscriptions
+    events:
+      - http:
+          method: get
+          path: /billing/v1/subscriptions
+          operationId: ListSubscriptions
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+  API-CreateSubscription:
+    handler: src.api.handler
+    name: BillingService-API-CreateSubscription
+    events:
+      - http:
+          method: post
+          path: /billing/v1/subscriptions
+          operationId: CreateSubscription
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+            schemas:
+              application/json: ${file(schemas/create_subscription.json)}
+  API-UpdateSubscription:
+    handler: src.api.handler
+    name: BillingService-API-UpdateSubscription
+    events:
+      - http:
+          method: put
+          path: /billing/v1/subscriptions/{subscription_id}
+          operationId: UpdateSubscription
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                subscription_id: true
+            schemas:
+              application/json: ${file(schemas/update_subscription.json)}
+  API-GetSubscriptionUsage:
+    handler: src.api.handler
+    name: BillingService-API-GetSubscriptionUsage
+    events:
+      - http:
+          method: get
+          path: /billing/v1/subscriptions/{subscription_id}/usage
+          operationId: GetSubscriptionUsage
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                subscription_id: true
+  API-Webhook:
+    handler: src.api.handler
+    name: BillingService-API-Webhook
+    events:
+      - http:
+          method: post
+          path: /billing/v1/webhook
+  # Subscribers
+  OnAirdropCreated:
+    handler: src.subscribers.on_airdrop_created
+    name: BillingService-OnAirdropCreated
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/event-bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - airdrop.created

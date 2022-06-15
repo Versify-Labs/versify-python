@@ -59,9 +59,6 @@ def call_internal_api(path: str, body: dict = {}, organization: str = None, para
         "body": response.json()
     })
     result = response.json()
-    logger.info({
-        'result': result
-    })
     return result
 
 
@@ -85,7 +82,7 @@ def list_contacts(org_id, filters):
     return results
 
 
-def get_merchant(org_id):
+def get_organization(org_id):
     path = f'/auth/{VERSIFY_API_VERSION}/backend/organizations/' + org_id
     return call_internal_api(path, {}, org_id)
 
@@ -236,6 +233,8 @@ class Airdrops:
                 'campaign_details': campaign.to_dict(),
                 'contact': contact['id'],
                 'contact_details': contact,
+                'organization': campaign.organization,
+                'organization_details': campaign.organization_details,
                 'product': campaign.product,
                 'product_details': campaign.product_details,
             }
@@ -357,7 +356,10 @@ class Campaigns:
         body['date_created'] = timestamp
         body['date_updated'] = timestamp
         body['object'] = 'campaign'
+
+        # Inject organization data
         body['organization'] = org_id
+        body['organization_details'] = get_organization(org_id)
 
         # Inject product data
         body['product_details'] = get_product(org_id, body['product'])

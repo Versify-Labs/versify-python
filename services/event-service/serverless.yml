@@ -58,29 +58,6 @@ provider:
     lambda: true
 
 functions:
-  #   API-PublishEvent:
-  #     handler: src.api.handler
-  #     name: EventService-API-PublishEvent
-  #     events:
-  #       - http:
-  #           method: post
-  #           path: /dashboard/events
-  #           operationId: PublishEvent
-  #           authorizer:
-  #             type: COGNITO_USER_POOLS
-  #             authorizerId: ${ssm:/versify/platform/api/dashboard/authorizer/id}
-  #           cors:
-  #             origin: "*"
-  #             headers:
-  #               - Authorization
-  #               - Content-Type
-  #               - Organization
-  #               - organization
-  #               - X-Amz-Date
-  #               - X-Api-Key
-  #               - X-Amz-Security-Token
-  #               - X-Amz-User-Agent
-  #             allowCredentials: false
   API-AlchemyWebhook:
     handler: src.api.handler
     name: EventService-API-AlchemyWebhook
@@ -97,30 +74,6 @@ functions:
       - http:
           method: post
           path: /webhook/auth0
-  #   API-ContentfulWebhook:
-  #     handler: src.api.handler
-  #     name: EventService-API-ContentfulWebhook
-  #     runtime: python3.9
-  #     events:
-  #       - http:
-  #           method: post
-  #           path: /webhook/contentful
-  # API-StripeWebhook:
-  #   handler: src.api.handler
-  #   name: EventService-API-StripeWebhook
-  #   runtime: python3.9
-  #   events:
-  #     - http:
-  #         method: post
-  #         path: /webhook/stripe
-  #   API-StripeConnectWebhook:
-  #     handler: src.api.handler
-  #     name: EventService-API-StripeConnectWebhook
-  #     runtime: python3.9
-  #     events:
-  #       - http:
-  #           method: post
-  #           path: /webhook/stripe_connect
   PublishDynamoEvent:
     handler: src.subscribers.publish_dynamo_event
     name: EventService-PublishDynamoEvent

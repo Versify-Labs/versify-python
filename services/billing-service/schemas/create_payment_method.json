@@ -1,0 +1,13 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreatePaymentMethod",
+  "required": ["payment_method"],
+  "properties": {
+    "payment_method": {
+      "description": "TBD",
+      "type": "string"
+    }
+  }
+}
