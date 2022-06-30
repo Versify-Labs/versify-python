@@ -1,0 +1,25 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "UpdateProduct",
+  "properties": {
+    "chain": {
+      "description": "The product’s chain",
+      "type": "string"
+    },
+    "contract_address": {
+      "description": "The product’s contract_address",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
+      "type": "object"
+    },
+    "token_id": {
+      "description": "The product’s token_id",
+      "type": "string"
+    }
+  }
+}

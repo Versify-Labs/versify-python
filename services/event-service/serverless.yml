@@ -2,180 +2,939 @@ org: versify
 app: versify
 service: event-service
 
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
 custom:
-  eventBusName: versify
-  tableName: EventServiceTable
+  auth0LogsTrigger: ${ssm:/versify/services/auth0/logs/trigger/id}
+  mongoAirdropsTrigger: ${ssm:/versify/services/mongo/airdrops/trigger/id}
+  mongoCollectionsTrigger: ${ssm:/versify/services/mongo/collections/trigger/id}
+  mongoContactsTrigger: ${ssm:/versify/services/mongo/contacts/trigger/id}
+  mongoMintLinksTrigger: ${ssm:/versify/services/mongo/mintLinks/trigger/id}
+  mongoMintsTrigger: ${ssm:/versify/services/mongo/mints/trigger/id}
+  mongoNotesTrigger: ${ssm:/versify/services/mongo/notes/trigger/id}
+  mongoEventsTrigger: ${ssm:/versify/services/mongo/events/trigger/id}
+  mongoProductsTrigger: ${ssm:/versify/services/mongo/products/trigger/id}
 
 provider:
   name: aws
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
   apiGateway:
-    restApiId: ${ssm:/versify/services/api/id}
-    restApiRootResourceId: ${ssm:/versify/services/api/root/resource/id}
-    restApiResources:
-      /webhook: ${ssm:/versify/services/webhook/api/resource/id}
+    restApiId:
+      "Fn::ImportValue": VersifyApiId
+    restApiRootResourceId:
+      "Fn::ImportValue": VersifyApiRootResourceId
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
-    EVENT_BUS_NAME: ${self:custom.eventBusName}
     LOG_LEVEL: INFO
     POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
     POWERTOOLS_LOGGER_LOG_EVENT: true
     POWERTOOLS_METRICS_NAMESPACE: versify
     POWERTOOLS_SERVICE_NAME: event-service
     POWERTOOLS_TRACE_DISABLED: false
-    TABLE_NAME: ${self:custom.tableName}
     SECRET_NAME: /versify/platform/secret
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - events:PutEvents
+        - events:*
       Resource:
-        - arn:aws:events:${aws:region}:*:event-bus/${self:custom.eventBusName}
+        - arn:aws:events:${aws:region}:*:event-bus/*
     - Effect: Allow
       Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:DescribeTable
-        - dynamodb:BatchGetItem
+        - execute-api:Invoke
       Resource:
-        - "arn:aws:dynamodb:${aws:region}:*:table/*"
-        - "arn:aws:dynamodb:${aws:region}:*:table/*/*"
+        - "arn:aws:execute-api:us-east-1:*:*/*/*/*"
     - Effect: Allow
       Action:
         - secretsmanager:GetSecretValue
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
   layers:
-    - ${ssm:/versify/services/versify/layer/arn}
     - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
   runtime: python3.9
+  timeout: 120
   tracing:
     lambda: true
 
 functions:
-  API-AlchemyWebhook:
-    handler: src.api.handler
-    name: EventService-API-AlchemyWebhook
+  # Connectors (Consume events from partners and publish to PartnerBus)
+  Auth0PartnerConnector:
+    handler: src.handler.auth0_partner_connector
+    name: EventService-Auth0PartnerConnector
+    description: Consume events from Auth0 and publish to PartnerBus
+    events:
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
+          pattern:
+            account:
+              - ${aws:accountId}
+  MongoPartnerConnector:
+    handler: src.handler.mongo_partner_connector
+    name: EventService-MongoPartnerConnector
+    description: Consume events from Mongo and publish to PartnerBus
+    events:
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAirdropsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoCollectionsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoContactsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoEventsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintLinksTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoNotesTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
+  # Webhook Connectors
+  AlchemyPartnerConnector:
+    handler: src.handler.api
+    name: EventService-AlchemyPartnerConnector
+    description: Consume events from Alchemy and publish to PartnerBus
     runtime: python3.9
     events:
       - http:
           method: post
           path: /webhook/alchemy
-  API-Auth0Webhook:
-    handler: src.api.handler
-    name: EventService-API-Auth0Webhook
+  StripePartnerConnector:
+    handler: src.handler.api
+    name: EventService-StripePartnerConnector
+    description: Consume events from Stripe and publish to PartnerBus
     runtime: python3.9
     events:
       - http:
           method: post
-          path: /webhook/auth0
-  PublishDynamoEvent:
-    handler: src.subscribers.publish_dynamo_event
-    name: EventService-PublishDynamoEvent
+          path: /webhook/stripe
+  TatumPartnerConnector:
+    handler: src.handler.api
+    name: EventService-TatumPartnerConnector
+    description: Consume events from Tatum and publish to PartnerBus
+    runtime: python3.9
     events:
-      - stream:
-          arn: ${ssm:/versify/services/blockchain/table/stream/arn}
-          enabled: true
-          type: dynamodb
-      - stream:
-          arn: ${ssm:/versify/services/campaign/table/stream/arn}
-          enabled: true
-          type: dynamodb
-      - stream:
-          arn: ${ssm:/versify/services/crm/table/stream/arn}
-          enabled: true
-          type: dynamodb
-      - stream:
-          arn: ${ssm:/versify/services/pim/table/stream/arn}
-          enabled: true
-          type: dynamodb
-      - stream:
-          arn: ${ssm:/versify/services/wallet/table/stream/arn}
-          enabled: true
-          type: dynamodb
-  SendSlackMessage:
-    handler: src.subscribers.send_slack_message
-    name: EventService-SendSlackMessage
+      - http:
+          method: post
+          path: /webhook/tatum
+  # Versify Connectors
+  PartnerVersifyConnector:
+    handler: src.handler.partner_versify_connector
+    name: EventService-PartnerVersifyConnector
+    description: Consume events from PartnerBus and publish to VersifyBus
     events:
+      # MongoAirdropCreated
       - eventBridge:
-          eventBus: ${ssm:/versify/services/event-bus/arn}
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
           pattern:
             source:
-              - auth0
-              - alchemy
-              - contentful
-              - stripe
-              - stripe.connect
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - airdrop
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.created"}'
+      # MongoAirdropDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - airdrop
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.deleted"}'
+      # MongoAirdropUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - airdrop
+              updateDescription:
+                updatedFields:
+                  status:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.updated"}'
+      # MongoAirdropSent
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - airdrop
+              updateDescription:
+                updatedFields:
+                  status:
+                    - sending
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.sent"}'
+      # MongoCollectionCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - collection
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.created"}'
+      # MongoCollectionDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - collection
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.deleted"}'
+      # MongoCollectionUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - collection
+              updateDescription:
+                updatedFields:
+                  active:
+                    - { "exists": false }
+                  tags:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.updated"}'
+      # MongoCollectionActivated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - collection
+              updateDescription:
+                updatedFields:
+                  active:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.activated"}'
+      # MongoCollectionArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - collection
+              updateDescription:
+                updatedFields:
+                  active:
+                    - false
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.archived"}'
+      # MongoContactCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - contact
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.created"}'
+      # MongoContactDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - contact
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.deleted"}'
+      # MongoContactUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - contact
+              updateDescription:
+                updatedFields:
+                  active:
+                    - { "exists": false }
+                  tags:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.updated"}'
+      # MongoContactActivated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - contact
+              updateDescription:
+                updatedFields:
+                  active:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.activated"}'
+      # MongoContactArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - contact
+              updateDescription:
+                updatedFields:
+                  active:
+                    - false
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.archived"}'
+      # MongoContactTagsUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - contact
+              updateDescription:
+                updatedFields:
+                  tags:
+                    - { "exists": true }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "contact.updated"}'
+      # MongoMintLinkCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - mint_link
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.created"}'
+      # MongoMintLinkDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - mint_link
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.deleted"}'
+      # MongoMintLinkUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint_link
+              updateDescription:
+                updatedFields:
+                  active:
+                    - { "exists": false }
+                  tags:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.updated"}'
+      # MongoMintLinkActivated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint_link
+              updateDescription:
+                updatedFields:
+                  active:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.activated"}'
+      # MongoMintLinkArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint_link
+              updateDescription:
+                updatedFields:
+                  active:
+                    - false
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.archived"}'
+      # MongoMintCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - mint
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint.created"}'
+      # MongoMintDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - mint
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint.deleted"}'
+      # MongoMintUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint.updated"}'
+      # MongoMintFulfilled
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint
+              updateDescription:
+                updatedFields:
+                  wallet_address:
+                    - { "exists": true }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint.fulfilled"}'
+      # MongoNoteCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - note
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "note.created"}'
+      # MongoNoteDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - note
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "note.deleted"}'
+      # MongoNoteUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - note
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "note.updated"}'
+      # MongoProductCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - product
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "product.created"}'
+      # MongoProductDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - product
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "product.deleted"}'
+      # MongoProductUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - product
+              updateDescription:
+                updatedFields:
+                  active:
+                    - { "exists": false }
+                  tags:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "product.updated"}'
+      # MongoProductActivated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - product
+              updateDescription:
+                updatedFields:
+                  active:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "product.activated"}'
+      # MongoProductArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - product
+              updateDescription:
+                updatedFields:
+                  active:
+                    - false
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "product.archived"}'
+  # Processors (Consume events from PartnerBus and call necessary Versify APIs)
+  AirdropProcessor:
+    handler: src.handler.airdrop_processor
+    name: EventService-AirdropProcessor
+    description: When a new airdrop is created, mint tokens and notify contacts
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            source:
               - versify
-# resources:
-#   Resources:
-# EventServiceTable:
-#   Type: AWS::DynamoDB::Table
-#   Properties:
-#     AttributeDefinitions:
-#       - AttributeName: PK # email
-#         AttributeType: S
-#       - AttributeName: SK # handle, account_id, etc
-#         AttributeType: S
-#       - AttributeName: object_type
-#         AttributeType: S
-#       - AttributeName: object_id
-#         AttributeType: S
-#     BillingMode: PROVISIONED
-#     GlobalSecondaryIndexes:
-#       - IndexName: byObjectType
-#         KeySchema:
-#           - AttributeName: PK # email
-#             KeyType: HASH
-#           - AttributeName: object_type # account, product, customer, etc
-#             KeyType: RANGE
-#         Projection:
-#           ProjectionType: ALL
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
-#       - IndexName: byObjectId
-#         KeySchema:
-#           - AttributeName: PK # email
-#             KeyType: HASH
-#           - AttributeName: object_id # product_123, customer_123, etc
-#             KeyType: RANGE
-#         Projection:
-#           ProjectionType: ALL
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
-#     KeySchema:
-#       - AttributeName: PK
-#         KeyType: HASH
-#       - AttributeName: SK
-#         KeyType: RANGE
-#     ProvisionedThroughput:
-#       ReadCapacityUnits: 1
-#       WriteCapacityUnits: 1
-#     StreamSpecification:
-#       StreamViewType: NEW_IMAGE
-#     TableName: ${self:custom.tableName}
-# EventServiceTableNameParameter:
-#   Type: AWS::SSM::Parameter
-#   Properties:
-#     Name: !Sub /versify/services/event/table/name
-#     Type: String
-#     Value: !Ref EventServiceTable
-# EventServiceTableArnParameter:
-#   Type: AWS::SSM::Parameter
-#   Properties:
-#     Name: !Sub /versify/services/event/table/arn
-#     Type: String
-#     Value: !GetAtt EventServiceTable.Arn
-# EventServiceTableStreamArnParameter:
-#   Type: AWS::SSM::Parameter
-#   Properties:
-#     Name: !Sub /versify/services/event/table/stream/arn
-#     Type: String
-#     Value: !GetAtt EventServiceTable.StreamArn
+            detail-type:
+              - airdrop.sent
+  UsageProcessor:
+    handler: src.handler.usage_processor
+    name: EventService-UsageProcessor
+    description: When a new collection or mint is created, record the usage in stripe billing
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - collection.created
+              - mint.created
+  # Subscribers (Consume events from VersifyBus and publish elsewhere)
+  EventSubscriber:
+    handler: src.handler.event_subscriber
+    name: EventService-EventSubscriber
+    description: Consume events and publish to EventAPI
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            source:
+              - versify
+  SlackSubscriber:
+    handler: src.handler.slack_subscriber
+    name: EventService-SlackSubscriber
+    description: Consume events and publish to Slack
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            account:
+              - "798774640116"
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            account:
+              - "798774640116"
+  # ZapierSubscriber:
+  #   handler: src.handler.zapier_subscriber
+  #   name: EventService-ZapierSubscriber
+  #   description: Consume events from VersifyBus and publish to Zapier
+  #   events:
+  #     - eventBridge:
+  #         eventBus: ${ssm:/versify/services/versify/bus/arn}
+  #         pattern:
+  #           source:
+  #             - versify
+
+resources:
+  Resources:
+    # Versify Bus
+    VersifyBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: !Sub "versify"
+    VersifyBusArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/versify/bus/arn
+        Type: String
+        Value: !GetAtt VersifyBus.Arn
+    # Partner Bus
+    PartnerBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: "partner"
+    PartnerBusArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/partner/bus/arn
+        Type: String
+        Value: !GetAtt PartnerBus.Arn
+    # Auth0 Buses
+    Auth0LogsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
+        Name: "aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
+    # Mongo Buses
+    MongoAirdropsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAirdropsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAirdropsTrigger}"
+    MongoCollectionsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoCollectionsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoCollectionsTrigger}"
+    MongoContactsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoContactsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoContactsTrigger}"
+    MongoEventsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoEventsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoEventsTrigger}"
+    MongoMintLinksBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintLinksTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintLinksTrigger}"
+    MongoMintsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoMintsTrigger}"
+    MongoNotesBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoNotesTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoNotesTrigger}"
+    MongoProductsBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
+    # Rules
+    # CreateCollectionUsageRecordRule:
+    #   Type: AWS::Events::Rule
+    #   Properties:
+    #     Description: When an organization created a collection, create a usage record
+    #     EventBusName: versify
+    #     EventPattern:
+    #       source:
+    #         - versify
+    #       detail:
+    #         - collection.created
+    #     Name: CreateCollectionUsageRecordRule
+    #     RoleArn: String
+    #     State: ENABLED
+    #     Targets:
+    #       - Arn: >-
+    #           arn:aws:events:us-east-1:123456789012:event-bus/CrossRegionDestinationBus
+    #         Id: " CrossRegionDestinationBus"
+    #         RoleArn: !GetAtt
+    #           - EventBridgeIAMrole
+    # OnMintCreated-CreateUsageRecord
+    # OnMintSendEmail
+    # DLQ
+    EventDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: EventDeadLetterQueue
+    EventDeadLetterQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Sid: OwnerStatement
+              Action:
+                - "sqs:*"
+              Effect: Allow
+              Resource: !GetAtt EventDeadLetterQueue.Arn
+              Principal:
+                AWS:
+                  - !Sub ${AWS::AccountId}
+            - Sid: EventRuleDlqStatement
+              Action:
+                - sqs:SendMessage
+              Effect: Allow
+              Resource: !GetAtt EventDeadLetterQueue.Arn
+              Principal:
+                Service: events.amazonaws.com
+              Condition:
+                ArnEquals:
+                  "aws:SourceArn": "*"
+        Queues:
+          - !Ref EventDeadLetterQueue

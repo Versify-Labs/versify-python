@@ -1,0 +1,8 @@
+auth0-python
+dnspython
+fastapi
+ksuid
+lambda-decorators
+pydantic
+pymongo[aws] == 4.1
+python-jose

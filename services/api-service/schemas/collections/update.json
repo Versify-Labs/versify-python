@@ -1,0 +1,41 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "UpdateCollection",
+  "properties": {
+    "contract_address": {
+      "description": "The contract address of the collection",
+      "type": "string"
+    },
+    "description": {
+      "description": "Explanation of what the collection should be used for",
+      "type": "string"
+    },
+    "image": {
+      "description": "The collections main image",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
+      "type": "object"
+    },
+    "name": {
+      "description": "The collections name. Contract symbol will be created based on this.",
+      "type": "string"
+    },
+    "signature": {
+      "description": "The signature of the collection",
+      "type": "string"
+    },
+    "status": {
+      "description": "The status of the collection",
+      "type": "string"
+    },
+    "transaction": {
+      "description": "The transaction of the collection",
+      "type": "string"
+    }
+  }
+}

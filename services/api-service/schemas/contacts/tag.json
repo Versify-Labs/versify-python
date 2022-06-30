@@ -1,0 +1,13 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "TagContact",
+  "required": ["tags"],
+  "properties": {
+    "tags": {
+      "description": "List of tags to add to the contact",
+      "type": "array"
+    }
+  }
+}

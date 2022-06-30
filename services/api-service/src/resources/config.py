@@ -1,0 +1,127 @@
+from ..models import (Airdrop, Collection, Contact, Event, Mint, MintLink,
+                      Note, Notification, Product, Wallet, Webhook)
+
+
+class AirdropConfig:
+    collection = 'Airdrops'
+    db = 'Campaigns'
+    expandables = ['product']
+    model = Airdrop
+    object = 'airdrop'
+    prefix = 'air'
+    search_index = None
+
+
+class CollectionConfig:
+    collection = 'Collections'
+    db = 'Products'
+    expandables = []
+    model = Collection
+    object = 'product'
+    prefix = 'coll'
+    search_index = None
+
+
+class ContactConfig:
+    collection = 'Contacts'
+    db = 'Contacts'
+    expandables = []
+    model = Contact
+    object = 'contact'
+    prefix = 'cont'
+    search_index = 'ContactsSearchIndex'
+
+
+class EventConfig:
+    collection = 'Events'
+    db = 'Events'
+    expandables = []
+    model = Event
+    object = 'event'
+    prefix = 'evt'
+    search_index = None
+
+
+class MintLinkConfig:
+    collection = 'MintLinks'
+    db = 'Campaigns'
+    expandables = ['product']
+    model = MintLink
+    object = 'mint_link'
+    prefix = 'mlink'
+    search_index = None
+
+
+class MintConfig:
+    collection = 'Mints'
+    db = 'Campaigns'
+    expandables = ['collection', 'contact', 'product']
+    model = Mint
+    object = 'mint'
+    prefix = 'mint'
+    search_index = None
+
+
+class NoteConfig:
+    collection = 'Notes'
+    db = 'Notes'
+    expandables = []
+    model = Note
+    object = 'note'
+    prefix = 'note'
+    search_index = None
+
+
+class NotificationConfig:
+    collection = 'Notifications'
+    db = 'Notifications'
+    expandables = []
+    model = Notification
+    object = 'notification'
+    prefix = 'noti'
+    search_index = None
+
+
+class ProductConfig:
+    collection = 'Products'
+    db = 'Products'
+    expandables = ['collection']
+    model = Product
+    object = 'product'
+    prefix = 'prod'
+    search_index = 'ProductsSearchIndex'
+
+
+class WalletConfig:
+    collection = 'Wallets'
+    db = 'Wallet'
+    expandables = []
+    model = Wallet
+    object = 'wallet'
+    prefix = 'wall'
+    search_index = None
+
+
+class WebhookConfig:
+    collection = 'Webhooks'
+    db = 'Webhooks'
+    expandables = []
+    model = Webhook
+    object = 'webhook'
+    prefix = 'wh'
+    search_index = None
+
+
+config = {
+    'airdrop': AirdropConfig,
+    'collection': CollectionConfig,
+    'contact': ContactConfig,
+    'event': EventConfig,
+    'mint': MintConfig,
+    'mint_link': MintLinkConfig,
+    'note': NoteConfig,
+    'notification': NotificationConfig,
+    'product': ProductConfig,
+    'wallet': WalletConfig,
+    'webhook': WebhookConfig
+}

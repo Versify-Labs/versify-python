@@ -1,0 +1,1403 @@
+org: versify
+app: versify
+service: api-service
+
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiGateway:
+    restApiId:
+      "Fn::ImportValue": VersifyApiId
+    restApiRootResourceId:
+      "Fn::ImportValue": VersifyApiRootResourceId
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    MONGO_DB_URL: versifydevelopmentclust.y5nxv.mongodb.net
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: api-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource:
+        - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+  layers:
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+  runtime: python3.9
+  tracing:
+    lambda: true
+
+functions:
+  Authorizer:
+    handler: src.authorizer.handler.handler
+    name: Authorizer
+  API-Airdrops:
+    handler: src.routes.airdrop.handler
+    name: API-Airdrops
+    events:
+      - http:
+          method: put
+          path: /internal/airdrops/{id}
+          operationId: UpdateAirdrop
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/update.json)}
+      - http:
+          method: get
+          path: /v1/airdrops
+          operationId: ListAirdrops
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                status: false
+      - http:
+          method: post
+          path: /v1/airdrops
+          operationId: CreateAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/create.json)}
+      - http:
+          method: get
+          path: /v1/airdrops/{id}
+          operationId: GetAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/airdrops/{id}
+          operationId: UpdateAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/update.json)}
+      - http:
+          method: put
+          path: /v1/airdrops/{id}/send
+          operationId: SendAirdrop
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+  API-Collections:
+    handler: src.routes.collection.handler
+    name: API-Collections
+    events:
+      - http:
+          method: get
+          path: /internal/collections
+          operationId: ListCollections
+          authorizer: aws_iam
+          request:
+            parameters:
+              querystrings:
+                active: false
+                contract_address: false
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                signature: false
+                status: false
+      - http:
+          method: get
+          path: /internal/collections/{id}
+          operationId: GetCollection
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /internal/collections/{id}
+          operationId: UpdateCollection
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/collections
+          operationId: ListCollections
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              querystrings:
+                active: false
+                contract_address: false
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                signature: false
+                status: false
+      - http:
+          method: post
+          path: /v1/collections
+          operationId: CreateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/collections/create.json)}
+      - http:
+          method: get
+          path: /v1/collections/{id}
+          operationId: GetCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/collections/{id}
+          operationId: UpdateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/collections/update.json)}
+      - http:
+          method: put
+          path: /v1/collections/{id}/activate
+          operationId: ActivateCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/collections/{id}/archive
+          operationId: ArchiveCollection
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+  API-Contacts:
+    handler: src.routes.contact.handler
+    name: API-Contacts
+    events:
+      - http:
+          method: get
+          path: /internal/contacts/aggregate/segment
+          operationId: SearchSegment
+          authorizer: aws_iam
+          request:
+            parameters:
+              querystrings:
+                conditions: false
+                match: false
+                type: false
+                page_num: false
+                page_size: false
+                vql: false
+      - http:
+          method: post
+          path: /public/contacts
+          operationId: CreateContact
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            schemas:
+              application/json: ${file(schemas/contacts/create.json)}
+      - http:
+          method: get
+          path: /v1/contacts
+          operationId: ListContacts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                active: false
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                tags: false
+      - http:
+          method: post
+          path: /v1/contacts
+          operationId: CreateContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/contacts/create.json)}
+      - http:
+          method: get
+          path: /v1/contacts/{id}
+          operationId: GetContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/contacts/{id}
+          operationId: UpdateContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/contacts/update.json)}
+      - http:
+          method: put
+          path: /v1/contacts/{id}/activate
+          operationId: ActivateContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/contacts/{id}/archive
+          operationId: ArchiveContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/contacts/{id}/tag
+          operationId: TagContact
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/contacts/aggregate/search
+          operationId: SearchContacts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+      - http:
+          method: get
+          path: /v1/contacts/aggregate/segment
+          operationId: SearchSegment
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                conditions: false
+                match: false
+                type: false
+                page_num: false
+                page_size: false
+                vql: false
+      - http:
+          method: get
+          path: /v1/contacts/aggregate/tags
+          operationId: SearchTags
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+  API-Events:
+    handler: src.routes.event.handler
+    name: API-Events
+    events:
+      - http:
+          method: post
+          path: /internal/events
+          operationId: CreateEvent
+          authorizer: aws_iam
+          request:
+            schemas:
+              application/json: ${file(schemas/events/create.json)}
+      - http:
+          method: get
+          path: /v1/events
+          operationId: ListEvents
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              querystrings:
+                expand: false
+                organization: false
+                page_num: false
+                page_size: false
+                query: false
+                resource_id: false
+                resource_type: false
+                user: false
+      - http:
+          method: get
+          path: /v1/events/{id}
+          operationId: GetEvent
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                id: true
+              querystrings:
+                expand: false
+  API-MintLinks:
+    handler: src.routes.mint_link.handler
+    name: API-MintLinks
+    events:
+      - http:
+          method: get
+          path: /public/mint_links/{id}
+          operationId: GetMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/mint_links
+          operationId: ListMintLinks
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                status: false
+      - http:
+          method: post
+          path: /v1/mint_links
+          operationId: CreateMintLink
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/create.json)}
+      - http:
+          method: get
+          path: /v1/mint_links/{id}
+          operationId: GetMintLink
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/mint_links/{id}/activate
+          operationId: ActivateMintLink
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/mint_links/{id}/archive
+          operationId: ArchiveMintLink
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+  API-Mints:
+    handler: src.routes.mint.handler
+    name: API-Mints
+    events:
+      - http:
+          method: get
+          path: /internal/mints
+          operationId: ListMints
+          authorizer: aws_iam
+          request:
+            parameters:
+              querystrings:
+                airdrop: false
+                expand: false
+                mint_link: false
+                page_num: false
+                page_size: false
+                query: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: post
+          path: /internal/mints
+          operationId: CreateMint
+          authorizer: aws_iam
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
+          method: put
+          path: /internal/mints/{id}
+          operationId: UpdateMint
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/mints/update.json)}
+      - http:
+          method: post
+          path: /public/mints
+          operationId: CreateMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
+          method: get
+          path: /public/mints/{id}
+          operationId: GetMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /public/mints/{id}/fulfill
+          operationId: FulfillMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/mints/fulfill.json)}
+      - http:
+          method: get
+          path: /v1/mints
+          operationId: ListMints
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                airdrop: false
+                expand: false
+                mint_link: false
+                page_num: false
+                page_size: false
+                query: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: post
+          path: /v1/mints
+          operationId: CreateMint
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
+          method: get
+          path: /v1/mints/{id}
+          operationId: GetMint
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/mints/{id}/fulfill
+          operationId: FulfillMint
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: false
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/fulfill.json)}
+  API-Notes:
+    handler: src.routes.note.handler
+    name: API-Notes
+    events:
+      - http:
+          method: get
+          path: /v1/notes
+          operationId: ListNotes
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                organization: false
+                page_num: false
+                page_size: false
+                query: false
+                resource_id: false
+                resource_type: false
+                user: false
+      - http:
+          method: post
+          path: /v1/notes
+          operationId: CreateNote
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/notes/create.json)}
+      - http:
+          method: delete
+          path: /v1/notes/{id}
+          operationId: DeleteNote
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+  API-Notifications:
+    handler: src.routes.notification.handler
+    name: API-Notifications
+    events:
+      - http:
+          method: get
+          path: /v1/notifications
+          operationId: ListNotifications
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                status: false
+      - http:
+          method: post
+          path: /v1/notifications
+          operationId: CreateNotification
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/notifications/create.json)}
+      - http:
+          method: get
+          path: /v1/notifications/{id}
+          operationId: GetNotification
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/notifications/{id}
+          operationId: UpdateNotification
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/notifications/update.json)}
+  API-Products:
+    handler: src.routes.product.handler
+    name: API-Products
+    events:
+      - http:
+          method: get
+          path: /internal/products/{id}
+          operationId: GetProduct
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /internal/products/{id}
+          operationId: UpdateProduct
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/products/update.json)}
+      - http:
+          method: get
+          path: /v1/products
+          operationId: ListProducts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                status: false
+      - http:
+          method: post
+          path: /v1/products
+          operationId: CreateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/products/create.json)}
+      - http:
+          method: get
+          path: /v1/products/{id}
+          operationId: GetProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/products/{id}
+          operationId: UpdateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/products/update.json)}
+      - http:
+          method: put
+          path: /v1/products/{id}/activate
+          operationId: ActivateProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/products/{id}/archive
+          operationId: ArchiveProduct
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/products/aggregate/search
+          operationId: SearchProducts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+  API-Webhooks:
+    handler: src.routes.webhook.handler
+    name: API-Webhooks
+    events:
+      - http:
+          method: get
+          path: /v1/webhooks
+          operationId: ListWebhooks
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                query: false
+                status: false
+      - http:
+          method: post
+          path: /v1/webhooks
+          operationId: CreateWebhook
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/webhooks/create.json)}
+      - http:
+          method: get
+          path: /v1/webhooks/{id}
+          operationId: GetWebhook
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/webhooks/{id}
+          operationId: UpdateWebhook
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+                X-Organization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/webhooks/update.json)}
+
+resources:
+  Resources:
+    VersifyApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: VersifyApi
+    VersifyApiResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId: !Ref VersifyApi
+    VersifyApiAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 0
+        AuthorizerUri: !Join
+          - ""
+          - - "arn:aws:apigateway:"
+            - !Ref "AWS::Region"
+            - ":lambda:path/2015-03-31/functions/"
+            - !GetAtt AuthorizerLambdaFunction.Arn
+            - /invocations
+        Name: VersifyApiAuthorizer
+        RestApiId:
+          Ref: VersifyApi
+        Type: REQUEST
+    VersifyApiAuthorizerArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/versify/api/authorizer/arn
+        Type: String
+        Value: !GetAtt AuthorizerLambdaFunction.Arn
+    VersifyApiAuthorizerIdParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/versify/api/authorizer/id
+        Type: String
+        Value: !GetAtt VersifyApiAuthorizer.AuthorizerId
+  Outputs:
+    VersifyApiId:
+      Export:
+        Name: VersifyApiId
+      Value:
+        Ref: VersifyApi
+    VersifyApiRootResourceId:
+      Export:
+        Name: VersifyApiRootResourceId
+      Value:
+        Fn::GetAtt:
+          - VersifyApi
+          - RootResourceId

@@ -1,0 +1,75 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateAirdrop",
+  "required": ["email_settings", "name", "product"],
+  "properties": {
+    "email_settings": {
+      "type": "object",
+      "required": [
+        "content",
+        "from_email",
+        "from_name",
+        "preview_text",
+        "subject_line"
+      ],
+      "properties": {
+        "content": {
+          "description": "The content of the campaign",
+          "type": "string"
+        },
+        "from_email": {
+          "description": "The from_email of the campaign",
+          "type": "string"
+        },
+        "from_name": {
+          "description": "The from_name of the campaign",
+          "type": "string"
+        },
+        "from_image": {
+          "description": "The from_image of the campaign",
+          "type": "string"
+        },
+        "preview_text": {
+          "description": "The preview_text of the campaign",
+          "type": "string"
+        },
+        "subject_line": {
+          "description": "The subject of the campaign",
+          "type": "string"
+        }
+      }
+    },
+    "name": {
+      "description": "The name of the campaign",
+      "type": "string"
+    },
+    "product": {
+      "description": "The ID of the product of the campaign",
+      "type": "string"
+    },
+    "recipients": {
+      "type": "object",
+      "properties": {
+        "segment": {
+          "description": "The segment ID to send the airdrop to",
+          "type": "string"
+        },
+        "segment_options": {
+          "type": "object",
+          "properties": {
+            "conditions": {
+              "description": "Comma separated list of conditions to match for the recipients",
+              "type": "string"
+            },
+            "match": {
+              "description": "Determines whether to match any of the following conditions or all of them. Must be either any or all",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
