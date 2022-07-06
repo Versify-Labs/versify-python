@@ -47,13 +47,30 @@ provider:
     lambda: true
 
 functions:
-  PartnerApi-Ping:
-    handler: src.routes.ping.handler
-    name: PartnerApi-Ping
+  PartnerApi-Config:
+    handler: src.routes.config.handler
+    name: PartnerApi-Config
     events:
       - http:
           method: get
-          path: /partners/ping
+          path: /partners/all/config
+          operationId: Config
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Api-Key: false
+                X-Authorization: false
+                X-Organization: false
+      - http:
+          method: get
+          path: /partners/all/ping
           operationId: Ping
           authorizer:
             type: REQUEST
@@ -74,26 +91,6 @@ functions:
               headers:
                 X-Api-Key: false
                 X-Authorization: false
-                X-Organization: false
-  PartnerApi-Config:
-    handler: src.routes.config.handler
-    name: PartnerApi-Config
-    events:
-      - http:
-          method: get
-          path: /partners/all/config
-          operationId: Config
-          authorizer:
-            type: REQUEST
-            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                X-Authorization: True
                 X-Organization: false
   PartnerApi-Auth0:
     handler: src.routes.auth0.handler

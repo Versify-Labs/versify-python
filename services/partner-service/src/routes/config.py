@@ -11,7 +11,7 @@ from lambda_decorators import cors_headers
 from ..utils.auth0 import auth0
 from ..utils.stripe import BasicPackage, GrowthPackage, stripe
 
-app = APIGatewayRestResolver(strip_prefixes=["/partners"])
+app = APIGatewayRestResolver()
 logger = Logger()
 tracer = Tracer()
 
@@ -45,7 +45,7 @@ def get_billing_usage(upcoming_invoice):
     }
 
 
-@app.get("/all/config")
+@app.get("/partners/all/config")
 @tracer.capture_method
 def get_config():
     authorizer = app.current_event.request_context.authorizer or {}
@@ -97,6 +97,16 @@ def get_config():
         'user': user,
         'organization': org
     }
+
+
+@app.get('/partners/all/ping')
+@tracer.capture_method
+def ping():
+    authorizer = app.current_event.request_context.authorizer or {}
+    if authorizer.get('organization'):
+        org_id = authorizer.get('organization')
+        return auth0.organizations.get_organization(org_id)
+    return 'Organization Not Found'
 
 
 @cors_headers

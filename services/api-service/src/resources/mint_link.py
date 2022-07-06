@@ -4,9 +4,9 @@ from .base import ApiResource
 
 ENVIRONMENT = os.environ['ENVIRONMENT']
 if ENVIRONMENT == 'prod':
-    MINT_URL = 'https://dashboard.versifylabs.com'
+    MINT_URL = 'https://mint.versifylabs.com'
 else:
-    MINT_URL = 'https://dashboard-dev.versifylabs.com'
+    MINT_URL = 'https://mint-dev.versifylabs.com'
 
 
 class MintLink(ApiResource):

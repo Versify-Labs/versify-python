@@ -105,6 +105,10 @@ See the [docs](docs/) folder for the documentation.
 1. Update Auth0 APIs
 1. Update Auth0 roles
 1. Update Auth0 actions
+1. Update Stripe Webhook
+1. Update Alchemy Webhook
+1. Update Tatum Signature Endpoint on KMS
+1. Deploy Amplify App
 
 ## Contributing
 

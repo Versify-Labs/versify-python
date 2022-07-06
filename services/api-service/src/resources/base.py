@@ -26,6 +26,14 @@ class ApiResource:
         self.Model = cfg.model
         self.search_index = cfg.search_index
 
+    def count(self, params):
+        return self.collection.count_documents(params)
+
+    def find(self, params, limit=20, skip=0):
+        cursor = self.collection.find(params).sort(
+            '_id', -1).limit(limit).skip(skip)
+        return [self.Model(**doc).to_json() for doc in cursor]
+
     def expand_data(self, app, data):
         params = app.current_event.query_string_parameters or {}
         expand_list = params.get('expand', '').split(',')
@@ -81,10 +89,8 @@ class ApiResource:
         if 'active' in params:
             params['active'] = params['active'] == 'true'
 
-        count = self.collection.count_documents(params)
-        cursor = self.collection.find(params).sort(
-            '_id', -1).limit(limit).skip(skip)
-        data = [self.Model(**doc).to_json() for doc in cursor]
+        count = self.count(params)
+        data = self.find(params, limit, skip)
         data = {
             'object': 'list',
             'url': f'/v1/{self.object}s',

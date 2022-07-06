@@ -7,6 +7,9 @@ frameworkVersion: ">=2.24.0"
 plugins:
   - serverless-python-requirements
 
+custom:
+  mongoDbUrl: ${ssm:/versify/services/mongo/db/url}
+
 provider:
   name: aws
   stage: ${opt:stage, 'dev'}
@@ -19,7 +22,7 @@ provider:
   environment:
     ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
-    MONGO_DB_URL: versifydevelopmentclust.y5nxv.mongodb.net
+    MONGO_DB_URL: ${self:custom.mongoDbUrl}
     POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
     POWERTOOLS_LOGGER_LOG_EVENT: true
     POWERTOOLS_METRICS_NAMESPACE: versify
@@ -1256,6 +1259,18 @@ functions:
                 page_num: false
                 page_size: false
                 query: false
+  API-Signatures:
+    handler: src.routes.signature.handler
+    name: API-Signatures
+    events:
+      - http:
+          method: get
+          path: /public/signatures/{id}
+          operationId: GetSignature
+          request:
+            parameters:
+              paths:
+                id: true
   API-Webhooks:
     handler: src.routes.webhook.handler
     name: API-Webhooks

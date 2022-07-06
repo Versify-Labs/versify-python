@@ -55,7 +55,7 @@ provider:
   layers:
     - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
   runtime: python3.9
-  timeout: 120
+  timeout: 30
   tracing:
     lambda: true
 
@@ -803,7 +803,7 @@ functions:
           eventBus: ${ssm:/versify/services/versify/bus/arn}
           pattern:
             account:
-              - "798774640116"
+              - ${aws:accountId}
   # ZapierSubscriber:
   #   handler: src.handler.zapier_subscriber
   #   name: EventService-ZapierSubscriber
@@ -886,28 +886,6 @@ resources:
       Properties:
         EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
         Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
-    # Rules
-    # CreateCollectionUsageRecordRule:
-    #   Type: AWS::Events::Rule
-    #   Properties:
-    #     Description: When an organization created a collection, create a usage record
-    #     EventBusName: versify
-    #     EventPattern:
-    #       source:
-    #         - versify
-    #       detail:
-    #         - collection.created
-    #     Name: CreateCollectionUsageRecordRule
-    #     RoleArn: String
-    #     State: ENABLED
-    #     Targets:
-    #       - Arn: >-
-    #           arn:aws:events:us-east-1:123456789012:event-bus/CrossRegionDestinationBus
-    #         Id: " CrossRegionDestinationBus"
-    #         RoleArn: !GetAtt
-    #           - EventBridgeIAMrole
-    # OnMintCreated-CreateUsageRecord
-    # OnMintSendEmail
     # DLQ
     EventDeadLetterQueue:
       Type: AWS::SQS::Queue

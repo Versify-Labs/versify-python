@@ -7,6 +7,7 @@ from .mint_link import MintLink
 from .note import Note
 from .notification import Notification
 from .product import Product
+from .signature import Signature
 from .wallet import Wallet
 from .webhook import Webhook
 
@@ -20,6 +21,7 @@ resources = {
     'Note': Note,
     'Notification': Notification,
     'Product': Product,
+    'Signature': Signature,
     'Wallet': Wallet,
     'Webhook': Webhook
 }
