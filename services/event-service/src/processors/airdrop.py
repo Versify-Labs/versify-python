@@ -51,7 +51,7 @@ class AirdropProcessor:
             method='POST',
             path='/internal/mints',
             body={
-                'airdrop': self.airdrop['_id'],
+                'airdrop': self.airdrop['id'],
                 'contact': contact['id'],
                 'product': self.airdrop['product']
             },
@@ -138,7 +138,7 @@ class AirdropProcessor:
         logger.info('Updating airdrop')
         airdrop = call_api(
             method='PUT',
-            path='/internal/airdrops/' + self.airdrop['_id'],
+            path='/internal/airdrops/' + self.airdrop['id'],
             body={
                 'status': 'complete'
             },

@@ -1,5 +1,5 @@
-from ..resources.config import config
-from ..resources.errors import ExpansionDepthError, ExpansionResourceError
+from ..api.config import config
+from ..api.errors import ExpansionDepthError, ExpansionResourceError
 from ..utils.mongo import mdb
 
 
@@ -33,7 +33,6 @@ def expand_object(data, path=''):
         raise ExpansionDepthError
 
     # Validate the resource requested can be expanded
-    print(data)
     parent_object = data['object']
     child_object = resources_left[0]
     cfg = config[parent_object]

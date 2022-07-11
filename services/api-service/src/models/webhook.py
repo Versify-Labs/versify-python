@@ -10,5 +10,8 @@ class Webhook(BaseVersifyModel):
     object: str = 'webhook'
     active: bool = True
     created: int
+    description: Optional[str]
+    enabled_events: list = []
     metadata: Optional[dict] = {}
     organization: Optional[str]
+    url: str

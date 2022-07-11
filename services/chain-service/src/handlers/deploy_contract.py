@@ -32,7 +32,7 @@ def handler(event, context):
     collection = event.detail
     logger.info(collection)
 
-    collection_id = collection['_id']
+    collection_id = collection['id']
     org_id = collection['organization']
 
     # Create token URI

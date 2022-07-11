@@ -7,9 +7,8 @@ from lambda_decorators import cors_headers
 
 from .processors.airdrop import AirdropProcessor
 from .processors.usage import UsageProcessor
-from .subscibers.event import EventSubscriber
 from .subscibers.slack import SlackSubscriber
-# from .subscibers.zapier import ZapierSubscriber
+from .subscibers.webhook import WebhookSubscriber
 from .utils.eb import publish_event
 
 # from .connectors.mongo import MongoConnector
@@ -46,7 +45,7 @@ def auth0_partner_connector(event, context):
 @logger.inject_lambda_context(log_event=True)  # type: ignore
 @tracer.capture_lambda_handler
 def mongo_partner_connector(event, context):
-    """Consume events from Mongo and pubish to the PartnerBus"""
+    """Consume events from Mongo and publish to the PartnerBus"""
     detail_type = event.detail_type
     detail = event.detail
     event_bus = 'partner'
@@ -110,6 +109,7 @@ def partner_versify_connector(event, context):
     """Consume events from PartnerBus and pubish to the VersifyBus"""
     detail_type = event.detail_type
     detail = event.detail
+    detail['id'] = event.detail.pop('_id')
     event_bus = 'versify'
     source = 'versify'
     publish_event(detail_type, detail, event_bus, source)
@@ -148,16 +148,6 @@ def usage_processor(event, context):
 @event_source(data_class=EventBridgeEvent)  # type: ignore
 @logger.inject_lambda_context(log_event=True)  # type: ignore
 @tracer.capture_lambda_handler
-def event_subscriber(event, context):
-    """Consume events and publish to EventAPI"""
-    subscriber = EventSubscriber()
-    subscriber.start(event)
-    return True
-
-
-@event_source(data_class=EventBridgeEvent)  # type: ignore
-@logger.inject_lambda_context(log_event=True)  # type: ignore
-@tracer.capture_lambda_handler
 def slack_subscriber(event, context):
     """Consume events and publish to Slack"""
     subscriber = SlackSubscriber()
@@ -165,11 +155,15 @@ def slack_subscriber(event, context):
     return True
 
 
-# def zapier_subscriber(event, context):
-#     """Consume events from VersifyBus and publish to Zapier"""
-#     subscriber = ZapierSubscriber()
-#     subscriber.start()
-#     return True
+@event_source(data_class=EventBridgeEvent)  # type: ignore
+@logger.inject_lambda_context(log_event=True)  # type: ignore
+@tracer.capture_lambda_handler
+def webhook_subscriber(event, context):
+    """Consume events and publish to matching webhooks"""
+    subscriber = WebhookSubscriber()
+    subscriber.start(event)
+    return True
+
 
 @cors_headers()
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST, log_event=True)

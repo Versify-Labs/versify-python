@@ -45,7 +45,7 @@ provider:
         - "arn:aws:s3:::cdn-dev.versifylabs.com"
         - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
   layers:
-    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:22
   runtime: python3.9
   timeout: 30
   tracing:

@@ -14,7 +14,7 @@ class Contact(BaseVersifyModel):
     balance: int = 0
     created: int
     currency: str = 'usd'
-    description: Optional[str]
+    description: str = ''
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
@@ -23,5 +23,5 @@ class Contact(BaseVersifyModel):
     organization: str
     phone: Optional[str]
     shipping: Optional[dict]
-    source: str = 'versify'
+    source: str = 'Versify'
     tags: list = []

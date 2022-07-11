@@ -41,5 +41,27 @@ def call_api(method: str, path: str, body: dict = {}, organization: str = None, 
         "message": "Response received from internal api",
         "body": response.json()
     })
-    result = response.json()
-    return result
+    return response.json()
+
+
+def call_external_api(method: str, url: str, organization: str, body: dict = {}, params: dict = {}):
+    headers = {
+        'Versify-Signature': 'Not Implemented',
+        'X-Organization': organization,
+    }
+    print({
+        'method': method,
+        'headers': headers,
+        'json': body,
+        'params': params,
+        'url': url,
+    })
+
+    response = requests.request(
+        headers=headers,
+        json=body,
+        method=method,
+        params=params,
+        url=url
+    )
+    return response

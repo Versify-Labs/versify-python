@@ -40,7 +40,7 @@ provider:
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
   layers:
-    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:22
   runtime: python3.9
   timeout: 30
   tracing:

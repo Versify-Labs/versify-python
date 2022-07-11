@@ -80,7 +80,7 @@ def handler(event, context):
     # Save token to product
     response = call_api(
         method='PUT',
-        path='/products/' + product['_id'],
+        path='/products/' + product['id'],
         body={
             'chain': collection.get('chain', 'polygon'),
             'contract_address': contract_address,

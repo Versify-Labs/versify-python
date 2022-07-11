@@ -53,7 +53,7 @@ provider:
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
   layers:
-    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:11
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:22
   runtime: python3.9
   timeout: 30
   tracing:
@@ -779,41 +779,31 @@ functions:
               - collection.created
               - mint.created
   # Subscribers (Consume events from VersifyBus and publish elsewhere)
-  EventSubscriber:
-    handler: src.handler.event_subscriber
-    name: EventService-EventSubscriber
-    description: Consume events and publish to EventAPI
+  SlackSubscriber:
+    handler: src.handler.slack_subscriber
+    name: EventService-SlackSubscriber
+    description: Consume events and publish to Slack
+    events:
+      # - eventBridge:
+      #     eventBus: ${ssm:/versify/services/partner/bus/arn}
+      #     pattern:
+      #       account:
+      #         - "798774640116"
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            account:
+              - ${aws:accountId}
+  WebhookSubscriber:
+    handler: src.handler.webhook_subscriber
+    name: EventService-WebhookSubscriber
+    description: Consume events and publish to matching webhooks
     events:
       - eventBridge:
           eventBus: ${ssm:/versify/services/versify/bus/arn}
           pattern:
             source:
               - versify
-  SlackSubscriber:
-    handler: src.handler.slack_subscriber
-    name: EventService-SlackSubscriber
-    description: Consume events and publish to Slack
-    events:
-      - eventBridge:
-          eventBus: ${ssm:/versify/services/partner/bus/arn}
-          pattern:
-            account:
-              - "798774640116"
-      - eventBridge:
-          eventBus: ${ssm:/versify/services/versify/bus/arn}
-          pattern:
-            account:
-              - ${aws:accountId}
-  # ZapierSubscriber:
-  #   handler: src.handler.zapier_subscriber
-  #   name: EventService-ZapierSubscriber
-  #   description: Consume events from VersifyBus and publish to Zapier
-  #   events:
-  #     - eventBridge:
-  #         eventBus: ${ssm:/versify/services/versify/bus/arn}
-  #         pattern:
-  #           source:
-  #             - versify
 
 resources:
   Resources:

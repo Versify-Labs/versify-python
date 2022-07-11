@@ -5,7 +5,5 @@ from .event import Event
 from .mint import Mint
 from .mint_link import MintLink
 from .note import Note
-from .notification import Notification
 from .product import Product
-from .wallet import Wallet
 from .webhook import Webhook

@@ -43,7 +43,7 @@ def handler(event, context):
 
     response = call_api(
         method='PUT',
-        path='/mints/' + mint['_id'],
+        path='/mints/' + mint['id'],
         body={
             'signature': signature_id
         },

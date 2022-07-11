@@ -1,5 +1,5 @@
 from ..models import (Airdrop, Collection, Contact, Event, Mint, MintLink,
-                      Note, Notification, Product, Wallet, Webhook)
+                      Note, Product, Webhook)
 
 
 class AirdropConfig:
@@ -72,16 +72,6 @@ class NoteConfig:
     search_index = None
 
 
-class NotificationConfig:
-    collection = 'Notifications'
-    db = 'Notifications'
-    expandables = []
-    model = Notification
-    object = 'notification'
-    prefix = 'noti'
-    search_index = None
-
-
 class ProductConfig:
     collection = 'Products'
     db = 'Products'
@@ -92,19 +82,9 @@ class ProductConfig:
     search_index = 'ProductsSearchIndex'
 
 
-class WalletConfig:
-    collection = 'Wallets'
-    db = 'Wallet'
-    expandables = []
-    model = Wallet
-    object = 'wallet'
-    prefix = 'wall'
-    search_index = None
-
-
 class WebhookConfig:
     collection = 'Webhooks'
-    db = 'Webhooks'
+    db = 'Events'
     expandables = []
     model = Webhook
     object = 'webhook'
@@ -120,8 +100,6 @@ config = {
     'mint': MintConfig,
     'mint_link': MintLinkConfig,
     'note': NoteConfig,
-    'notification': NotificationConfig,
     'product': ProductConfig,
-    'wallet': WalletConfig,
     'webhook': WebhookConfig
 }
