@@ -45,6 +45,84 @@ functions:
   Authorizer:
     handler: src.api.authorizer.handler
     name: Authorizer
+  API-Accounts:
+    handler: src.api.routes.handler
+    name: API-Accounts
+    events:
+      - http:
+          method: get
+          path: /v1/accounts
+          operationId: ListAccounts
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/accounts
+          operationId: CreateAccount
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: true
+            schemas:
+              application/json: ${file(schemas/accounts/create.json)}
+      - http:
+          method: get
+          path: /v1/accounts/{id}
+          operationId: GetAccount
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: true
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /v1/accounts/{id}
+          operationId: UpdateAccount
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                X-Authorization: false
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/accounts/update.json)}
   API-Airdrops:
     handler: src.api.routes.handler
     name: API-Airdrops

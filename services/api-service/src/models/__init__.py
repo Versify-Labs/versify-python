@@ -1,3 +1,4 @@
+from .account import Account
 from .airdrop import Airdrop
 from .collection import Collection
 from .contact import Contact

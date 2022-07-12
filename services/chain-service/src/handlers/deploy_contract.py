@@ -30,8 +30,6 @@ def get_contract_token_uri(collection_id):
 def handler(event, context):
     """Deploy a new ERC1155 contract for the collection"""
     collection = event.detail
-    logger.info(collection)
-
     collection_id = collection['id']
     org_id = collection['organization']
 
@@ -41,13 +39,12 @@ def handler(event, context):
     # Deploy contract
     response = tatum.deploy_contract(token_uri)
     logger.info(response)
-
-    # Save transaction with collection
     signature_id = response.get('signatureId')
     if not signature_id:
         logger.error(response)
-        return False
+        raise RuntimeError
 
+    # Save transaction with collection
     response = call_api(
         method='PUT',
         path=f'/collections/{collection_id}',
@@ -58,5 +55,8 @@ def handler(event, context):
         organization=org_id
     )
     logger.info(response)
+    if not response:
+        logger.error(response)
+        raise RuntimeError
 
     return True

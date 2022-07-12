@@ -29,15 +29,16 @@ exports.onExecutePostLogin = async (event, api) => {
     result.users_organizations = organizations
     organizations.forEach(async (org) => {
         let userOrgRoles = await management.organizations.getMemberRoles({ id: org.id, user_id: userId })
-        userOrgRoles.forEach(async (role) => {
-            let rolePerms = await management.roles.getPermissions({ id: role.id })
-            rolePerms.forEach((perm) => {
-                console.log(`Adding perm: ${org.id}:${perm.permission_name}`)
-                perms.push(`${org.id}:${perm.permission_name}`)
-                permCount += 1
-                console.log('Total Permissions: ' + permCount)
-            })
-        })
+        // userOrgRoles.forEach(async (role) => {
+        //     let rolePerms = await management.roles.getPermissions({ id: role.id })
+        //     rolePerms.forEach((perm) => {
+        //         console.log(`Adding perm: ${org.id}:${perm.permission_name}`)
+        //         perms.push(`${org.id}:${perm.permission_name}`)
+        //         permCount += 1
+        //         console.log('Total Permissions: ' + permCount)
+        //     })
+        // })
+        
     })
     console.log('Result:')
     console.log(result)

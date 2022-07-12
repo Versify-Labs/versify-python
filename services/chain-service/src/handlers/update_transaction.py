@@ -50,24 +50,25 @@ def match_mint(signature):
 def handler(event, context):
     """Update collection based on txn"""
     txn = event.detail
-    logger.info(txn)
-
     sig_id = txn['signatureId']
     txn_id = txn['txId']
     sub_type = txn['subscriptionType']
     status = 'complete' if sub_type == 'KMS_COMPLETED_TX' else 'failed'
+    logger.info({'status': status})
 
     # Get details from Tatum
     txn_details = tatum.get_transaction_details(sig_id)
     logger.info(txn_details)
+    if not txn_details:
+        logger.error('Could not get transaction details')
+        raise RuntimeError
 
     # Get txn from tatum
     tatum_txn = tatum.get_transaction(txn_id)
     logger.info(tatum_txn)
-
-    if not tatum_txn or not tatum_txn.get('transactionHash'):
-        logger.error(tatum_txn)
-        return
+    if not tatum_txn:
+        logger.error('Could not get transaction')
+        raise RuntimeError
 
     # Get collection with matching signature
     collection = match_collection(sig_id)
@@ -91,6 +92,9 @@ def handler(event, context):
             organization=organization
         )
         logger.info(response)
+        if not response:
+            logger.error('Could not update collection')
+            raise RuntimeError
 
     # Get mint with matching signature
     mint = match_mint(sig_id)
@@ -112,5 +116,8 @@ def handler(event, context):
             organization=organization
         )
         logger.info(response)
+        if not response:
+            logger.error('Could not update mint')
+            raise RuntimeError
 
     return True

@@ -1,5 +1,15 @@
-from ..models import (Airdrop, Collection, Contact, Event, Mint, MintLink,
+from ..models import (Account, Airdrop, Collection, Contact, Event, Mint, MintLink,
                       Note, Product, Webhook)
+
+
+class AccountConfig:
+    collection = 'Accounts'
+    db = 'Accounts'
+    expandables = []
+    model = Account
+    object = 'account'
+    prefix = 'acct'
+    search_index = None
 
 
 class AirdropConfig:

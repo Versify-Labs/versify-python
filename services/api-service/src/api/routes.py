@@ -5,14 +5,51 @@ from aws_lambda_powertools.event_handler.api_gateway import \
 from aws_lambda_powertools.logging import correlation_paths
 from lambda_decorators import cors_headers
 
-from .resources import (Airdrop, Collection, Contact, Event, Mint, MintLink,
-                        Note, Product, Signature, Webhook)
+from .resources import (Account, Airdrop, Collection, Contact, Event, Mint,
+                        MintLink, Note, Product, Signature, Webhook)
 from .rest import Request, Response
 from .search import Search
 
 app = APIGatewayRestResolver()
 logger = Logger()
 tracer = Tracer()
+
+############
+# Accounts #
+############
+
+
+@app.get('/.+/accounts')
+@tracer.capture_method
+def list_accounts():
+    req = Request(app)
+    data = Account().list(**req.list)
+    count = Account().count(**req.count)
+    return Response(req, data, count).list
+
+
+@app.post('/.+/accounts')
+@tracer.capture_method
+def create_account():
+    req = Request(app)
+    data = Account().create(**req.create)
+    return Response(req, data).create
+
+
+@app.get('/.+/accounts/<id>')
+@tracer.capture_method
+def get_account(id):
+    req = Request(app, id)
+    data = Account().get(**req.get)
+    return Response(req, data).get
+
+
+@app.put('/.+/accounts/<id>')
+@tracer.capture_method
+def update_account(id):
+    req = Request(app, id)
+    data = Account().update(**req.update)
+    return Response(req, data).update
 
 
 ############

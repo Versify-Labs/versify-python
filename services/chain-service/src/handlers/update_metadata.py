@@ -33,10 +33,9 @@ def get_collection(id, organization):
 @tracer.capture_lambda_handler
 def handler(event, context):
     """Update product token metadata"""
-    product = event.detail
-    logger.info(product)
 
     # Check product data to see what we need to do
+    product = event.detail
     collection_id = product['collection']
     organization_id = product['organization']
     token_id = product.get('token_id')
@@ -90,5 +89,8 @@ def handler(event, context):
         organization=product['organization']
     )
     logger.info(response)
+    if not response:
+        logger.error('Could not update product')
+        raise RuntimeError
 
     return True

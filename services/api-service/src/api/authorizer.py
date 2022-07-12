@@ -83,28 +83,29 @@ def get_requested_scope(method, path, token=None, organization=None):
     return f'{owner}:{action}:{resource}'
 
 
-def list_user_permissions(user_id, token):
-    result = []
+# def list_user_permissions(user_id, token):
+#     result = []
 
-    # Add user permissions
-    claims = jwt.get_unverified_claims(token)
-    user_perms = claims.get('permissions')
-    for perm_name in user_perms:
-        result.append(f'{user_id}:{perm_name}')
+#     # Add user permissions
+#     claims = jwt.get_unverified_claims(token)
+#     user_perms = claims.get('permissions')
+#     for perm_name in user_perms:
+#         result.append(f'{user_id}:{perm_name}')
 
-    # Add org permissions
-    orgs = auth0.users.list_organizations(user_id)
-    for org in orgs['organizations']:
-        org_id = org['id']
-        roles = auth0.organizations.all_organization_member_roles(
-            org_id, user_id)
-        for role in roles:
-            role_id = role['id']
-            perms = auth0.roles.list_permissions(role_id, per_page=100)
-            for perm in perms['permissions']:
-                perm_name = perm['permission_name']
-                result.append(f'{org_id}:{perm_name}')
-    return result
+#     # Add org permissions
+#     orgs = auth0.users.list_organizations(user_id)
+#     for org in orgs['organizations']:
+#         org_id = org['id']
+#         roles = auth0.organizations.all_organization_member_roles(
+#             org_id, user_id)
+#         for role in roles:
+#             role_id = role['id']
+#             perms = auth0.roles.list_permissions(role_id, per_page=100)
+#             for perm in perms['permissions']:
+#                 perm_name = perm['permission_name']
+#                 result.append(f'{org_id}:{perm_name}')
+
+#     return result
 
 
 def principal_has_access(principal, scope, token=None):
@@ -114,10 +115,16 @@ def principal_has_access(principal, scope, token=None):
         return scope.startswith(principal)
 
     # Handle token calls
-    available_scopes = list_user_permissions(principal, token)
-    logger.info(available_scopes)
+    # TODO: Validate token with Auth0
+    # TODO: Check role permissions
+    claims = jwt.get_unverified_claims(token)
+    roles = claims.get(NAMESPACE + '/roles', [])
+    for owner_role in roles:
+        owner, role = owner_role.split(':')
+        if scope.startswith(owner):
+            return True
 
-    return scope in available_scopes
+    return False
 
 
 def create_auth_context(token=None, organization=None):

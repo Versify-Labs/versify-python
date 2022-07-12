@@ -16,7 +16,6 @@ tatum = Tatum()
 def handler(event, context):
     """Mint a token to the collections contract"""
     mint = event.detail
-    logger.info(mint)
 
     # Get the product being minted
     product = call_api(
@@ -26,6 +25,9 @@ def handler(event, context):
             'expand': 'collection'
         }
     )
+    if not product:
+        logger.error('Product was not found')
+        raise RuntimeError
 
     # Mint token to contract
     response = tatum.mint_token(
@@ -34,13 +36,12 @@ def handler(event, context):
         to=mint['wallet_address']
     )
     logger.info(response)
-
-    # Save transaction with mint
     signature_id = response.get('signatureId')
     if not signature_id:
-        logger.error(response)
-        return False
+        logger.error('Mint failed')
+        raise RuntimeError
 
+    # Save transaction with mint
     response = call_api(
         method='PUT',
         path='/mints/' + mint['id'],
@@ -50,5 +51,8 @@ def handler(event, context):
         organization=mint['organization']
     )
     logger.info(response)
+    if not response:
+        logger.error('Could not update mint')
+        raise RuntimeError
 
     return True

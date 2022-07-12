@@ -50,7 +50,7 @@ provider:
   timeout: 30
   tracing:
     lambda: true
-
+ 
 functions:
   DeployContract:
     handler: src.handlers.deploy_contract.handler

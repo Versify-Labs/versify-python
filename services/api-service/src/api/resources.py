@@ -147,6 +147,13 @@ class ApiResource:
         return self.expand(data, expand_list)  # type: ignore
 
 
+class Account(ApiResource):
+
+    def __init__(self):
+        object = 'account'
+        super().__init__(object)
+
+
 class Airdrop(ApiResource):
 
     def __init__(self):
