@@ -1,26 +1,45 @@
-from .base import BaseCampaign
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
+from .base import BaseVersifyModel
 
 
-class Airdrop(BaseCampaign):
+class EmailSettings(BaseModel):
+    content: Optional[str]
+    from_email: Optional[str]
+    from_name: Optional[str]
+    preview_text: Optional[str]
+    subject_line: Optional[str]
+
+
+class Recipients(BaseModel):
+    count: int = 0
+    segment_options: dict = {'conditions': '',  'match': 'all'}
+
+
+class Airdrop(BaseVersifyModel):
+    id: Optional[str] = Field(None, alias="_id")
+    account: str
     object: str = 'airdrop'
-    email_settings: dict = {}
-    # email_settings.content
-    # email_settings.from_email
-    # email_settings.from_
-    # email_settings.from_name
-    # email_settings.preview_text
-    # email_settings.subject_line
-    name: str
+    created: int
+    email_settings: Optional[EmailSettings]
+    metadata: Optional[dict] = {}
+    name: str = 'Unnamed Airdrop'
     product: str
-    recipients: dict = {
-        'count': 0,
-        'segment_options': {
-            'conditions': '',
-            'match': 'all'
-        }
-    }
-    # recipients.count: Count of the recipients of the associated segment options. Saved on create/update (NOT IMPLEMENTED)
-    # recipients.segment: ID for a saved segment (NOT IMPLEMENTED)
-    # recipients.segment_options.match: segment match type ("any" or "all") (NOT IMPLEMENTED)
-    # recipients.segment_options.conditions: segment match condition (ex: 'tags-$in-test')
+    recipients: Optional[Recipients]
     status: str = 'draft'  # changes to sending -> complete
+    updated: Optional[int]
+
+    # "body": {
+    #     "email_settings": {
+    #         "content": "Enjoy this complimentary NFT.",
+    #         "from_email": "claims@versifylabs.com",
+    #         "from_image": "https://uploads-ssl.webflow.com/61f99f3055f0fb37c1005252/61f99f3155f0fb4ba7005411_image-2-help-center-saas-x-template.svg",
+    #         "from_name": "Acme Corp",
+    #         "preview_text": "Complimentary NFT from Acme Corp",
+    #         "subject_line": "Complimentary NFT from Acme Corp"
+    #     },
+    #     "name": "Jul 24 Airdrop",
+    #     "product": "prod_62dded659aa81a9bb00da543"
+    # },

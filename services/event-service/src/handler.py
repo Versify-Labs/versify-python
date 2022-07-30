@@ -6,17 +6,12 @@ from aws_lambda_powertools.utilities.data_classes import (EventBridgeEvent,
 from lambda_decorators import cors_headers
 
 from .processors.airdrop import AirdropProcessor
+from .processors.billing import BillingProcessor
+from .processors.transaction import TransactionProcessor
 from .processors.usage import UsageProcessor
 from .subscibers.slack import SlackSubscriber
 from .subscibers.webhook import WebhookSubscriber
 from .utils.eb import publish_event
-
-# from .connectors.mongo import MongoConnector
-# from .processors.alchemy import AlchemyProcessor
-# from .processors.auth0 import Auth0Processor
-# from .processors.mongo import MongoProcessor
-# from .processors.stripe import StripeProcessor
-# from .publishers.event import EventPublisher
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -26,19 +21,6 @@ logger = Logger()
 #########################
 # Bus to Bus Connectors #
 #########################
-
-
-@event_source(data_class=EventBridgeEvent)  # type: ignore
-@logger.inject_lambda_context(log_event=True)  # type: ignore
-@tracer.capture_lambda_handler
-def auth0_partner_connector(event, context):
-    """Consume events from Auth0 and pubish to the PartnerBus"""
-    detail_type = event.detail_type
-    detail = event.detail
-    event_bus = 'partner'
-    source = 'auth0'
-    publish_event(detail_type, detail, event_bus, source)
-    return True
 
 
 @event_source(data_class=EventBridgeEvent)  # type: ignore
@@ -134,8 +116,28 @@ def airdrop_processor(event, context):
 @event_source(data_class=EventBridgeEvent)  # type: ignore
 @logger.inject_lambda_context(log_event=True)  # type: ignore
 @tracer.capture_lambda_handler
+def billing_processor(event, context):
+    """When a new stripe billing event is created, update internal systems"""
+    processor = BillingProcessor(event.detail)
+    processor.start()
+    return True
+
+
+@event_source(data_class=EventBridgeEvent)  # type: ignore
+@logger.inject_lambda_context(log_event=True)  # type: ignore
+@tracer.capture_lambda_handler
+def transaction_processor(event, context):
+    """When a new blockchain transaction is created, update corresponding collection or mint"""
+    processor = TransactionProcessor(txn=event.detail)
+    processor.start()
+    return True
+
+
+@event_source(data_class=EventBridgeEvent)  # type: ignore
+@logger.inject_lambda_context(log_event=True)  # type: ignore
+@tracer.capture_lambda_handler
 def usage_processor(event, context):
-    """When a new collection or mint is creaed, add billing usage records"""
+    """When a new mint is created, add billing usage records"""
     processor = UsageProcessor(object=event.detail)
     processor.start()
     return True

@@ -22,6 +22,7 @@ class SearchType(Enum):
     ListSegmentContacts = "list_segment_contacts"
     SearchContacts = "search_contacts"
     SearchProducts = "search_products"
+    UsageStats = 'usage_stats'
 
 
 class Search:
@@ -32,7 +33,7 @@ class Search:
 
         # Parse request for params
         self._search_type = query_params.get('search_type')
-        self._org = app.current_event.get_header_value('X-Organization')
+        self._account = app.current_event.get_header_value('Versify-Account')
         self._query = query_params.get('query', '')
         self._vql = query_params.get('vql', '')
         self._url = app.current_event.path
@@ -50,7 +51,7 @@ class Search:
     def aggregate_tags(self):
         collection = self.get_collection('contact')
         stages = [
-            match_stage(org=self._org),
+            match_stage(account=self._account),
             unwind_stage(path='$tags'),
             group_stage(field='tags')
         ]
@@ -64,7 +65,7 @@ class Search:
     def count_segment_contacts(self):
         collection = self.get_collection('contact')
         stages = [
-            vql_stage(vql=self._vql, org=self._org),
+            vql_stage(vql=self._vql, account=self._account),
             count_stage()
         ]
         cursor = collection.aggregate(stages)
@@ -75,7 +76,7 @@ class Search:
         collection = self.get_collection('contact')
         model = self.get_model('contact')
         stages = [
-            vql_stage(vql=self._vql, org=self._org)
+            vql_stage(vql=self._vql, account=self._account)
         ]
         cursor = collection.aggregate(stages)
         return [model(**doc).to_json() for doc in cursor]
@@ -89,7 +90,7 @@ class Search:
             match_stage(
                 conditions='',
                 match='all',
-                org=self._org
+                account=self._account
             )
         ]
         cursor = collection.aggregate(stages)
@@ -104,15 +105,26 @@ class Search:
             match_stage(
                 conditions='',
                 match='all',
-                org=self._org
+                account=self._account
             )
         ]
         cursor = collection.aggregate(stages)
         return [model(**doc).to_json() for doc in cursor]
 
+    def usage_stats(self):
+        # TODO: Implement
+        # collection = self.get_collection('mint')
+        # stages = [
+        #     vql_stage(vql=self._vql, account=self._account),
+        #     count_stage()
+        # ]
+        # cursor = collection.aggregate(stages)
+        # result = json.loads(dumps(list(cursor)))
+        # return result[0]['count']
+        return []
+
     def run(self):
         data = None
-
         logger.info(self._search_type)
         logger.info(SearchType.SearchContacts)
 
@@ -126,9 +138,12 @@ class Search:
             data = self.search_contacts()
         elif self._search_type == SearchType.SearchProducts.value:
             data = self.search_products()
+        elif self._search_type == SearchType.UsageStats.value:
+            data = self.usage_stats()
         else:
             e = f"'{self._search_type}' is not a valid Search Type"
             raise BadRequestError(e)
+
         return {
             'object': 'search',
             'url': self._url,

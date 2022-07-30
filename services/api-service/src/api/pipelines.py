@@ -22,12 +22,12 @@ def group_stage(field):
     return stage
 
 
-def vql_stage(vql='', org=None):
+def vql_stage(vql='', account=None):
     q = {}
 
-    # Limit the results for the organization
-    if org:
-        q['organization'] = org
+    # Limit the results for the account
+    if account:
+        q['account'] = account
 
     # Convert VQL to match conditions
     clauses = vql.split(' ')
@@ -68,15 +68,15 @@ def vql_stage(vql='', org=None):
     return {"$match": q}
 
 
-def match_stage(conditions='', match='all', org=None):
+def match_stage(conditions='', match='all', account=None):
     q = {}
 
     # Inject $or if match is any
     # if match == 'any':
 
-    # Limit the results for the organization
-    if org:
-        q['organization'] = org
+    # Limit the results for the account
+    if account:
+        q['account'] = account
 
     # Gather the filter conditions
     condition_map = {}

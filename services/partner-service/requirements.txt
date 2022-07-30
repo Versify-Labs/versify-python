@@ -1,5 +1,0 @@
-auth0-python
-lambda-decorators
-mailchimp_transactional
-python-slugify
-stripe==3.0.0

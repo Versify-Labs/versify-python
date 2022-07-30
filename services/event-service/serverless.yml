@@ -8,7 +8,7 @@ plugins:
   - serverless-python-requirements
 
 custom:
-  auth0LogsTrigger: ${ssm:/versify/services/auth0/logs/trigger/id}
+  mongoAccountsTrigger: ${ssm:/versify/services/mongo/accounts/trigger/id}
   mongoAirdropsTrigger: ${ssm:/versify/services/mongo/airdrops/trigger/id}
   mongoCollectionsTrigger: ${ssm:/versify/services/mongo/collections/trigger/id}
   mongoContactsTrigger: ${ssm:/versify/services/mongo/contacts/trigger/id}
@@ -17,6 +17,7 @@ custom:
   mongoNotesTrigger: ${ssm:/versify/services/mongo/notes/trigger/id}
   mongoEventsTrigger: ${ssm:/versify/services/mongo/events/trigger/id}
   mongoProductsTrigger: ${ssm:/versify/services/mongo/products/trigger/id}
+  mongoUsersTrigger: ${ssm:/versify/services/mongo/users/trigger/id}
 
 provider:
   name: aws
@@ -28,8 +29,8 @@ provider:
     restApiRootResourceId:
       "Fn::ImportValue": VersifyApiRootResourceId
   environment:
-    ENVIRONMENT: ${opt:stage, 'dev'}
     LOG_LEVEL: INFO
+    ENVIRONMENT: ${opt:stage, 'dev'}
     POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
     POWERTOOLS_LOGGER_LOG_EVENT: true
     POWERTOOLS_METRICS_NAMESPACE: versify
@@ -61,21 +62,16 @@ provider:
 
 functions:
   # Connectors (Consume events from partners and publish to PartnerBus)
-  Auth0PartnerConnector:
-    handler: src.handler.auth0_partner_connector
-    name: EventService-Auth0PartnerConnector
-    description: Consume events from Auth0 and publish to PartnerBus
-    events:
-      - eventBridge:
-          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
-          pattern:
-            account:
-              - ${aws:accountId}
   MongoPartnerConnector:
     handler: src.handler.mongo_partner_connector
     name: EventService-MongoPartnerConnector
     description: Consume events from Mongo and publish to PartnerBus
     events:
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAccountsTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
       - eventBridge:
           eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAirdropsTrigger}"
           pattern:
@@ -116,6 +112,11 @@ functions:
           pattern:
             account:
               - ${aws:accountId}
+      - eventBridge:
+          eventBus: "arn:aws:events:${aws:region}:${aws:accountId}:event-bus/aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoUsersTrigger}"
+          pattern:
+            account:
+              - ${aws:accountId}
   # Webhook Connectors
   AlchemyPartnerConnector:
     handler: src.handler.api
@@ -150,6 +151,87 @@ functions:
     name: EventService-PartnerVersifyConnector
     description: Consume events from PartnerBus and publish to VersifyBus
     events:
+      # MongoAccountCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - account
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "account.created"}'
+      # MongoAccountDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - account
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "account.deleted"}'
+      # MongoAccountUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - account
+              updateDescription:
+                updatedFields:
+                  status:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "account.updated"}'
+      # MongoAccountTeamUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - account
+              updateDescription:
+                updatedFields:
+                  settings:
+                    auth:
+                      - { "exists": false }
+                    billing:
+                      - { "exists": false }
+                    dashboard:
+                      - { "exists": false }
+                    team:
+                      - { "exists": true }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "account.team.updated"}'
       # MongoAirdropCreated
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -271,15 +353,14 @@ functions:
                   - collection
               updateDescription:
                 updatedFields:
-                  active:
-                    - { "exists": false }
-                  tags:
-                    - { "exists": false }
+                  status:
+                    - new
+                    - pending
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "collection.updated"}'
-      # MongoCollectionActivated
+      # MongoCollectionDeployed
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
           pattern:
@@ -294,33 +375,12 @@ functions:
                   - collection
               updateDescription:
                 updatedFields:
-                  active:
-                    - true
+                  status:
+                    - deployed
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "collection.activated"}'
-      # MongoCollectionArchived
-      - eventBridge:
-          eventBus: ${ssm:/versify/services/partner/bus/arn}
-          pattern:
-            source:
-              - mongo
-            detail:
-              operationType:
-                - replace
-                - update
-              fullDocument:
-                object:
-                  - collection
-              updateDescription:
-                updatedFields:
-                  active:
-                    - false
-          inputTransformer:
-            inputPathsMap:
-              detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "collection.archived"}'
+            inputTemplate: '{"detail": <detail>, "detail-type": "collection.deployed"}'
       # MongoContactCreated
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -752,6 +812,61 @@ functions:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "product.archived"}'
+      # MongoUserCreated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - insert
+              fullDocument:
+                object:
+                  - user
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "user.created"}'
+      # MongoUserDeleted
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - delete
+              fullDocumentBeforeChange:
+                object:
+                  - user
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocumentBeforeChange"
+            inputTemplate: '{"detail": <detail>, "detail-type": "user.deleted"}'
+      # MongoUserUpdated
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - user
+              updateDescription:
+                updatedFields:
+                  active:
+                    - { "exists": false }
+                  tags:
+                    - { "exists": false }
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "user.updated"}'
   # Processors (Consume events from PartnerBus and call necessary Versify APIs)
   AirdropProcessor:
     handler: src.handler.airdrop_processor
@@ -765,10 +880,40 @@ functions:
               - versify
             detail-type:
               - airdrop.sent
+  BillingProcessor:
+    handler: src.handler.billing_processor
+    name: EventService-BillingProcessor
+    description: When a new stripe billing event is created, update internal systems
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - stripe
+            detail-type:
+              - event.created
+            detail:
+              type:
+                - customer.created
+                - customer.updated
+                - customer.subscription.created
+                - customer.subscription.updated
+  TransactionProcessor:
+    handler: src.handler.transaction_processor
+    name: EventService-TransactionProcessor
+    description: When a new blockchain transaction is created, update corresponding collection or mint
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - tatum
+            detail-type:
+              - transaction.created
   UsageProcessor:
     handler: src.handler.usage_processor
     name: EventService-UsageProcessor
-    description: When a new collection or mint is created, record the usage in stripe billing
+    description: When a new mint is created, record the usage in stripe billing
     events:
       - eventBridge:
           eventBus: ${ssm:/versify/services/versify/bus/arn}
@@ -776,7 +921,6 @@ functions:
             source:
               - versify
             detail-type:
-              - collection.created
               - mint.created
   # Subscribers (Consume events from VersifyBus and publish elsewhere)
   SlackSubscriber:
@@ -784,11 +928,15 @@ functions:
     name: EventService-SlackSubscriber
     description: Consume events and publish to Slack
     events:
-      # - eventBridge:
-      #     eventBus: ${ssm:/versify/services/partner/bus/arn}
-      #     pattern:
-      #       account:
-      #         - "798774640116"
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            account:
+              - ${aws:accountId}
+            source:
+              - alchemy
+              - stripe
+              - tatum
       - eventBridge:
           eventBus: ${ssm:/versify/services/versify/bus/arn}
           pattern:
@@ -829,13 +977,12 @@ resources:
         Name: !Sub /versify/services/partner/bus/arn
         Type: String
         Value: !GetAtt PartnerBus.Arn
-    # Auth0 Buses
-    Auth0LogsBus:
+    # Mongo Buses
+    MongoAccountsBus:
       Type: AWS::Events::EventBus
       Properties:
-        EventSourceName: "aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
-        Name: "aws.partner/auth0.com/${self:custom.auth0LogsTrigger}/auth0.logs"
-    # Mongo Buses
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAccountsTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoAccountsTrigger}"
     MongoAirdropsBus:
       Type: AWS::Events::EventBus
       Properties:
@@ -876,6 +1023,11 @@ resources:
       Properties:
         EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
         Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoProductsTrigger}"
+    MongoUsersBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        EventSourceName: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoUsersTrigger}"
+        Name: "aws.partner/mongodb.com/stitch.trigger/${self:custom.mongoUsersTrigger}"
     # DLQ
     EventDeadLetterQueue:
       Type: AWS::SQS::Queue

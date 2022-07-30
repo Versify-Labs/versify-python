@@ -1,0 +1,384 @@
+{
+  "version": "1.1.0",
+  "platformVersion": "12.0.3",
+  "triggers": {
+    "new_contact": {
+      "operation": {
+        "perform": {
+          "source": "return [bundle.cleanedRequest.data.object];"
+        },
+        "inputFields": [],
+        "type": "hook",
+        "canPaginate": false,
+        "performSubscribe": {
+          "source": "const options = {\n  url: 'https://api.versifylabs.com/v1/webhooks',\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'Accept': 'application/json',\n    'Authorization': bundle.authData.access_token,\n    'Versify-Account': bundle.authData.accountId\n    \n  },\n  params: {},\n  body: {\n    'url': bundle.targetUrl,\n    'enabled_events': [\"contact.created\"]\n  }\n}\n\nreturn z.request(options)\n  .then((response) => {\n    response.throwForStatus();\n    const results = response.json;\n\n    // You can do any parsing you need for results here before returning them\n\n    return results;\n  });"
+        },
+        "performUnsubscribe": {
+          "source": "const options = {\n  url: `https://api.versifylabs.com/v1/webhooks/${bundle.subscribeData.id}`,\n  method: 'DELETE',\n  headers: {\n    'Content-Type': 'application/json',\n    'Accept': 'application/json',\n    'Authorization': bundle.authData.access_token,\n    'Versify-Account': bundle.authData.accountId\n  },\n  params: {},\n  body: {}\n}\n\nreturn z.request(options)\n  .then((response) => {\n    response.throwForStatus();\n    const results = response.json;\n\n    // You can do any parsing you need for results here before returning them\n\n    return results;\n  });"
+        },
+        "performList": {
+          "source": "const options = {\n  url: 'https://api.versifylabs.com/v1/contacts',\n  method: 'GET',\n  headers: {\n    'Accept': 'application/json',\n    'Authorization': bundle.authData.access_token,\n    'Versify-Account': bundle.authData.accountId\n  },\n  params: {}\n}\n\nreturn z.request(options)\n  .then((response) => {\n    response.throwForStatus();\n    const results = response.json;\n\n    // You can do any parsing you need for results here before returning them\n    const data = results.data\n\n    return data;\n  });"
+        },
+        "sample": {
+          "id": "cont_123",
+          "object": "contact",
+          "created": 1657078902,
+          "active": true,
+          "balance": 0,
+          "currency": "usd",
+          "email": "jane@example.com",
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "name": "Jane Doe",
+          "source": "versify",
+          "tags": []
+        },
+        "outputFields": [
+          {
+            "key": "id",
+            "label": "ID",
+            "type": "string"
+          },
+          {
+            "key": "object",
+            "label": "Object",
+            "type": "string"
+          },
+          {
+            "key": "created",
+            "type": "integer",
+            "label": "Created At"
+          },
+          {
+            "key": "active",
+            "type": "boolean",
+            "label": "Activec"
+          },
+          {
+            "key": "balance",
+            "label": "Balance",
+            "type": "integer"
+          },
+          {
+            "key": "currency",
+            "label": "Currency"
+          },
+          {
+            "key": "email",
+            "label": "Email Address",
+            "type": "string"
+          },
+          {
+            "key": "first_name",
+            "label": "First Name",
+            "type": "string"
+          },
+          {
+            "key": "last_name",
+            "label": "Last Name",
+            "type": "string"
+          },
+          {
+            "key": "name",
+            "label": "Full Name",
+            "type": "string"
+          },
+          {
+            "key": "source",
+            "label": "Source",
+            "type": "string"
+          }
+        ]
+      },
+      "key": "new_contact",
+      "noun": "Contact",
+      "display": {
+        "label": "New Contact",
+        "description": "Triggers when a new contact is created.",
+        "hidden": false,
+        "important": true
+      }
+    }
+  },
+  "creates": {
+    "create_contact": {
+      "key": "create_contact",
+      "noun": "Contact",
+      "display": {
+        "label": "Create Contact",
+        "description": "Creates a Contact",
+        "hidden": false,
+        "important": true
+      },
+      "operation": {
+        "inputFields": [
+          {
+            "key": "avatar",
+            "label": "Avatar URL",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "currency",
+            "label": "Currency",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "description",
+            "label": "Description",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "email",
+            "label": "Email Address",
+            "type": "string",
+            "required": true,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "first_name",
+            "label": "First name",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "last_name",
+            "label": "Last name",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "name",
+            "label": "Name",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "phone",
+            "label": "Phone number",
+            "type": "string",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "tags",
+            "label": "Tags",
+            "type": "string",
+            "required": false,
+            "list": true,
+            "altersDynamicFields": false
+          },
+          {
+            "key": "source",
+            "label": "Source",
+            "type": "string",
+            "default": "zapier",
+            "required": false,
+            "list": false,
+            "altersDynamicFields": false
+          }
+        ],
+        "sample": {
+          "id": "cont_123",
+          "account": "acct_123",
+          "object": "contact",
+          "created": 1658529469,
+          "metadata": {},
+          "updated": 1658529469,
+          "organization": null,
+          "active": true,
+          "address": null,
+          "avatar": null,
+          "balance": 0,
+          "currency": "usd",
+          "description": "",
+          "email": "jane@example.com",
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "name": null,
+          "phone": null,
+          "shipping": null,
+          "source": "zapier",
+          "tags": []
+        },
+        "outputFields": [
+          {
+            "key": "id",
+            "label": "Contact ID"
+          },
+          {
+            "key": "object",
+            "type": "string",
+            "label": "Object Type"
+          },
+          {
+            "key": "created",
+            "type": "integer",
+            "label": "Created Timestamp"
+          },
+          {
+            "key": "active",
+            "type": "boolean",
+            "label": "Active"
+          },
+          {
+            "key": "address",
+            "label": "Address"
+          },
+          {
+            "key": "avatar",
+            "label": "Avatar Image"
+          },
+          {
+            "key": "balance",
+            "label": "Balance",
+            "type": "integer"
+          },
+          {
+            "key": "currency",
+            "label": "Currency"
+          },
+          {
+            "key": "description",
+            "label": "Description"
+          },
+          {
+            "key": "email",
+            "label": "Email address"
+          },
+          {
+            "key": "first_name",
+            "label": "First name"
+          },
+          {
+            "key": "last_name",
+            "label": "Last name"
+          },
+          {
+            "key": "name",
+            "label": "Full name"
+          },
+          {
+            "key": "phone"
+          },
+          {
+            "key": "shipping"
+          },
+          {
+            "key": "source"
+          }
+        ],
+        "perform": {
+          "body": {
+            "email": "{{bundle.inputData.email}}",
+            "currency": "{{bundle.inputData.currency}}",
+            "description": "{{bundle.inputData.description}}",
+            "first_name": "{{bundle.inputData.first_name}}",
+            "last_name": "{{bundle.inputData.last_name}}",
+            "name": "{{bundle.inputData.name}}",
+            "phone": "{{bundle.inputData.phone}}",
+            "source": "{{bundle.inputData.source}}",
+            "tags": "{{bundle.inputData.tags}}",
+            "avatar": "{{bundle.inputData.avatar}}"
+          },
+          "headers": {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer {{bundle.authData.access_token}}",
+            "Versify-Account": "{{bundle.authData.account_id}}"
+          },
+          "method": "POST",
+          "removeMissingValuesFrom": {
+            "params": true,
+            "body": true
+          },
+          "url": "https://api.versifylabs.com/v1/contacts"
+        }
+      }
+    }
+  },
+  "authentication": {
+    "type": "oauth2",
+    "test": {
+      "headers": {
+        "Authorization": "Bearer {{bundle.authData.access_token}}",
+        "Versify-Account": "{{bundle.authData.account_id}}",
+        "X-ACCOUNT-ID": "{{bundle.authData.account_id}}"
+      },
+      "url": "https://api.versifylabs.com/v1/accounts/{{bundle.authData.account_id}}"
+    },
+    "oauth2Config": {
+      "authorizeUrl": {
+        "url": "https://versify.us.auth0.com/authorize",
+        "params": {
+          "client_id": "{{process.env.CLIENT_ID}}",
+          "state": "{{bundle.inputData.state}}",
+          "redirect_uri": "{{bundle.inputData.redirect_uri}}",
+          "response_type": "code",
+          "audience": "https://api.versifylabs.com/admin",
+          "scope": "offline_access"
+        }
+      },
+      "getAccessToken": {
+        "body": {
+          "code": "{{bundle.inputData.code}}",
+          "client_id": "{{process.env.CLIENT_ID}}",
+          "client_secret": "{{process.env.CLIENT_SECRET}}",
+          "grant_type": "authorization_code",
+          "redirect_uri": "{{bundle.inputData.redirect_uri}}",
+          "audience": "https://api.dev.versifylabs.com/admin"
+        },
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json"
+        },
+        "method": "POST",
+        "url": "https://versify.us.auth0.com/oauth/token"
+      },
+      "refreshAccessToken": {
+        "body": {
+          "refresh_token": "{{bundle.authData.refresh_token}}",
+          "client_id": "{{process.env.CLIENT_ID}}",
+          "client_secret": "{{process.env.CLIENT_SECRET}}",
+          "grant_type": "refresh_token",
+          "audience": "https://api.dev.versifylabs.com/admin"
+        },
+        "headers": {
+          "content-type": "application/x-www-form-urlencoded",
+          "accept": "application/json"
+        },
+        "method": "POST",
+        "url": "https://versify.us.auth0.com/oauth/token"
+      },
+      "autoRefresh": true,
+      "scope": ""
+    },
+    "connectionLabel": "{{bundle.inputData.business_profile.name}}",
+    "fields": [
+      {
+        "computed": false,
+        "key": "account_id",
+        "required": true,
+        "label": "Account",
+        "type": "string",
+        "helpText": "This is your organizations Versify Account ID.  You can view your Account ID in the Versify Dashboard under the [Integrations](https://dashboard.versifylabs.com/integrations) tab. "
+      }
+    ]
+  }
+}

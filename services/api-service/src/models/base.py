@@ -8,6 +8,8 @@ class BaseVersifyModel(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
     object: str
     created: int
+    metadata: Optional[dict] = {}
+    updated: Optional[int]
 
     def to_json(self):
         raw = jsonable_encoder(self, exclude_none=False)
@@ -20,11 +22,3 @@ class BaseVersifyModel(BaseModel):
         if data.get("_id") is None:
             data.pop("_id", None)
         return data
-
-
-class BaseCampaign(BaseVersifyModel):
-    id: Optional[str] = Field(None, alias="_id")
-    created: int
-    metadata: Optional[dict] = {}
-    organization: Optional[str]
-    product: str

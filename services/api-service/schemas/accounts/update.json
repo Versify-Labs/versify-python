@@ -13,6 +13,11 @@
       "description": "The accounts primary business_type. Can be individual, company, non_profit, or government_entity",
       "type": "string"
     },
+    "capabilities": {
+      "additionalProperties": true,
+      "description": "An object containing the set of capabilities for this account and their associated states. Keys are names of capabilities. Values may be active, inactive, or pending.",
+      "type": "object"
+    },
     "company": {
       "additionalProperties": true,
       "description": "Information about the company or business. This field is available for any business_type.",
@@ -26,12 +31,9 @@
       "description": "Three-letter ISO currency code representing the default currency for the account. This must be a currency that Versify supports in the account’s country.",
       "type": "string"
     },
-    "description": {
-      "description": "The accounts description, meant to be displayable on the admin dashboard.",
-      "type": "string"
-    },
     "email": {
-      "description": "The accounts email address. This is the default email to send order invoices to.",
+      "description": "The accounts email address. This is the default email to send invoices to.",
+      "format": "email",
       "type": "string"
     },
     "individual": {
@@ -44,13 +46,14 @@
       "description": "Set of key-value pairs that you can attach to an object. This can be useful for storing additional information about the object in a structured format.",
       "type": "object"
     },
-    "name": {
-      "description": "The accounts full name.",
-      "type": "string"
-    },
     "settings": {
       "additionalProperties": true,
       "description": "Options for customizing how the account functions within Versify.",
+      "type": "object"
+    },
+    "tos_acceptance": {
+      "additionalProperties": true,
+      "description": "Details on the account’s acceptance of the Versify Services Agreement.",
       "type": "object"
     }
   }

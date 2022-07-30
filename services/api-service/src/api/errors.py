@@ -11,5 +11,12 @@ class ExpansionDepthError(BadRequestError):
 class ExpansionResourceError(BadRequestError):
 
     def __init__(self, parent, child):
-        msg = f'The {child} resource cannot be expanded on a {parent}'
+        msg = f'The {child} resource cannot be expanded on a {parent}.'
+        super().__init__(msg)
+
+
+class UsageLimitError(BadRequestError):
+
+    def __init__(self):
+        msg = 'Account usage limit reached for this request.'
         super().__init__(msg)

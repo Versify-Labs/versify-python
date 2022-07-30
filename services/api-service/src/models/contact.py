@@ -7,6 +7,7 @@ from .base import BaseVersifyModel
 
 class Contact(BaseVersifyModel):
     id: Optional[str] = Field(None, alias="_id")
+    account: Optional[str]
     object: str = 'contact'
     active: bool = True
     address: Optional[dict]
@@ -20,8 +21,8 @@ class Contact(BaseVersifyModel):
     last_name: Optional[str]
     metadata: Optional[dict] = {}
     name: Optional[str]
-    organization: str
     phone: Optional[str]
     shipping: Optional[dict]
     source: str = 'Versify'
     tags: list = []
+    updated: Optional[int]

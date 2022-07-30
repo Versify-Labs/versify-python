@@ -7,15 +7,25 @@ class Request:
 
     def __init__(self, app: APIGatewayRestResolver, id: Optional[str] = None):
         self._id = id
-        self._org = app.current_event.get_header_value('X-Organization')
         self._path = app.current_event.path
+
+        # Add context data
+        self._account = app.current_event.get_header_value('Versify-Account')
+        self._email = None
+        self._user = None
+        authorizer = {}
+        try:
+            authorizer = app.current_event.request_context.authorizer or {}
+            self._account = authorizer.get('account')
+            self._email = authorizer.get('email')
+            self._user = authorizer.get('user')
+        except:
+            authorizer = {}
 
         # Construct body
         self._body = {}
         if app.current_event.body:
             self._body = app.current_event.json_body
-        if self.org:
-            self._body['organization'] = self.org
 
         # Cleanup query params from request
         query_params = {}
@@ -62,8 +72,12 @@ class Request:
         # Other Params
         if id:
             self._filter['_id'] = id
-        if self._org:
-            self._filter['organization'] = self._org
+        if self._account:
+            self._filter['account'] = self._account
+
+    @property
+    def account(self) -> Optional[str]:
+        return self._account
 
     @property
     def body(self) -> dict:
@@ -79,7 +93,12 @@ class Request:
     def create(self) -> dict:
         return {
             'body': self._body,
-            'expand_list': self._expand_list
+            'expand_list': self._expand_list,
+            'auth': {
+                'account': self._account,
+                'email': self._email,
+                'user': self._user
+            }
         }
 
     @property
@@ -87,6 +106,10 @@ class Request:
         return {
             'filter': self._filter
         }
+
+    @property
+    def filter(self) -> dict:
+        return self._filter
 
     @property
     def get(self) -> dict:
@@ -109,10 +132,6 @@ class Request:
         }
 
     @property
-    def org(self) -> Optional[str]:
-        return self._org
-
-    @property
     def path(self) -> str:
         return self._path
 
@@ -124,9 +143,17 @@ class Request:
             'expand_list': self._expand_list
         }
 
+    @property
+    def user(self) -> Optional[str]:
+        return self._user
+
     @body.setter
     def body(self, value):
         self._body = value
+
+    @body.setter
+    def filter(self, value):
+        self._filter = value
 
 
 class Response:
@@ -147,7 +174,7 @@ class Response:
 
         # Construct variables from req object
         self.id = req.id
-        self.org = req.org
+        self.account = req.account
         self.url = req.path
 
         # Construct object from request object

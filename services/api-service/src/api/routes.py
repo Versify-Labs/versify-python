@@ -5,34 +5,26 @@ from aws_lambda_powertools.event_handler.api_gateway import \
 from aws_lambda_powertools.logging import correlation_paths
 from lambda_decorators import cors_headers
 
-from .resources import (Account, Airdrop, Collection, Contact, Event, Mint,
-                        MintLink, Note, Product, Signature, Webhook)
+from .resources import Signature, Versify
 from .rest import Request, Response
 from .search import Search
 
 app = APIGatewayRestResolver()
 logger = Logger()
 tracer = Tracer()
+versify = Versify()
+
 
 ############
 # Accounts #
 ############
 
 
-@app.get('/.+/accounts')
-@tracer.capture_method
-def list_accounts():
-    req = Request(app)
-    data = Account().list(**req.list)
-    count = Account().count(**req.count)
-    return Response(req, data, count).list
-
-
 @app.post('/.+/accounts')
 @tracer.capture_method
 def create_account():
     req = Request(app)
-    data = Account().create(**req.create)
+    data = versify.account.create(**req.create)
     return Response(req, data).create
 
 
@@ -40,7 +32,7 @@ def create_account():
 @tracer.capture_method
 def get_account(id):
     req = Request(app, id)
-    data = Account().get(**req.get)
+    data = versify.account.get(**req.get)
     return Response(req, data).get
 
 
@@ -48,7 +40,31 @@ def get_account(id):
 @tracer.capture_method
 def update_account(id):
     req = Request(app, id)
-    data = Account().update(**req.update)
+    data = versify.account.update(**req.update)
+    return Response(req, data).update
+
+
+@app.post('/.+/accounts/<id>/members')
+@tracer.capture_method
+def create_account_member(id):
+    req = Request(app, id)
+    data = versify.account.create_member(**req.create)
+    return Response(req, data).create
+
+
+@app.post('/.+/accounts/<id>/subscriptions')
+@tracer.capture_method
+def create_account_subscription(id):
+    req = Request(app, id)
+    data = versify.account.create_subscription(**req.create)
+    return Response(req, data).create
+
+
+@app.put('/.+/accounts/<id>/subscriptions/<sid>')
+@tracer.capture_method
+def update_account_subscription(id, sid):
+    req = Request(app, id)
+    data = versify.account.update_subscription(sid, req.body)
     return Response(req, data).update
 
 
@@ -61,8 +77,8 @@ def update_account(id):
 @tracer.capture_method
 def list_airdrops():
     req = Request(app)
-    data = Airdrop().list(**req.list)
-    count = Airdrop().count(**req.count)
+    data = versify.airdrop.list(**req.list)
+    count = versify.airdrop.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -70,7 +86,7 @@ def list_airdrops():
 @tracer.capture_method
 def create_airdrop():
     req = Request(app)
-    data = Airdrop().create(**req.create)
+    data = versify.airdrop.create(**req.create)
     return Response(req, data).create
 
 
@@ -78,7 +94,7 @@ def create_airdrop():
 @tracer.capture_method
 def get_airdrop(id):
     req = Request(app, id)
-    data = Airdrop().get(**req.get)
+    data = versify.airdrop.get(**req.get)
     return Response(req, data).get
 
 
@@ -86,7 +102,7 @@ def get_airdrop(id):
 @tracer.capture_method
 def update_airdrop(id):
     req = Request(app, id)
-    data = Airdrop().update(**req.update)
+    data = versify.airdrop.update(**req.update)
     return Response(req, data).update
 
 
@@ -94,7 +110,7 @@ def update_airdrop(id):
 @tracer.capture_method
 def delete_airdrop(id):
     req = Request(app, id)
-    Airdrop().delete(**req.delete)
+    versify.airdrop.delete(**req.delete)
     return Response(req).delete
 
 
@@ -103,7 +119,7 @@ def delete_airdrop(id):
 def send_airdrop(id):
     req = Request(app, id)
     req.body = {'status': 'sending'}
-    data = Airdrop().update(**req.update)
+    data = versify.airdrop.update(**req.update)
     return Response(req, data).update
 
 ###############
@@ -115,8 +131,8 @@ def send_airdrop(id):
 @tracer.capture_method
 def list_collections():
     req = Request(app)
-    data = Collection().list(**req.list)
-    count = Collection().count(**req.count)
+    data = versify.collection.list(**req.list)
+    count = versify.collection.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -124,7 +140,7 @@ def list_collections():
 @tracer.capture_method
 def create_collection():
     req = Request(app)
-    data = Collection().create(**req.create)
+    data = versify.collection.create(**req.create)
     return Response(req, data).create
 
 
@@ -132,7 +148,7 @@ def create_collection():
 @tracer.capture_method
 def get_collection(id):
     req = Request(app, id)
-    data = Collection().get(**req.get)
+    data = versify.collection.get(**req.get)
     return Response(req, data).get
 
 
@@ -140,7 +156,7 @@ def get_collection(id):
 @tracer.capture_method
 def update_collection(id):
     req = Request(app, id)
-    data = Collection().update(**req.update)
+    data = versify.collection.update(**req.update)
     return Response(req, data).update
 
 
@@ -148,7 +164,7 @@ def update_collection(id):
 @tracer.capture_method
 def delete_collection(id):
     req = Request(app, id)
-    Collection().delete(**req.delete)
+    versify.collection.delete(**req.delete)
     return Response(req).delete
 
 
@@ -160,8 +176,8 @@ def delete_collection(id):
 @tracer.capture_method
 def list_contacts():
     req = Request(app)
-    data = Contact().list(**req.list)
-    count = Contact().count(**req.count)
+    data = versify.contact.list(**req.list)
+    count = versify.contact.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -169,7 +185,7 @@ def list_contacts():
 @tracer.capture_method
 def create_contact():
     req = Request(app)
-    data = Contact().create(**req.create)
+    data = versify.contact.create(**req.create)
     return Response(req, data).create
 
 
@@ -177,7 +193,7 @@ def create_contact():
 @tracer.capture_method
 def get_contact(id):
     req = Request(app, id)
-    data = Contact().get(**req.get)
+    data = versify.contact.get(**req.get)
     return Response(req, data).get
 
 
@@ -185,7 +201,7 @@ def get_contact(id):
 @tracer.capture_method
 def update_contact(id):
     req = Request(app, id)
-    data = Contact().update(**req.update)
+    data = versify.contact.update(**req.update)
     return Response(req, data).update
 
 
@@ -193,7 +209,7 @@ def update_contact(id):
 @tracer.capture_method
 def delete_contact(id):
     req = Request(app, id)
-    Contact().delete(**req.delete)
+    versify.contact.delete(**req.delete)
     return Response(req).delete
 
 
@@ -206,8 +222,8 @@ def delete_contact(id):
 @tracer.capture_method
 def list_events():
     req = Request(app)
-    data = Event().list(**req.list)
-    count = Event().count(**req.count)
+    data = versify.event.list(**req.list)
+    count = versify.event.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -215,7 +231,7 @@ def list_events():
 @tracer.capture_method
 def create_event():
     req = Request(app)
-    data = Event().create(**req.create)
+    data = versify.event.create(**req.create)
     return Response(req, data).create
 
 
@@ -223,7 +239,7 @@ def create_event():
 @tracer.capture_method
 def get_event(id):
     req = Request(app, id)
-    data = Event().get(**req.get)
+    data = versify.event.get(**req.get)
     return Response(req, data).get
 
 
@@ -231,7 +247,7 @@ def get_event(id):
 @tracer.capture_method
 def update_event(id):
     req = Request(app, id)
-    data = Event().update(**req.update)
+    data = versify.event.update(**req.update)
     return Response(req, data).update
 
 
@@ -239,7 +255,7 @@ def update_event(id):
 @tracer.capture_method
 def delete_event(id):
     req = Request(app, id)
-    Event().delete(**req.delete)
+    versify.event.delete(**req.delete)
     return Response(req).delete
 
 
@@ -251,8 +267,8 @@ def delete_event(id):
 @tracer.capture_method
 def list_mint_links():
     req = Request(app)
-    data = MintLink().list(**req.list)
-    count = MintLink().count(**req.count)
+    data = versify.mint_link.list(**req.list)
+    count = versify.mint_link.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -260,7 +276,7 @@ def list_mint_links():
 @tracer.capture_method
 def create_mint_link():
     req = Request(app)
-    data = MintLink().create(**req.create)
+    data = versify.mint_link.create(**req.create)
     return Response(req, data).create
 
 
@@ -268,7 +284,7 @@ def create_mint_link():
 @tracer.capture_method
 def get_mint_link(id):
     req = Request(app, id)
-    data = MintLink().get(**req.get)
+    data = versify.mint_link.get(**req.get)
     return Response(req, data).get
 
 
@@ -276,7 +292,7 @@ def get_mint_link(id):
 @tracer.capture_method
 def update_mint_link(id):
     req = Request(app, id)
-    data = MintLink().update(**req.update)
+    data = versify.mint_link.update(**req.update)
     return Response(req, data).update
 
 
@@ -284,7 +300,7 @@ def update_mint_link(id):
 @tracer.capture_method
 def delete_mint_link(id):
     req = Request(app, id)
-    MintLink().delete(**req.delete)
+    versify.mint_link.delete(**req.delete)
     return Response(req).delete
 
 
@@ -295,8 +311,8 @@ def delete_mint_link(id):
 @tracer.capture_method
 def list_mints():
     req = Request(app)
-    data = Mint().list(**req.list)
-    count = Mint().count(**req.count)
+    data = versify.mint.list(**req.list)
+    count = versify.mint.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -304,7 +320,7 @@ def list_mints():
 @tracer.capture_method
 def create_mint():
     req = Request(app)
-    data = Mint().create(**req.create)
+    data = versify.mint.create(**req.create)
     return Response(req, data).create
 
 
@@ -312,7 +328,7 @@ def create_mint():
 @tracer.capture_method
 def get_mint(id):
     req = Request(app, id)
-    data = Mint().get(**req.get)
+    data = versify.mint.get(**req.get)
     return Response(req, data).get
 
 
@@ -320,7 +336,7 @@ def get_mint(id):
 @tracer.capture_method
 def update_mint(id):
     req = Request(app, id)
-    data = Mint().update(**req.update)
+    data = versify.mint.update(**req.update)
     return Response(req, data).update
 
 
@@ -328,7 +344,7 @@ def update_mint(id):
 @tracer.capture_method
 def delete_mint(id):
     req = Request(app, id)
-    Mint().delete(**req.delete)
+    versify.mint.delete(**req.delete)
     return Response(req).delete
 
 
@@ -336,8 +352,8 @@ def delete_mint(id):
 @tracer.capture_method
 def fulfill_mint(id):
     req = Request(app, id)
-    req.body['status'] = 'fulfilled'
-    return Mint().update(**req.update)
+    data = versify.mint.fulfill(**req.update)
+    return Response(req, data).update
 
 #########
 # Notes #
@@ -348,8 +364,8 @@ def fulfill_mint(id):
 @tracer.capture_method
 def list_notes():
     req = Request(app)
-    data = Note().list(**req.list)
-    count = Note().count(**req.count)
+    data = versify.note.list(**req.list)
+    count = versify.note.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -357,7 +373,7 @@ def list_notes():
 @tracer.capture_method
 def create_note():
     req = Request(app)
-    data = Note().create(**req.create)
+    data = versify.note.create(**req.create)
     return Response(req, data).create
 
 
@@ -365,7 +381,7 @@ def create_note():
 @tracer.capture_method
 def get_note(id):
     req = Request(app, id)
-    data = Note().get(**req.get)
+    data = versify.note.get(**req.get)
     return Response(req, data).get
 
 
@@ -373,7 +389,7 @@ def get_note(id):
 @tracer.capture_method
 def update_note(id):
     req = Request(app, id)
-    data = Note().update(**req.update)
+    data = versify.note.update(**req.update)
     return Response(req, data).update
 
 
@@ -381,7 +397,7 @@ def update_note(id):
 @tracer.capture_method
 def delete_note(id):
     req = Request(app, id)
-    Note().delete(**req.delete)
+    versify.note.delete(**req.delete)
     return Response(req).delete
 
 
@@ -393,8 +409,8 @@ def delete_note(id):
 @tracer.capture_method
 def list_products():
     req = Request(app)
-    data = Product().list(**req.list)
-    count = Product().count(**req.count)
+    data = versify.product.list(**req.list)
+    count = versify.product.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -402,7 +418,7 @@ def list_products():
 @tracer.capture_method
 def create_product():
     req = Request(app)
-    data = Product().create(**req.create)
+    data = versify.product.create(**req.create)
     return Response(req, data).create
 
 
@@ -410,7 +426,7 @@ def create_product():
 @tracer.capture_method
 def get_product(id):
     req = Request(app, id)
-    data = Product().get(**req.get)
+    data = versify.product.get(**req.get)
     return Response(req, data).get
 
 
@@ -418,7 +434,7 @@ def get_product(id):
 @tracer.capture_method
 def update_product(id):
     req = Request(app, id)
-    data = Product().update(**req.update)
+    data = versify.product.update(**req.update)
     return Response(req, data).update
 
 
@@ -426,7 +442,7 @@ def update_product(id):
 @tracer.capture_method
 def delete_product(id):
     req = Request(app, id)
-    Product().delete(**req.delete)
+    versify.product.delete(**req.delete)
     return Response(req).delete
 
 
@@ -451,17 +467,30 @@ def search():
 def get_signature(id):
     return Signature().exists(id)
 
+############
+# Users #
+############
+
+
+@app.post('/.+/users')
+@tracer.capture_method
+def create_user():
+    req = Request(app)
+    data = versify.user.create(**req.create)
+    return Response(req, data).create
+
 
 ############
 # Webhooks #
 ############
 
+
 @app.get('/.+/webhooks')
 @tracer.capture_method
 def list_webhooks():
     req = Request(app)
-    data = Webhook().list(**req.list)
-    count = Webhook().count(**req.count)
+    data = versify.webhook.list(**req.list)
+    count = versify.webhook.count(**req.count)
     return Response(req, data, count).list
 
 
@@ -469,7 +498,7 @@ def list_webhooks():
 @tracer.capture_method
 def create_webhook():
     req = Request(app)
-    data = Webhook().create(**req.create)
+    data = versify.webhook.create(**req.create)
     return Response(req, data).create
 
 
@@ -477,7 +506,7 @@ def create_webhook():
 @tracer.capture_method
 def get_webhook(id):
     req = Request(app, id)
-    data = Webhook().get(**req.get)
+    data = versify.webhook.get(**req.get)
     return Response(req, data).get
 
 
@@ -485,7 +514,7 @@ def get_webhook(id):
 @tracer.capture_method
 def update_webhook(id):
     req = Request(app, id)
-    data = Webhook().update(**req.update)
+    data = versify.webhook.update(**req.update)
     return Response(req, data).update
 
 
@@ -493,7 +522,7 @@ def update_webhook(id):
 @tracer.capture_method
 def delete_webhook(id):
     req = Request(app, id)
-    Webhook().delete(**req.delete)
+    versify.webhook.delete(**req.delete)
     return Response(req).delete
 
 

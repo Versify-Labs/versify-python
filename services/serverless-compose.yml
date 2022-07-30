@@ -5,13 +5,3 @@ services:
     path: event-service
     dependsOn:
       - api-service
-  chain-service:
-    path: chain-service
-    dependsOn:
-      - api-service
-      - event-service
-  partner-service:
-    path: partner-service
-    dependsOn:
-      - api-service
-      - event-service

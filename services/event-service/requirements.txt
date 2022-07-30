@@ -1,3 +1,12 @@
 aws_requests_auth
+dnspython
+fastapi
+ksuid
 lambda-decorators
+mailchimp_transactional
+pydantic
+pymongo[aws] == 4.1
+python-jose
+python-slugify
 requests
+stripe==3.0.0

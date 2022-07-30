@@ -7,4 +7,5 @@ from .mint import Mint
 from .mint_link import MintLink
 from .note import Note
 from .product import Product
+from .user import User
 from .webhook import Webhook

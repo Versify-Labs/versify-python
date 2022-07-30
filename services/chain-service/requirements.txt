@@ -1,3 +1,0 @@
-aws_requests_auth
-lambda-decorators
-requests

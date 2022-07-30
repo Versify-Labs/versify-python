@@ -7,18 +7,18 @@ from .base import BaseVersifyModel
 
 class Mint(BaseVersifyModel):
     id: Optional[str] = Field(None, alias="_id")
+    account: str
     object: str = 'mint'
     airdrop: Optional[str]
-    contact: str
+    contact: Optional[str]
     created: int
-    failure_code: Optional[int]
-    failure_message: Optional[str]
+    email: Optional[str]
     metadata: Optional[dict] = {}
     mint_link: Optional[str]
-    organization: str
     product: str
     signature: Optional[str]
-    status: str = 'reserved'  # reserved -> fulfilled -> complete / failed
+    # updates to pending, then failed or complete once we receive transaction result
+    status: str = 'reserved'
     transaction: Optional[str]
-    url: str  # example: "https://mint.versifylabs.com/{id}"
+    updated: Optional[int]
     wallet_address: Optional[str]

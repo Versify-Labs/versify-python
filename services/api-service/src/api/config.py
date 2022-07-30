@@ -1,5 +1,5 @@
-from ..models import (Account, Airdrop, Collection, Contact, Event, Mint, MintLink,
-                      Note, Product, Webhook)
+from ..models import (Account, Airdrop, Collection, Contact, Event, Mint,
+                      MintLink, Note, Product, User, Webhook)
 
 
 class AccountConfig:
@@ -27,7 +27,7 @@ class CollectionConfig:
     db = 'Products'
     expandables = []
     model = Collection
-    object = 'product'
+    object = 'collection'
     prefix = 'coll'
     search_index = None
 
@@ -92,6 +92,16 @@ class ProductConfig:
     search_index = 'ProductsSearchIndex'
 
 
+class UserConfig:
+    collection = 'Users'
+    db = 'Accounts'
+    expandables = []
+    model = User
+    object = 'user'
+    prefix = 'user'
+    search_index = None
+
+
 class WebhookConfig:
     collection = 'Webhooks'
     db = 'Events'
@@ -103,13 +113,15 @@ class WebhookConfig:
 
 
 config = {
+    'account': AccountConfig,
     'airdrop': AirdropConfig,
     'collection': CollectionConfig,
     'contact': ContactConfig,
     'event': EventConfig,
-    'mint': MintConfig,
     'mint_link': MintLinkConfig,
+    'mint': MintConfig,
     'note': NoteConfig,
     'product': ProductConfig,
+    'user': UserConfig,
     'webhook': WebhookConfig
 }

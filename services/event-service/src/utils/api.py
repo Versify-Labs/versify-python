@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 from urllib.parse import urlparse
 
 import boto3
@@ -13,7 +12,7 @@ else:
     VERSIFY_API_URL = 'https://api-dev.versifylabs.com'
 
 
-def call_api(method: str, path: str, body: dict = {}, organization: str = None, params: dict = {}):
+def call_api(method: str, path: str, body: dict = {}, account: str = None, params: dict = {}):
     url = urlparse(VERSIFY_API_URL)
     region = boto3.session.Session().region_name
     iam_auth = BotoAWSRequestsAuth(
@@ -21,7 +20,7 @@ def call_api(method: str, path: str, body: dict = {}, organization: str = None, 
         aws_region=region,
         aws_service='execute-api'
     )
-    headers = {'X-Organization': organization}
+    headers = {'Versify-Account': account}
     print({
         'url': VERSIFY_API_URL+path,
         'params': params,
@@ -44,10 +43,10 @@ def call_api(method: str, path: str, body: dict = {}, organization: str = None, 
     return response.json()
 
 
-def call_external_api(method: str, url: str, organization: str, body: dict = {}, params: dict = {}):
+def call_external_api(method: str, url: str, account: str, body: dict = {}, params: dict = {}):
     headers = {
         'Versify-Signature': 'Not Implemented',
-        'X-Organization': organization,
+        'Versify-Account': account,
     }
     print({
         'method': method,

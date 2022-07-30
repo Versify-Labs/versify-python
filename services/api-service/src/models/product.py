@@ -7,6 +7,7 @@ from .base import BaseVersifyModel
 
 class Product(BaseVersifyModel):
     id: Optional[str] = Field(None, alias="_id")
+    account: Optional[str]
     object: str = 'product'
     active: bool = True
     chain: Optional[str] = 'polygon'
@@ -19,7 +20,7 @@ class Product(BaseVersifyModel):
     image: Optional[str]
     metadata: Optional[dict] = {}
     name: Optional[str]
-    organization: str
     properties: list = []
     tags: list = []
     token_id: Optional[str]
+    updated: Optional[int]

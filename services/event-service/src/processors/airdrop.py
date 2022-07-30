@@ -1,6 +1,7 @@
 from aws_lambda_powertools import Logger
 
 from ..utils.api import call_api
+from ..utils.mandrill import mailchimp
 
 logger = Logger()
 
@@ -13,37 +14,29 @@ class AirdropProcessor:
     def validate(self):
         return True
 
-    def get_organization(self):
-        org_id = self.airdrop['organization']
-        organization = call_api(
-            method='GET',
-            path=f'/partners/auth0/organizations/{org_id}/validate',
-            organization=self.airdrop['organization']
-        )
-        logger.info(organization)
-        return organization
-
-    def get_product(self):
-        product_id = self.airdrop['product']
-        product = call_api(
-            method='GET',
-            path=f'/internal/products/{product_id}',
-            organization=self.airdrop['organization'],
-            params={'expand': 'collection'}
-        )
-        logger.info(product)
-        return product
-
     def get_segment(self):
+        logger.info('Getting segment')
         vql = self.airdrop['recipients']['segment_options']['conditions']
         response = call_api(
             method='GET',
             path='/internal/contacts/aggregate/segment',
-            organization=self.airdrop['organization'],
+            account=self.airdrop['account'],
             params={'vql': vql}
         )
         logger.info(response)
         return response.get('data', [])
+
+    def get_product(self):
+        logger.info('Getting product')
+        product_id = self.airdrop['product']
+        product = call_api(
+            method='GET',
+            path=f'/internal/products/{product_id}',
+            account=self.airdrop['account'],
+            params={'expand': 'collection'}
+        )
+        logger.info(product)
+        return product
 
     def create_mint(self, contact, product):
         logger.info('Creating mint')
@@ -55,7 +48,7 @@ class AirdropProcessor:
                 'contact': contact['id'],
                 'product': self.airdrop['product']
             },
-            organization=self.airdrop['organization'],
+            account=self.airdrop['account'],
         )
         logger.info(mint)
         return mint
@@ -72,65 +65,61 @@ class AirdropProcessor:
         greeting = 'Hi there'
         if to_name:
             greeting = 'Hi ' + to_name.capitalize()
-        message = call_api(
-            method='POST',
-            path='/partners/mandrill/messages',
-            body={
-                'template_name': 'airdrop',
-                'template_content': [],
-                'message': {
-                    'from_email': from_email,
-                    'from_name': from_name,
-                    'subject': subject_line,
-                    'to': [
-                        {
-                            'email': contact['email'],
-                            'type': 'to'
-                        }
-                    ],
-                    'merge_language': 'handlebars',
-                    'global_merge_vars': [
-                        {
-                            'name': 'CLAIM_URL',
-                            'content': mint['url']
-                        },
-                        {
-                            'name': 'FROM_NAME',
-                            'content': from_name
-                        },
-                        {
-                            'name': 'FROM_IMAGE',
-                            'content': from_image
-                        },
-                        {
-                            'name': 'GREETING',
-                            'content': greeting
-                        },
-                        {
-                            'name': 'MESSAGE',
-                            'content': content
-                        },
-                        {
-                            'name': 'PREVIEW_TEXT',
-                            'content': preview_text
-                        },
-                        {
-                            'name': 'PRODUCT_DESCRIPTION',
-                            'content': product['description']
-                        },
-                        {
-                            'name': 'PRODUCT_IMAGE',
-                            'content': product['image']
-                        },
-                        {
-                            'name': 'PRODUCT_NAME',
-                            'content': product['name']
-                        }
-                    ]
-                }
-            },
-            organization=self.airdrop['organization'],
-        )
+        body = {
+            'template_name': 'airdrop',
+            'template_content': [],
+            'message': {
+                'from_email': from_email,
+                'from_name': from_name,
+                'subject': subject_line,
+                'to': [
+                    {
+                        'email': contact['email'],
+                        'type': 'to'
+                    }
+                ],
+                'merge_language': 'handlebars',
+                'global_merge_vars': [
+                    {
+                        'name': 'CLAIM_URL',
+                        'content': mint['url']
+                    },
+                    {
+                        'name': 'FROM_NAME',
+                        'content': from_name
+                    },
+                    {
+                        'name': 'FROM_IMAGE',
+                        'content': from_image
+                    },
+                    {
+                        'name': 'GREETING',
+                        'content': greeting
+                    },
+                    {
+                        'name': 'MESSAGE',
+                        'content': content
+                    },
+                    {
+                        'name': 'PREVIEW_TEXT',
+                        'content': preview_text
+                    },
+                    {
+                        'name': 'PRODUCT_DESCRIPTION',
+                        'content': product['description']
+                    },
+                    {
+                        'name': 'PRODUCT_IMAGE',
+                        'content': product['image']
+                    },
+                    {
+                        'name': 'PRODUCT_NAME',
+                        'content': product['name']
+                    }
+                ]
+            }
+        }
+        message = mailchimp.messages.send_template(body)
         logger.info(message)
         return message
 
@@ -139,10 +128,8 @@ class AirdropProcessor:
         airdrop = call_api(
             method='PUT',
             path='/internal/airdrops/' + self.airdrop['id'],
-            body={
-                'status': 'complete'
-            },
-            organization=self.airdrop['organization'],
+            body={'status': 'complete'},
+            account=self.airdrop['account'],
         )
         logger.info(airdrop)
         return airdrop

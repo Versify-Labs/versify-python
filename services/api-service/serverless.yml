@@ -29,15 +29,31 @@ provider:
     POWERTOOLS_SERVICE_NAME: api-service
     POWERTOOLS_TRACE_DISABLED: false
     SECRET_NAME: /versify/platform/secret
+    STRIPE_BASIC_PRICE: ${ssm:/versify/services/stripe/basic/price}
+    STRIPE_GROWTH_PRICE: ${ssm:/versify/services/stripe/growth/price}
   iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - execute-api:Invoke
+      Resource:
+        - "arn:aws:execute-api:us-east-1:*:*/*/*/*"
     - Effect: Allow
       Action:
         - secretsmanager:GetSecretValue
       Resource:
         - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - "arn:aws:s3:::cdn.versifylabs.com"
+        - "arn:aws:s3:::cdn.versifylabs.com/*"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com"
+        - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
   layers:
-    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:22
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:26
   runtime: python3.9
+  timeout: 30
   tracing:
     lambda: true
 
@@ -45,31 +61,34 @@ functions:
   Authorizer:
     handler: src.api.authorizer.handler
     name: Authorizer
+    description: API Authorizer
   API-Accounts:
     handler: src.api.routes.handler
     name: API-Accounts
+    description: API endpoints relating to the Account object
     events:
       - http:
           method: get
-          path: /v1/accounts
-          operationId: ListAccounts
-          authorizer:
-            type: REQUEST
-            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
+          path: /internal/accounts/{id}
+          operationId: GetAccount
+          authorizer: aws_iam
           request:
             parameters:
               headers:
-                X-Authorization: true
-              querystrings:
-                expand: false
-                page_num: false
-                page_size: false
-                filter: false
-                status: false
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /internal/accounts/{id}
+          operationId: UpdateAccount
+          authorizer: aws_iam
+          request:
+            parameters:
+              headers:
+                Versify-Account: true
+              paths:
+                id: true
       - http:
           method: post
           path: /v1/accounts
@@ -84,7 +103,7 @@ functions:
           request:
             parameters:
               headers:
-                X-Authorization: true
+                Authorization: true
             schemas:
               application/json: ${file(schemas/accounts/create.json)}
       - http:
@@ -101,7 +120,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Authorization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
       - http:
@@ -118,14 +138,73 @@ functions:
           request:
             parameters:
               headers:
-                X-Authorization: false
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
             schemas:
               application/json: ${file(schemas/accounts/update.json)}
+      - http:
+          method: post
+          path: /v1/accounts/{id}/members
+          operationId: CreateMember
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/accounts/create_member.json)}
+      - http:
+          method: post
+          path: /v1/accounts/{id}/subscriptions
+          operationId: CreateSubscription
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/accounts/create_subscription.json)}
+      - http:
+          method: put
+          path: /v1/accounts/{id}/subscriptions/{sid}
+          operationId: UpdateSubscription
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+                sid: true
+            schemas:
+              application/json: ${file(schemas/accounts/update_subscription.json)}
   API-Airdrops:
     handler: src.api.routes.handler
     name: API-Airdrops
+    description: API endpoints relating to the Airdrop object
     events:
       - http:
           method: put
@@ -154,9 +233,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
                 page_num: false
@@ -177,9 +255,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -198,9 +275,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -219,9 +295,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -242,18 +317,16 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
                 expand: false
-            schemas:
-              application/json: ${file(schemas/airdrops/send.json)}
   API-Collections:
     handler: src.api.routes.handler
     name: API-Collections
+    description: API endpoints relating to the Collection object
     events:
       - http:
           method: get
@@ -271,15 +344,6 @@ functions:
                 filter: false
                 signature: false
                 status: false
-      - http:
-          method: get
-          path: /internal/collections/{id}
-          operationId: GetCollection
-          authorizer: aws_iam
-          request:
-            parameters:
-              paths:
-                id: true
       - http:
           method: put
           path: /internal/collections/{id}
@@ -305,9 +369,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: false
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 active: false
                 contract_address: false
@@ -331,9 +394,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -352,9 +414,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -373,9 +434,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -385,18 +445,8 @@ functions:
   API-Contacts:
     handler: src.api.routes.handler
     name: API-Contacts
+    description: API endpoints relating to the Contact object
     events:
-      - http:
-          method: post
-          path: /public/contacts
-          operationId: CreateContact
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            schemas:
-              application/json: ${file(schemas/contacts/create.json)}
       - http:
           method: get
           path: /v1/contacts
@@ -411,9 +461,7 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
               querystrings:
                 active: false
                 expand: false
@@ -435,9 +483,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -456,9 +503,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -477,9 +523,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -489,6 +534,7 @@ functions:
   API-Events:
     handler: src.api.routes.handler
     name: API-Events
+    description: API endpoints relating to the Event object
     events:
       - http:
           method: post
@@ -512,9 +558,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
                 organization: false
@@ -538,9 +583,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -548,6 +592,7 @@ functions:
   API-MintLinks:
     handler: src.api.routes.handler
     name: API-MintLinks
+    description: API endpoints relating to the MintLink object
     events:
       - http:
           method: get
@@ -575,9 +620,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
                 page_num: false
@@ -598,9 +642,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -619,9 +662,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -629,6 +671,7 @@ functions:
   API-Mints:
     handler: src.api.routes.handler
     name: API-Mints
+    description: API endpoints relating to the Mint object
     events:
       - http:
           method: get
@@ -655,9 +698,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -724,9 +766,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 airdrop: false
                 expand: false
@@ -751,9 +792,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -772,9 +812,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -792,10 +831,6 @@ functions:
             allowCredentials: false
           request:
             parameters:
-              headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: false
               paths:
                 id: true
               querystrings:
@@ -805,6 +840,7 @@ functions:
   API-Notes:
     handler: src.api.routes.handler
     name: API-Notes
+    description: API endpoints relating to the Note object
     events:
       - http:
           method: get
@@ -820,9 +856,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
                 organization: false
@@ -846,9 +881,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -867,9 +901,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -877,6 +910,7 @@ functions:
   API-Products:
     handler: src.api.routes.handler
     name: API-Products
+    description: API endpoints relating to the Product object
     events:
       - http:
           method: get
@@ -889,17 +923,6 @@ functions:
                 id: true
               querystrings:
                 expand: false
-      - http:
-          method: put
-          path: /internal/products/{id}
-          operationId: UpdateProduct
-          authorizer: aws_iam
-          request:
-            parameters:
-              paths:
-                id: true
-            schemas:
-              application/json: ${file(schemas/products/update.json)}
       - http:
           method: get
           path: /v1/products
@@ -914,9 +937,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: false
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
                 page_num: false
@@ -937,9 +959,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -958,9 +979,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -979,9 +999,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
               querystrings:
@@ -991,6 +1010,7 @@ functions:
   API-Signatures:
     handler: src.api.routes.handler
     name: API-Signatures
+    description: API endpoints relating to the Signature object
     events:
       - http:
           method: get
@@ -1003,6 +1023,7 @@ functions:
   API-Search:
     handler: src.api.routes.handler
     name: API-Search
+    description: API endpoints relating to the Search object
     events:
       - http:
           method: get
@@ -1018,18 +1039,40 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 conditions: false
                 match: false
                 search_type: true
                 query: false
                 vql: false
+  API-Users:
+    handler: src.api.routes.handler
+    name: API-Users
+    description: API endpoints relating to the User object
+    events:
+      - http:
+          method: post
+          path: /v1/users
+          operationId: CreateUser
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: true
+          request:
+            parameters:
+              headers:
+                Authorization: true
+          #   schemas:
+          #     application/json: ${file(schemas/user/create.json)}
   API-Webhooks:
     handler: src.api.routes.handler
     name: API-Webhooks
+    description: API endpoints relating to the Webhook object
     events:
       - http:
           method: get
@@ -1058,9 +1101,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               querystrings:
                 active: false
                 enabled_events: false
@@ -1081,9 +1123,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
             schemas:
               application/json: ${file(schemas/webhooks/create.json)}
       - http:
@@ -1100,9 +1141,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
       - http:
@@ -1119,9 +1159,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
             schemas:
@@ -1140,9 +1179,8 @@ functions:
           request:
             parameters:
               headers:
-                X-Api-Key: false
-                X-Authorization: false
-                X-Organization: true
+                Authorization: true
+                Versify-Account: true
               paths:
                 id: true
 

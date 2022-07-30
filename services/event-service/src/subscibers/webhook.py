@@ -1,4 +1,4 @@
-from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools import Logger
 
 from ..utils.api import call_api, call_external_api
 from ._base import BaseSubscriber
@@ -11,7 +11,7 @@ class WebhookSubscriber(BaseSubscriber):
     def start(self, event):
 
         # Parse event for params
-        organization = event.detail.get('organization')
+        account = event.detail.get('account')
 
         # Save Event to DB
         event_response = call_api(
@@ -26,8 +26,8 @@ class WebhookSubscriber(BaseSubscriber):
         )
         logger.info(event_response)
 
-        # Webhooks are for organization events only
-        if not organization:
+        # Webhooks are for account events only
+        if not account:
             return
 
         # Get all matching webhooks this event needs to be sent to
@@ -36,8 +36,8 @@ class WebhookSubscriber(BaseSubscriber):
             path='/internal/webhooks',
             params={
                 'active': 'true',
-                'enabled_events': event.detail_type,
-                'organization': organization
+                'account': account,
+                'enabled_events': event.detail_type
             }
         )
         logger.info(webhooks_response)
@@ -50,7 +50,7 @@ class WebhookSubscriber(BaseSubscriber):
             response = call_external_api(
                 method='POST',
                 url=webhook['url'],
-                organization=organization,
+                account=account,
                 body=event_response
             )
             logger.info(response)

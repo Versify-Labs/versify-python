@@ -19,6 +19,7 @@
     },
     "email": {
       "description": "The contacts email address. This is the default email to send order invoices to.",
+      "format": "email",
       "type": "string"
     },
     "first_name": {
