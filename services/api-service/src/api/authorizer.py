@@ -71,12 +71,14 @@ def generate_authenticated_response(arn, account=None, email=None, user=None):
     )
     policy.allow_all_routes()
     result = policy.asdict()
+    logger.info(result)
     return result
 
 
 def handle_key(arn, key, account_id=None):
     # Validate that the key belongs to the account
     account = Versify().account.get(filter={'account': account_id})
+    logger.info(account)
     if account['settings']['auth'].get('api_secret_key') == key:
         return generate_authenticated_response(arn, account_id)
     return DENY_ALL_RESPONSE

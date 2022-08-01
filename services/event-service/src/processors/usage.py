@@ -25,7 +25,7 @@ class UsageProcessor:
 
     def get_subscription_item(self, account):
         subscriptions = account['settings']['billing']['subscriptions']
-        for _, subscription in subscriptions:
+        for _, subscription in subscriptions.items():
             for item in subscription['items']['data']:
                 return item
         return None

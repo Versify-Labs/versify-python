@@ -70,6 +70,8 @@ class Search:
         ]
         cursor = collection.aggregate(stages)
         result = json.loads(dumps(list(cursor)))
+        if not result or len(result) < 1:
+            return 0
         return result[0]['count']
 
     def list_segment_contacts(self):

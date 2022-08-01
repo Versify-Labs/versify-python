@@ -32,22 +32,14 @@ def vql_stage(vql='', account=None):
     # Convert VQL to match conditions
     clauses = vql.split(' ')
     for clause in clauses:
-        print(clause)
-
         if not clause or clause == '':
             continue
 
         # Find the field, operator, and value
-        print(CUSTOMER_PATTERN)
         matches = re.match(CUSTOMER_PATTERN, clause)
-        print(matches)
-
         field = matches.group('field')
         operator = matches.group('operator')
         value = matches.group('value')[1:-1]
-        print('Field: ' + field)
-        print('Operator: ' + operator)
-        print('Value: ' + value)
 
         if operator == ':':
             q[field] = value
@@ -64,7 +56,6 @@ def vql_stage(vql='', account=None):
         elif operator == '>':
             q[field] = {'$gt': int(value)}
 
-    print(q)
     return {"$match": q}
 
 

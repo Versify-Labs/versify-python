@@ -8,7 +8,8 @@ SECRET_NAME = os.environ['SECRET_NAME']
 SECRET = json.loads(parameters.get_secret(SECRET_NAME))
 TATUM_API_KEY = SECRET['TATUM_API_KEY']
 TATUM_API_URL = SECRET['TATUM_API_URL']
-VERSIFY_MATIC_SIG_ID = SECRET['TATUM_MATIC_SIG_ID']
+VERSIFY_MATIC_WALLET_ADDRESS = SECRET['TATUM_MATIC_WALLET_ADDRESS']
+VERSIFY_MATIC_WALLET_SIG_ID = SECRET['TATUM_MATIC_WALLET_SIG_ID']
 
 
 class Tatum:
@@ -21,7 +22,8 @@ class Tatum:
             'Content-Type': "application/json",
             'x-api-key': api_key
         }
-        self.versify_matic_sig_id = VERSIFY_MATIC_SIG_ID
+        self.versify_matic_wallet_address = VERSIFY_MATIC_WALLET_ADDRESS
+        self.versify_matic_wallet_sig_id = VERSIFY_MATIC_WALLET_SIG_ID
         self.version = 'v3'
 
     def __get(self, url):
@@ -38,6 +40,19 @@ class Tatum:
         res = self.conn.getresponse()
         data = res.read()
         return json.loads(data.decode("utf-8"))
+
+    def add_minter(self, contract_address, chain='MATIC'):
+        url = f"/{self.version}/multitoken/mint/add"
+        estimate = self.estimate_gas(chain, type="DEPLOY_NFT")
+        estimate = {k: str(v) for k, v in estimate.items()}
+        payload = {
+            "chain": chain,
+            "contractAddress": contract_address,
+            "minter": self.versify_matic_wallet_address,
+            "signatureId": self.versify_matic_wallet_sig_id,
+            "fee": estimate
+        }
+        return self.__post(url, payload)
 
     def estimate_gas(self, chain: str, type: str):
         url = f"/{self.version}/blockchain/estimate"
@@ -63,7 +78,7 @@ class Tatum:
         payload = {
             "chain": chain,
             "uri": uri,
-            "signatureId": self.versify_matic_sig_id,
+            "signatureId": self.versify_matic_wallet_sig_id,
             "publicMint": public_mint,
             "fee": estimate
         }
@@ -77,6 +92,6 @@ class Tatum:
             "to": to,
             "contractAddress": contract,
             "amount": quantity,
-            "signatureId": self.versify_matic_sig_id,
+            "signatureId": self.versify_matic_wallet_sig_id,
         }
         return self.__post(url, payload)

@@ -574,7 +574,7 @@ functions:
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.activated"}'
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.enabled"}'
       # MongoMintLinkArchived
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -595,7 +595,7 @@ functions:
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.archived"}'
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.disabled"}'
       # MongoMintCreated
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}

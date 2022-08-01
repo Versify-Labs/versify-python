@@ -26,13 +26,6 @@ class Tatum:
         self.versify_matic_wallet_sig_id = VERSIFY_MATIC_WALLET_SIG_ID
         self.version = 'v3'
 
-    def __get(self, url):
-        headers = self.headers
-        self.conn.request("GET", url, headers=headers)
-        res = self.conn.getresponse()
-        data = res.read()
-        return json.loads(data.decode("utf-8"))
-
     def __post(self, url, payload):
         headers = self.headers
         body = json.dumps(payload)
@@ -62,37 +55,10 @@ class Tatum:
         }
         return self.__post(url, payload)
 
-    def get_transaction(self, hash):
-        url = f"/{self.version}/polygon/transaction/{hash}"
-        return self.__get(url)
 
-    def get_transaction_details(self, id):
-        url = f"/{self.version}/kms/{id}"
-        return self.__get(url)
+if __name__ == '__main__':
+    tatum = Tatum()
 
-    def deploy_contract(self, uri, chain='MATIC', public_mint=False):
-        """Create a new contract"""
-        url = f"/{self.version}/multitoken/deploy"
-        estimate = self.estimate_gas(chain, type="DEPLOY_NFT")
-        estimate = {k: str(v) for k, v in estimate.items()}
-        payload = {
-            "chain": chain,
-            "uri": uri,
-            "signatureId": self.versify_matic_wallet_sig_id,
-            "publicMint": public_mint,
-            "fee": estimate
-        }
-        return self.__post(url, payload)
+    # Get all collections
 
-    def mint_token(self, contract, token, to, chain='MATIC', quantity=1):
-        url = f"/{self.version}/multitoken/mint"
-        payload = {
-            "chain": chain,
-            "tokenId": token,
-            "to": to,
-            "contractAddress": contract,
-            "amount": quantity,
-            "signatureId": self.versify_matic_wallet_sig_id,
-        }
-        print(payload)
-        return self.__post(url, payload)
+    # For each collection, add Versify minter role

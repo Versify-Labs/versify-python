@@ -668,6 +668,28 @@ functions:
                 id: true
               querystrings:
                 expand: false
+      - http:
+          method: put
+          path: /v1/mint_links/{id}
+          operationId: UpdateMintLink
+          authorizer:
+            type: REQUEST
+            authorizerId: ${ssm:/versify/services/versify/api/authorizer/id}
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/update.json)}
   API-Mints:
     handler: src.api.routes.handler
     name: API-Mints

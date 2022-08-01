@@ -397,6 +397,20 @@ class Collection(ApiResource):
         # Return collection after contract is deployed
         return self.deploy(collection_id, [])
 
+    def pre_update(self, body: dict, filter: dict = {}) -> dict:
+
+        # Add minter role for Versify KMS Wallet
+        if body.get('contract_address'):
+            tatum = Tatum()
+            contract_address = body.get('contract_address')
+            try:
+                result = tatum.add_minter(contract_address)
+                logger.info(result)
+            except Exception as err:
+                logger.error(err)
+
+        return super().pre_update(body, filter)
+
 
 class Contact(ApiResource):
 
@@ -646,7 +660,7 @@ class User(ApiResource):
     def list_accounts(self, email):
         logger.info('Listing accounts', extra={'email': email})
 
-        accounts = Account().list(filter={'email': email})
+        accounts = Account().list(filter={'settings.team.email': email})
         logger.info(accounts)
 
         return accounts
