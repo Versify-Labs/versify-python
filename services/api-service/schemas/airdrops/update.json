@@ -6,13 +6,6 @@
   "properties": {
     "email_settings": {
       "type": "object",
-      "required": [
-        "content",
-        "from_email",
-        "from_name",
-        "preview_text",
-        "subject_line"
-      ],
       "properties": {
         "content": {
           "description": "The content of the campaign",

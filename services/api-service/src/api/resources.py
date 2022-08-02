@@ -340,7 +340,13 @@ class Airdrop(ApiResource):
         super().__init__(object)
 
     def pre_create(self, body, auth={}):
+        account = Account().get({'account': body['account']})
+        business_profile = account['business_profile']
+        business_branding = business_profile['branding']
         body['recipients'] = body.get('recipients') or {}
+        body['email_settings']['from_email'] = business_branding.get('logo')
+        body['email_settings']['from_image'] = business_branding.get('logo')
+        body['email_settings']['from_name'] = business_profile.get('name')
         return body
 
 
@@ -460,7 +466,7 @@ class MintLink(ApiResource):
                 'background': business_branding['primary_color'],
                 'button': business_branding['secondary_color']
             },
-            'logo': business_branding['logo'],
+            'logo': business_branding.get('logo'),
             'name': account['business_profile']['name']
         }
         body['url'] = MINT_URL + '/' + body['_id']
@@ -475,20 +481,44 @@ class Mint(ApiResource):
 
     def pre_create(self, body: dict, auth: dict = {}) -> dict:
         account = None
+        email = body.get('email')
+
         if body.get('airdrop'):
             airdrop_id = body['airdrop']
             airdrop = Airdrop().get({'_id': airdrop_id})
             account = airdrop['account']
+
         if body.get('mint_link'):
             mint_link_id = body['mint_link']
             mint_link = MintLink().get({'_id': mint_link_id})
             account = mint_link['account']
+
+            # If mint link is not public, we need to check whitelist
+            if not mint_link.get('public_mint', True):
+                email_allowed = False
+                whitelist = mint_link.get('whitelist', [])
+                for i, spot in enumerate(whitelist):
+                    if spot['email'] == email and spot['status'] != 'claimed':
+                        email_allowed = True
+                        whitelist[i] = {'email': email, 'status': 'claimed'}
+                        break
+                if email_allowed:
+                    MintLink().update(
+                        body={'whitelist': whitelist},
+                        filter={'_id': mint_link_id}
+                    )
+                else:
+                    err = 'Email is not authorized to mint'
+                    raise BadRequestError(err)
+
         body['account'] = account
         return body
 
     def post_create(self, body: dict, auth: dict = {}) -> dict:
+
         if body.get('wallet_address'):
             return self.fulfill(body, filter={'_id': body['id']})
+
         return body
 
     def fulfill(

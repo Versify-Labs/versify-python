@@ -9,8 +9,6 @@
       "type": "object",
       "required": [
         "content",
-        "from_email",
-        "from_name",
         "preview_text",
         "subject_line"
       ],

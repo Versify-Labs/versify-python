@@ -1,3 +1,5 @@
+import time
+
 from aws_lambda_powertools import Logger
 
 from ..utils.api import call_api
@@ -76,8 +78,6 @@ class TransactionProcessor:
         sig_id = txn['signatureId']
         txn_id = txn['txId']
         sub_type = txn['subscriptionType']
-        status = 'complete' if sub_type == 'KMS_COMPLETED_TX' else 'failed'
-        logger.info({'status': status})
 
         # Get details from Tatum
         txn_details = tatum.get_transaction_details(sig_id)
@@ -86,29 +86,38 @@ class TransactionProcessor:
             logger.error('Could not get transaction details')
             raise RuntimeError
 
-        # Get txn from tatum
-        tatum_txn = tatum.get_transaction(txn_id)
-        logger.info(tatum_txn)
-        if not tatum_txn:
-            logger.error('Could not get transaction')
-            raise RuntimeError
-
         # Get collection with matching signature
         collection = self.match_collection(sig_id)
         if collection:
             collection_id = collection['id']
             account = collection['account']
 
+            # Get deployed contract address from tatum
+            contract_address = None
+            retries_left = 3
+            while not contract_address and retries_left > 0:
+                tatum_txn = tatum.get_transaction(txn_id)
+                logger.info(tatum_txn)
+
+                if not tatum_txn:
+                    logger.error('Could not get transaction')
+                    raise RuntimeError
+
+                contract_address = tatum_txn.get('contractAddress')
+                retries_left -= 1
+                time.sleep(1)
+
             # Create update body based on tatum txn
             status = 'deployed' if sub_type == 'KMS_COMPLETED_TX' else 'failed'
             update_body = {
-                'contract_address': tatum_txn.get('contractAddress'),
+                'contract_address': contract_address,
                 'status': status,
                 'transaction': txn_id
             }
 
             # Save Updated Collection to DB
             self.update_collection(collection_id, update_body, account)
+            return True
 
         # Get mint with matching signature
         mint = self.match_mint(sig_id)
@@ -125,5 +134,6 @@ class TransactionProcessor:
 
             # Save Updated Mint to DB
             self.update_mint(mint_id, update_body, account)
+            return True
 
         return True

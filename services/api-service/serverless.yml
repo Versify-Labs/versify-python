@@ -595,6 +595,17 @@ functions:
     description: API endpoints relating to the MintLink object
     events:
       - http:
+          method: post
+          path: /internal/mint_links
+          operationId: CreateMintLink
+          authorizer: aws_iam
+          request:
+            parameters:
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/create.json)}
+      - http:
           method: get
           path: /public/mint_links/{id}
           operationId: GetMintLink
@@ -719,9 +730,6 @@ functions:
           authorizer: aws_iam
           request:
             parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
               querystrings:
                 expand: false
             schemas:
@@ -1047,6 +1055,19 @@ functions:
     name: API-Search
     description: API endpoints relating to the Search object
     events:
+      - http:
+          method: get
+          path: /internal/search
+          operationId: Search
+          authorizer: aws_iam
+          request:
+            parameters:
+              querystrings:
+                conditions: false
+                match: false
+                search_type: true
+                query: false
+                vql: false
       - http:
           method: get
           path: /v1/search

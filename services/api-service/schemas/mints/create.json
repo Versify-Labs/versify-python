@@ -3,7 +3,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "title": "CreateMint",
-  "required": ["product"],
+  "required": ["email", "product"],
   "properties": {
     "airdrop": {
       "description": "The airdrop of the mint",

@@ -8,7 +8,6 @@ from .base import BaseVersifyModel
 DEFAULT_BUSINESS_TYPE = 'individual'
 DEFAULT_COUNTRY = 'US'
 DEFAULT_CURRENCY = 'usd'
-DEFAULT_LOGO = 'https://uploads-ssl.webflow.com/61f99f3055f0fb37c1005252/61f99f3155f0fb4ba7005411_image-2-help-center-saas-x-template.svg'
 DEFAULT_PRIMARY_COLOR = '#4457FF'
 DEFAULT_SERVICE_AGREEMENT = 'standard'
 DEFAULT_SECONDARY_COLOR = '#FF5F85'
@@ -18,7 +17,7 @@ DEFAULT_SUBSCRIPTION_PLAN = 'basic'
 class Branding(BaseModel):
     """Branding used to apply the account's emails, invoices, links, etc"""
     icon: Optional[str]
-    logo: Optional[str] = DEFAULT_LOGO
+    logo: Optional[str]
     primary_color: Optional[str] = DEFAULT_PRIMARY_COLOR
     secondary_color: Optional[str] = DEFAULT_SECONDARY_COLOR
 

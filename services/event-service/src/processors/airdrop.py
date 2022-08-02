@@ -19,9 +19,12 @@ class AirdropProcessor:
         vql = self.airdrop['recipients']['segment_options']['conditions']
         response = call_api(
             method='GET',
-            path='/internal/contacts/aggregate/segment',
+            path='/internal/search',
             account=self.airdrop['account'],
-            params={'vql': vql}
+            params={
+                'search_type': 'list_segment_contacts',
+                'vql': vql
+            }
         )
         logger.info(response)
         return response.get('data', [])
@@ -38,29 +41,31 @@ class AirdropProcessor:
         logger.info(product)
         return product
 
-    def create_mint(self, contact, product):
-        logger.info('Creating mint')
-        mint = call_api(
+    def create_mint_link(self, name, product, whitelist):
+        logger.info('Creating mint link')
+        mint_link = call_api(
             method='POST',
-            path='/internal/mints',
+            path='/internal/mint_links',
             body={
                 'airdrop': self.airdrop['id'],
-                'contact': contact['id'],
-                'product': self.airdrop['product']
+                'name': name,
+                'product': product,
+                'public_mint': False,
+                'whitelist': whitelist
             },
             account=self.airdrop['account'],
         )
-        logger.info(mint)
-        return mint
+        logger.info(mint_link)
+        return mint_link
 
-    def send_email(self, contact, product, mint):
+    def send_email(self, contact, product, mint_link):
         logger.info('Sending email')
-        content = self.airdrop['email_settings']['content']
-        from_email = self.airdrop['email_settings']['from_email']
-        from_image = self.airdrop['email_settings']['from_image']
-        from_name = self.airdrop['email_settings']['from_name']
-        preview_text = self.airdrop['email_settings']['preview_text']
-        subject_line = self.airdrop['email_settings']['subject_line']
+        content = self.airdrop['email_settings'].get('content')
+        from_email = self.airdrop['email_settings'].get('from_email')
+        from_image = self.airdrop['email_settings'].get('from_image')
+        from_name = self.airdrop['email_settings'].get('from_name')
+        preview_text = self.airdrop['email_settings'].get('preview_text')
+        subject_line = self.airdrop['email_settings'].get('subject_line')
         to_name = contact.get('first_name')
         greeting = 'Hi there'
         if to_name:
@@ -82,7 +87,7 @@ class AirdropProcessor:
                 'global_merge_vars': [
                     {
                         'name': 'CLAIM_URL',
-                        'content': mint['url']
+                        'content': mint_link['url']
                     },
                     {
                         'name': 'FROM_NAME',
@@ -123,7 +128,7 @@ class AirdropProcessor:
         logger.info(message)
         return message
 
-    def update_airdrop(self):
+    def complete_airdrop(self):
         logger.info('Updating airdrop')
         airdrop = call_api(
             method='PUT',
@@ -138,8 +143,15 @@ class AirdropProcessor:
         self.validate()
         contacts = self.get_segment()
         product = self.get_product()
+        name = 'Airdrop Mint Link'
+
+        whitelist = []
         for contact in contacts:
-            mint = self.create_mint(contact, product)
-            self.send_email(contact, product, mint)
-        self.update_airdrop()
+            whitelist.append({'email': contact['email']})
+        mint_link = self.create_mint_link(name, product['id'], whitelist)
+
+        for contact in contacts:
+            self.send_email(contact, product, mint_link)
+
+        self.complete_airdrop()
         return True
