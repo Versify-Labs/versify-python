@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-.Python
+.Pythonf
 build/
 develop-eggs/
 dist/
@@ -123,8 +123,8 @@ dmypy.json
 **/.secrets.prod
 
 .vscode/
-data/
 poc/
 services/_dpc/
 services/poc/
 old/
+resources/scripts/**

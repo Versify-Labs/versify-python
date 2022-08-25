@@ -1,0 +1,25 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateMint",
+  "required": ["product", "wallet_address"],
+  "properties": {
+    "airdrop": {
+      "description": "The airdrop of the mint",
+      "type": "string"
+    },
+    "mint_link": {
+      "description": "The mint_link of the mint",
+      "type": "string"
+    },
+    "product": {
+      "description": "The ID of the product of the mint",
+      "type": "string"
+    },
+    "wallet_address": {
+      "description": "The wallet_address of the mint",
+      "type": "string"
+    }
+  }
+}

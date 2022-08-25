@@ -1,1 +1,0 @@
-ssh -i ~/.ssh/keys/TS-MBP-prod.pem ec2-user@3.88.181.72
