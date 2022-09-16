@@ -16,6 +16,16 @@
     "name": {
       "description": "The name of the mint link. Used for organizational purposes only.",
       "type": "string"
+    },
+    "reference_id_collection": {
+      "additionalProperties": true,
+      "description": "TBD",
+      "type": "object"
+    },
+    "tax_id_collection": {
+      "additionalProperties": true,
+      "description": "TBD",
+      "type": "object"
     }
   }
 }

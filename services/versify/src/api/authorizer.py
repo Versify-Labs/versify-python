@@ -20,8 +20,6 @@ def generate_authenticated_response(arn, account=None, email=None, user=None):
         'email': email,
         'user': user
     }
-    logger.info('Context')
-    logger.info(context)
     policy = APIGatewayAuthorizerResponse(
         principal_id=user or email or account or 'Unknown',
         context=context,

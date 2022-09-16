@@ -6,7 +6,7 @@ from aws_lambda_powertools import Logger, Tracer
 from bson.objectid import ObjectId
 from pymongo.collection import ReturnDocument
 
-from ..api.errors import BadRequestError, NotFoundError, UsageLimitError
+from ..api.errors import NotFoundError, UsageLimitError
 from ..interfaces.expandable import ExpandableResource
 from ..services._config import config
 from ..utils.mongo import mdb

@@ -1,7 +1,7 @@
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from ..interfaces.versify_model import BaseVersifyModel
 
@@ -74,7 +74,7 @@ class DashboardSettings(BaseModel):
 
 
 class TeamMember(BaseModel):
-    email: Optional[str]
+    email: Optional[EmailStr]
     role: Optional[str] = 'member'
 
 
@@ -104,7 +104,7 @@ class Account(BaseVersifyModel):
     country: str = DEFAULT_COUNTRY
     created: int
     currency: str = DEFAULT_CURRENCY
-    email: str
+    email: EmailStr
     metadata: Optional[dict] = {}
     settings: Settings
     tos_acceptance: Optional[TermsAcceptance]

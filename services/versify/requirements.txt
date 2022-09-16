@@ -1,4 +1,5 @@
 aws_requests_auth
+email-validator
 dnspython
 fastapi
 ksuid

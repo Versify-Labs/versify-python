@@ -39,12 +39,12 @@
       "description": "The contacts full name.",
       "type": "string"
     },
-    "organization": {
-      "description": "The organization that the contact will be associated with.",
-      "type": "string"
-    },
     "phone": {
       "description": "The contacts phone number. This is for record keeping only.",
+      "type": "string"
+    },
+    "source": {
+      "description": "Where the contact was created from.",
       "type": "string"
     }
   }

@@ -35,6 +35,11 @@ class ProductService(ExpandableResource):
         padding = 4
         return f"{x:#0{padding}x}"
 
+    def to_long(self, x):
+        x = int(x)
+        padding = 64
+        return f"{x:#0{padding}}"
+
     def upsert_metadata(self, product):
 
         # Check product data to see what we need to do
@@ -48,11 +53,13 @@ class ProductService(ExpandableResource):
             token_id = max_token_id + 1
         product['token_id'] = token_id
         token_id_hex = self.to_hex(token_id)
+        token_id_long = self.to_long(token_id)
 
         # Move product image from /tmp to /metadata/collection_id/token_id
         old_key = '/'.join(product['image'].split('/')[-2:])
         metadata_key_dec = get_metadata_key(collection_id, token_id)
         metadata_key_hex = get_metadata_key(collection_id, token_id_hex)
+        metadata_key_long = get_metadata_key(collection_id, token_id_long)
         image_key = get_image_key(collection_id, token_id_hex)
         image_url = get_image_url(collection_id, token_id_hex)
         move_s3_object(old_key, image_key)
@@ -69,6 +76,7 @@ class ProductService(ExpandableResource):
         }
         upload_metadata_to_s3(metadata_key_dec, metadata)
         upload_metadata_to_s3(metadata_key_hex, metadata)
+        upload_metadata_to_s3(metadata_key_long, metadata)
 
         return product
 

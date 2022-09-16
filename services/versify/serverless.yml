@@ -551,6 +551,7 @@ functions:
                 Authorization: true
                 Versify-Account: true
               querystrings:
+                airdrop: false
                 expand: false
                 page_num: false
                 page_size: false
@@ -1280,12 +1281,35 @@ functions:
                   - airdrop
               updateDescription:
                 updatedFields:
+                  archived:
+                    - { "exists": false }
                   status:
                     - { "exists": false }
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.updated"}'
+      # MongoAirdropArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - airdrop
+              updateDescription:
+                updatedFields:
+                  archived:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.archived"}' 
       # MongoAirdropSent
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -1549,13 +1573,36 @@ functions:
                 updatedFields:
                   active:
                     - { "exists": false }
+                  archived:
+                    - { "exists": false }
                   tags:
                     - { "exists": false }
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.updated"}'
-      # MongoMintLinkActivated
+      # MongoMintLinkArchived
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/partner/bus/arn}
+          pattern:
+            source:
+              - mongo
+            detail:
+              operationType:
+                - replace
+                - update
+              fullDocument:
+                object:
+                  - mint_link
+              updateDescription:
+                updatedFields:
+                  archived:
+                    - true
+          inputTransformer:
+            inputPathsMap:
+              detail: "$.detail.fullDocument"
+            inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.archived"}'
+      # MongoMintLinkEnabled
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
           pattern:
@@ -1576,7 +1623,7 @@ functions:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "mint_link.enabled"}'
-      # MongoMintLinkArchived
+      # MongoMintLinkDisabled
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
           pattern:
@@ -1829,27 +1876,6 @@ functions:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "user.created"}'
-      # MongoUserLogin
-      - eventBridge:
-          eventBus: ${ssm:/versify/services/partner/bus/arn}
-          pattern:
-            source:
-              - mongo
-            detail:
-              operationType:
-                - replace
-                - update
-              fullDocument:
-                object:
-                  - user
-              updateDescription:
-                updatedFields:
-                  last_login:
-                    - { "exists": true }
-          inputTransformer:
-            inputPathsMap:
-              detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "user.login"}'
       # MongoUserUpdated
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -1863,14 +1889,6 @@ functions:
               fullDocument:
                 object:
                   - user
-              updateDescription:
-                updatedFields:
-                  active:
-                    - { "exists": false }
-                  last_login:
-                    - { "exists": false }
-                  tags:
-                    - { "exists": false }
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
@@ -1982,6 +2000,18 @@ functions:
               - tatum
             detail-type:
               - transaction.created
+  EventSubscriber-Product:
+    handler: src.subscribers.product.handler
+    name: EventSubscriber-Product
+    description: Handle product events
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - product.archived
   EventSubscriber-Slack:
     handler: src.subscribers.slack.handler
     name: EventSubscriber-Slack

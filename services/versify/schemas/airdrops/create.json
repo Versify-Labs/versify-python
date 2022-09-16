@@ -23,7 +23,7 @@
         },
         "from_image": {
           "description": "The from_image of the campaign",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "preview_text": {
           "description": "The preview_text of the campaign",

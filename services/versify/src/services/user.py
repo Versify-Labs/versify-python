@@ -159,6 +159,25 @@ class UserService(ExpandableResource):
 
         return data
 
+    def delete(self, user_id: str) -> bool:
+        """Delete an user.
+
+        Args:
+            user_id (str): The id of the user to delete.
+
+        Returns:
+            bool: True if the user was deleted, False otherwise.
+        """
+
+        # Delete document matching filter
+        deleted = self.collection.find_one_and_delete({
+            '_id': user_id
+        })
+        if not deleted:
+            raise NotFoundError
+
+        return True
+
     def login(self, user_body: dict) -> dict:
         """Login a user.
 
@@ -194,7 +213,6 @@ class UserService(ExpandableResource):
 
         # If user does not exist, create user
         else:
-            user_body['last_login'] = int(time.time())
             user = self.create(user_body)
 
         # Expand user accounts
@@ -203,21 +221,5 @@ class UserService(ExpandableResource):
 
         return data
 
-    def delete(self, user_id: str) -> bool:
-        """Delete an user.
-
-        Args:
-            user_id (str): The id of the user to delete.
-
-        Returns:
-            bool: True if the user was deleted, False otherwise.
-        """
-
-        # Delete document matching filter
-        deleted = self.collection.find_one_and_delete({
-            '_id': user_id
-        })
-        if not deleted:
-            raise NotFoundError
-
-        return True
+    def sync_contact_to_user(self, contact):
+        pass

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import EmailStr, Field
 
 from ..interfaces.versify_model import BaseVersifyModel
 
@@ -11,7 +11,7 @@ class User(BaseVersifyModel):
     active: bool = True
     avatar: Optional[str]
     created: int
-    email: Optional[str]
+    email: Optional[EmailStr]
     first_name: Optional[str]
     last_login: Optional[str]
     last_name: Optional[str]

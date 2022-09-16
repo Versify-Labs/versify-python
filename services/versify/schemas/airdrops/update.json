@@ -21,7 +21,7 @@
         },
         "from_image": {
           "description": "The from_image of the campaign",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "preview_text": {
           "description": "The preview_text of the campaign",
@@ -51,12 +51,12 @@
         "segment_options": {
           "type": "object",
           "properties": {
-            "match": {
-              "description": "Determines whether to match any of the following conditions or all of them. Must be either any or all",
-              "type": "string"
-            },
             "conditions": {
               "description": "Comma separated list of conditions to match for the recipients",
+              "type": "string"
+            },
+            "match": {
+              "description": "Determines whether to match any of the following conditions or all of them. Must be either any or all",
               "type": "string"
             }
           }

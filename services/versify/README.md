@@ -1,6 +1,5 @@
 # Versify API
 
-
 ## Structure
 
 Models
@@ -8,7 +7,6 @@ Services
 Controllers
 Jobs
 Subscribers
-
 
 ## OAuth 2.0
 
@@ -118,3 +116,51 @@ curl POST https://$DOMAIN/oauth/token?
 # The API responds with requested data.
 
 ```
+
+## Airdropping an NFT
+
+1. API request
+
+```sh
+POST /v1/airdrops
+  - H account: acct_123
+  - data {
+    "product_details": {
+      "name": "Test Product"
+      "description": "Test description"
+      "image": "https://cdn.versifylabs.com/prod_123"
+    },
+    "recipients": {
+      "query":  {
+          "operator": "AND",
+          "value": [
+              {
+                  "field": "custom_attributes.social_network",
+                  "operator": "=",
+                  "value": "facebook"
+              },
+              {
+                  "field": "custom_attributes.social_network",
+                  "operator": "=",
+                  "value": "twitter"
+              },
+              {
+                  "field": "custom_attributes.social_network",
+                  "operator": "=",
+                  "value": "instagram"
+              }
+          ]
+      }
+    }
+  }
+```
+
+2. Get collection or use default (verify deployed)
+3. Create product (mint to collections contract)
+4. Create mint link for airdorp
+5. Create airdrop
+6. Send email notifications
+
+## Airdrop audience rules
+
+POST /v1/

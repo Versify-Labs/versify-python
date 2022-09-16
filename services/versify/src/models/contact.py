@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import EmailStr, Field
 
 from ..interfaces.versify_model import BaseVersifyModel
 
@@ -16,7 +16,7 @@ class Contact(BaseVersifyModel):
     created: int
     currency: str = 'usd'
     description: str = ''
-    email: str
+    email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
     metadata: Optional[dict] = {}
@@ -27,3 +27,15 @@ class Contact(BaseVersifyModel):
     tags: list = []
     updated: Optional[int]
     wallet_address: Optional[str]
+    wallets: Optional[list] = []
+
+
+class Company(BaseVersifyModel):
+    id: Optional[str] = Field(None, alias="_id")
+    account: str
+    object: str = 'company'
+    active: bool = True
+    created: int
+    email: EmailStr
+    metadata: Optional[dict] = {}
+    updated: int

@@ -2,6 +2,7 @@
 from aws_lambda_powertools import Logger, Tracer
 from jose import jwt
 
+from ..api.errors import NotFoundError
 from ..utils.stytch import stytch
 
 logger = Logger()
@@ -30,7 +31,10 @@ class AuthService:
         if not token:
             return
 
-        claims = jwt.get_unverified_claims(token)
+        try:
+            claims = jwt.get_unverified_claims(token)
+        except jwt.JWTError:  # type: ignore
+            return
         if not claims:
             return
 
@@ -75,8 +79,9 @@ class AuthService:
             account: The account document if authentication was successful.
             error: The error message if authentication failed.
         """
-        account = self.account_service.retrieve_by_api_secret_key(api_key)
-        if not account:
+        try:
+            account = self.account_service.retrieve_by_api_secret_key(api_key)
+        except NotFoundError:
             return False, None, 'Invalid API key'
         return True, account, None
 

@@ -2,15 +2,18 @@ from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.data_classes import (EventBridgeEvent,
                                                           event_source)
 
-from ..services import ContactService
+from ..services import AccountService, ContactService, UserService
 
 tracer = Tracer()
 logger = Logger()
+account_service = AccountService()
 contact_service = ContactService()
+user_service = UserService(account_service)
 
 
 def update_contact_user(contact):
     logger.info(contact)
+    user_service.sync_contact_to_user(contact)
     return True
 
 

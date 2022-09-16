@@ -27,6 +27,7 @@ class Airdrop(BaseVersifyModel):
     id: Optional[str] = Field(None, alias="_id")
     account: str
     object: str = 'airdrop'
+    archived: Optional[bool] = False
     created: int
     email_settings: Optional[EmailSettings]
     metadata: Optional[dict] = {}

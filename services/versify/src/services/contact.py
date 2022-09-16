@@ -38,9 +38,12 @@ class ContactService(ExpandableResource):
         """
         logger.info('Creating contact', extra={'body': body})
 
+        # Sanitize body
+        body['email'] = body['email'].lower()
+
         # Check if email already exists
         contacts = self.list(
-            {
+            filter={
                 'account': body['account'],
                 'email': body['email']
             }
@@ -232,9 +235,11 @@ class ContactService(ExpandableResource):
             }
         ]
         cursor = self.collection.aggregate(stages)
-        data = json.loads(dumps(list(cursor)))
+        data = list(cursor)
+        data = dumps(data)
+        data = json.loads(data)
         tags = []
-        if len(data) > 0:
+        if data and len(data) > 0:
             tags = sorted(data[0]['tags'])
         return tags
 

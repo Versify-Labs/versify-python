@@ -184,7 +184,7 @@ class CollectionService(ExpandableResource):
 
         # Deploy ERC1155 smart contract for the collection
         tatum = Tatum()
-        token_uri = f"{METADATA_URI_BASE}/products/{id}" + "/{id}.json"
+        token_uri = f"{METADATA_URI_BASE}/products/{collection_id}" + "/{id}.json"
         response = tatum.deploy_contract(token_uri)
         signature = response.get('signatureId')
 

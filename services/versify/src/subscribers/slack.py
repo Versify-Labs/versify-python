@@ -1,4 +1,5 @@
 import json
+import os
 
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.data_classes import (EventBridgeEvent,
@@ -9,16 +10,26 @@ from ..utils.slack import send_message
 tracer = Tracer()
 logger = Logger()
 
+ENV = os.environ.get("ENVIRONMENT", "dev")
+
 
 def handle_error(message):
     pass
 
 
-def handle_event(source, detail_type):
-    blocks = [
-        # {
-        #     "type": "divider"
-        # },
+def handle_event(source, detail_type, detail):
+    blocks = []
+
+    # Conditionally add divider block
+    if ENV == "dev":
+        blocks.append(
+            {
+                "type": "divider",
+            }
+        )
+
+    # Add event detail type block
+    blocks.append(
         {
             "type": "section",
             "text": {
@@ -26,17 +37,23 @@ def handle_event(source, detail_type):
                 "text": f"*Event*: {source} -> {detail_type}"
                 # "text": f"*Bus*: {bus}\n*Source*: {source}\n*Type*: {detail_type}"
             }
-        },
-        # {
-        #     "type": "context",
-        #     "elements": [
-        #         {
-        #             "type": "mrkdwn",
-        #             "text": f"```{json.dumps(detail, indent = 2)}```"
-        #         }
-        #     ]
-        # }
-    ]
+        }
+    )
+
+    # Conditionally add detail block
+    if ENV == "dev":
+        blocks.append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"```{json.dumps(detail, indent = 2)}```"
+                    }
+                ]
+            }
+        )
+
     return send_message(blocks)
 
 
@@ -47,5 +64,5 @@ def handler(event, context):
     # bus = 'versify' if event.source == 'versify' else 'partner'
     source = event.source
     detail_type = event.detail_type
-    # detail = event.detail
-    return handle_event(source, detail_type)
+    detail = event.detail
+    return handle_event(source, detail_type, detail)

@@ -17,6 +17,10 @@
       "description": "The ID of the product of the mint",
       "type": "string"
     },
+    "reference_id": {
+      "description": "The optional reference ID",
+      "type": "string"
+    },
     "wallet_address": {
       "description": "The wallet_address of the mint",
       "type": "string"
