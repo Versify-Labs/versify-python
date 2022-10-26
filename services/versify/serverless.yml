@@ -21,6 +21,17 @@ custom:
   mongoUsersTrigger: ${ssm:/versify/services/mongo/users/trigger/id}
   mongoWebhooksTrigger: ${ssm:/versify/services/mongo/webhooks/trigger/id}
 
+layers:
+  versify:
+    path: layers/versify # required, path to layer contents on disk
+    name: versify # optional, Deployed Lambda layer name
+    description: Commonly used python packages in the Versify ecosystem # optional, Description to publish to AWS
+    compatibleRuntimes: # optional, a list of runtimes this layer is compatible with
+      - python3.9
+    compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+      - x86_64
+    retain: false # optional, false by default. If true, layer versions are not deleted as new ones are created
+
 provider:
   name: aws
   stage: ${opt:stage, 'dev'}
@@ -59,6 +70,7 @@ provider:
             - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
   layers:
     - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:26
+    - !Ref VersifyLambdaLayer
   runtime: python3.9
   timeout: 30
   tracing:
@@ -73,9 +85,9 @@ functions:
     handler: src.api.authorizer.authorize_user
     name: API-AuthorizeUser
     description: API authorizer for users
-  API-PrivateEndpoints:
-    handler: src.api.routes.handler
-    name: API-PrivateEndpoints
+  API-AccountEndpoints:
+    handler: src.api.routes.account.handler
+    name: API-AccountEndpoints
     description: API endpoints relating to the Account object
     events:
       - http:
@@ -170,6 +182,22 @@ functions:
               paths:
                 id: true
       - http:
+          method: get
+          path: /v1/accounts/{id}/invoices
+          operationId: ListAccountInvoices
+          authorizer:
+            name: API-AuthorizeAccount
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+      - http:
           method: post
           path: /v1/accounts/{id}/members
           operationId: CreateAccountMember
@@ -205,22 +233,6 @@ functions:
                 Versify-Account: true
       - http:
           method: get
-          path: /v1/accounts/{id}/invoices
-          operationId: ListAccountInvoices
-          authorizer:
-            name: API-AuthorizeAccount
-            type: REQUEST
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-      - http:
-          method: get
           path: /v1/accounts/{id}/subscriptions
           operationId: ListAccountSubscriptions
           authorizer:
@@ -235,6 +247,24 @@ functions:
               headers:
                 Authorization: true
                 Versify-Account: true
+      - http:
+          method: post
+          path: /v1/accounts/{id}/tokens
+          operationId: CreateAccountToken
+          authorizer:
+            name: API-AuthorizeAccount
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
       - http:
           method: get
           path: /v1/airdrops
@@ -895,21 +925,6 @@ functions:
                 query: false
                 vql: false
       - http:
-          method: post
-          path: /v1/users
-          operationId: CreateUser
-          authorizer:
-            name: API-AuthorizeUser
-            type: REQUEST
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: true
-          request:
-            parameters:
-              headers:
-                Authorization: true
-      - http:
           method: get
           path: /v1/webhooks
           operationId: ListWebhooks
@@ -1005,9 +1020,9 @@ functions:
               paths:
                 id: true
   API-PublicEndpoints:
-    handler: src.api.routes.handler
+    handler: src.api.routes.public.handler
     name: API-PublicEndpoints
-    description: API endpoints that can be called by anyone, regardless of authentication.
+    description: API endpoints that can be called by consumers.
     events:
       - http:
           method: get
@@ -1022,8 +1037,75 @@ functions:
               paths:
                 id: true
       - http:
+          method: get
+          path: /public/signatures/{id}
+          operationId: GetSignature
+          request:
+            parameters:
+              paths:
+                id: true
+  API-UserEndpoints:
+    handler: src.api.routes.user.handler
+    name: API-UserEndpoints
+    description: API endpoints that can be called by users.
+    events:
+      - http:
           method: post
-          path: /public/mints
+          path: /users/auth
+          operationId: AuthenticateUser
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: true
+          request:
+            parameters:
+              headers:
+                Authorization: true
+      - http:
+          method: post
+          path: /users/accounts
+          operationId: CreateAccount
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+            schemas:
+              application/json: ${file(schemas/accounts/create.json)}
+      - http:
+          method: get
+          path: /users/events
+          operationId: ListEvents
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                resource_id: false
+                resource_type: false
+      - http:
+          method: post
+          path: /users/mints
           operationId: CreateMint
           authorizer:
             name: API-AuthorizeUser
@@ -1042,8 +1124,36 @@ functions:
               application/json: ${file(schemas/mints/create.json)}
       - http:
           method: get
-          path: /public/mints/{id}
+          path: /users/mints
+          operationId: ListMints
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                airdrop: false
+                expand: false
+                mint_link: false
+                page_num: false
+                page_size: false
+                filter: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: get
+          path: /users/mints/{id}
           operationId: GetMint
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
           cors:
             origin: "*"
             headers: "*"
@@ -1054,8 +1164,11 @@ functions:
                 id: true
       - http:
           method: put
-          path: /public/mints/{id}/fulfill
+          path: /users/mints/{id}/fulfill
           operationId: FulfillMint
+          authorizer:
+            name: API-AuthorizeUser
+            type: REQUEST
           cors:
             origin: "*"
             headers: "*"
@@ -1066,16 +1179,8 @@ functions:
                 id: true
             schemas:
               application/json: ${file(schemas/mints/fulfill.json)}
-      - http:
-          method: get
-          path: /public/signatures/{id}
-          operationId: GetSignature
-          request:
-            parameters:
-              paths:
-                id: true
   API-WebhookEndpoints:
-    handler: src.api.routes.handler
+    handler: src.api.routes.webhook.handler
     name: API-WebhookEndpoints
     description: API endpoints that can be called by partner webhooks.
     events:
@@ -1309,7 +1414,7 @@ functions:
           inputTransformer:
             inputPathsMap:
               detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.archived"}' 
+            inputTemplate: '{"detail": <detail>, "detail-type": "airdrop.archived"}'
       # MongoAirdropSent
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -2000,6 +2105,16 @@ functions:
               - tatum
             detail-type:
               - transaction.created
+  # EventSubscriber-Paragon:
+  #   handler: src.subscribers.webhook.handler
+  #   name: EventSubscriber-Paragon
+  #   description: Consume events and publish to paragon
+  #   events:
+  #     - eventBridge:
+  #         eventBus: ${ssm:/versify/services/versify/bus/arn}
+  #         pattern:
+  #           source:
+  #             - versify
   EventSubscriber-Product:
     handler: src.subscribers.product.handler
     name: EventSubscriber-Product

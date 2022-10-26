@@ -119,8 +119,8 @@ dmypy.json
 # NPM Packages
 **node_modules
 
-**/.secrets.dev
-**/.secrets.prod
+**/.secrets.dev.json
+**/.secrets.prod.json
 
 .vscode/
 poc/

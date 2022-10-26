@@ -28,14 +28,3 @@ class Contact(BaseVersifyModel):
     updated: Optional[int]
     wallet_address: Optional[str]
     wallets: Optional[list] = []
-
-
-class Company(BaseVersifyModel):
-    id: Optional[str] = Field(None, alias="_id")
-    account: str
-    object: str = 'company'
-    active: bool = True
-    created: int
-    email: EmailStr
-    metadata: Optional[dict] = {}
-    updated: int

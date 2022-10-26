@@ -4,26 +4,19 @@ import os
 
 from aws_lambda_powertools.utilities import parameters
 
-SECRET_NAME = os.environ['SECRET_NAME']
-SECRET = json.loads(parameters.get_secret(SECRET_NAME))
-TATUM_API_KEY = SECRET['TATUM_API_KEY']
-TATUM_API_URL = SECRET['TATUM_API_URL']
-VERSIFY_MATIC_WALLET_ADDRESS = SECRET['TATUM_MATIC_WALLET_ADDRESS']
-VERSIFY_MATIC_WALLET_SIG_ID = SECRET['TATUM_MATIC_WALLET_SIG_ID']
-
 
 class Tatum:
 
     def __init__(self):
-        api_key = TATUM_API_KEY
-        api_url = TATUM_API_URL
-        self.conn = http.client.HTTPSConnection(api_url)
+        secret_name = os.environ['SECRET_NAME']
+        secret = json.loads(parameters.get_secret(secret_name))
+        self.conn = http.client.HTTPSConnection(secret['TATUM_API_URL'])
         self.headers = {
             'Content-Type': "application/json",
-            'x-api-key': api_key
+            'x-api-key': secret['TATUM_API_KEY']
         }
-        self.versify_matic_wallet_address = VERSIFY_MATIC_WALLET_ADDRESS
-        self.versify_matic_wallet_sig_id = VERSIFY_MATIC_WALLET_SIG_ID
+        self.versify_matic_wallet_address = secret['TATUM_MATIC_WALLET_ADDRESS']
+        self.versify_matic_wallet_sig_id = secret['TATUM_MATIC_WALLET_SIG_ID']
         self.version = 'v3'
 
     def __get(self, url):

@@ -1,9 +1,12 @@
+import json
 import os
 import secrets
 import time
 
 from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools.utilities import parameters
 from bson.objectid import ObjectId
+from jose import jwt
 from pymongo.collection import ReturnDocument
 
 from ..api.errors import NotFoundError, UsageLimitError
@@ -495,3 +498,30 @@ class AccountService(ExpandableResource):
         data = self.Model(**data).to_json()
 
         return data
+
+    def generate_paragon_token(self, account_id: str):
+        """Generate a Paragon token for an account.
+
+        Args:
+            account_id (str): The id of the account to get a Paragon token for.
+
+        Returns:
+            dict: The Paragon token.
+        """
+        logger.info('Getting Paragon token', extra={'account_id': account_id})
+        secret_name = os.environ['SECRET_NAME']
+        secret_raw = parameters.get_secret(secret_name)
+        secret = json.loads(secret_raw)  # type: ignore
+        signing_key = secret['PARAGON_SIGNING_KEY']
+        created = int(time.time())
+        token = jwt.encode(
+            {
+                'sub': account_id,
+                'iat': created,
+                'exp': created + 60 * 60,
+            },
+            signing_key,
+            algorithm='RS256'
+        )
+        logger.info('Paragon token', extra={'token': token})
+        return token

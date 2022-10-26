@@ -19,7 +19,7 @@ class AirdropConfig:
     model = Airdrop
     object = 'airdrop'
     prefix = 'air'
-    search_index = None
+    search_index = 'AirdropSearchIndex'
 
 
 class CollectionConfig:

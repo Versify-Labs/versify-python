@@ -8,6 +8,7 @@ from ..api.errors import BadRequestError, NotFoundError
 from ..interfaces.expandable import ExpandableResource
 from ..services._config import config
 from ..utils.mongo import mdb
+from ..utils.pipelines import match_stage, search_stage
 from ..utils.s3 import (get_image_key, get_image_url, get_max_token_id,
                         get_metadata_key, move_s3_object,
                         upload_metadata_to_s3)
@@ -259,15 +260,11 @@ class ProductService(ExpandableResource):
         """
         logger.info('Searching products', extra={'query': query})
 
-        # Construct filter
-        filter = {}
-        if account_id:
-            filter['account'] = account_id
-        if query:
-            filter['$text'] = {'$search': query}
-
         # Find documents matching filter
-        cursor = self.collection.find(filter=filter)
+        cursor = self.collection.aggregate([
+            search_stage(index=self.search_index, query=query),
+            match_stage(account=account_id),
+        ])
 
         # Convert cursor to list
         products = [self.Model(**doc).to_json() for doc in cursor]

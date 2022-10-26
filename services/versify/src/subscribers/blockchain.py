@@ -6,7 +6,7 @@ from aws_lambda_powertools.utilities.data_classes import (EventBridgeEvent,
 
 from ..services import (AccountService, AirdropService, CollectionService,
                         ContactService, MintLinkService, MintService,
-                        ProductService)
+                        ProductService, UserService)
 from ..utils.tatum import Tatum
 
 tracer = Tracer()
@@ -14,13 +14,15 @@ logger = Logger()
 tatum = Tatum()
 
 account_service = AccountService()
+user_service = UserService(account_service)
 contact_service = ContactService()
 mint_link_service = MintLinkService(account_service)
 collection_service = CollectionService()
 product_service = ProductService(collection_service)
 airdrop_service = AirdropService(
     account_service, contact_service, mint_link_service, product_service)
-mint_service = MintService(airdrop_service, contact_service, mint_link_service)
+mint_service = MintService(
+    airdrop_service, contact_service, mint_link_service, user_service)
 
 
 def match_collection(signature):

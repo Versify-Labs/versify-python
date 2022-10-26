@@ -2,7 +2,6 @@ from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
-from pydantic.color import Color
 
 from ..interfaces.versify_model import BaseVersifyModel
 
@@ -18,8 +17,8 @@ class ShapeEnum(str, Enum):
 
 
 class Branding(BaseModel):
-    background_color: Optional[Color] = "#FFFFFF"  # type: ignore
-    button_color: Optional[Color] = "#FFFFFF"  # type: ignore
+    background_color: Optional[str] = "E1E4FF"  # type: ignore
+    button_color: Optional[str] = "#596AFF"  # type: ignore
     font: Optional[FontEnum] = "inherit"  # type: ignore
     icon: Optional[str]
     logo: Optional[str]
@@ -49,8 +48,8 @@ class MintLink(BaseVersifyModel):
     object: str = 'mint_link'
     active: bool = True
     archived: Optional[bool] = False
-    branding: Optional[Branding]
     airdrop: Optional[str]
+    branding: Optional[Branding]
     created: int
     metadata: Optional[dict] = {}
     mint_list: Optional[List[MintSpot]] = []

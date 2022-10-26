@@ -1,6 +1,6 @@
 import re
 
-CUSTOMER_PATTERN = '(?P<field>tags|email)(?P<operator>:|<|>|~)(?P<value>\".*?\")'
+CLAUSE_PATTERN = '(?P<field>tags|email)(?P<operator>:|<|>|~)(?P<value>\".*?\")'
 
 
 def count_stage():
@@ -22,7 +22,7 @@ def group_stage(field):
     return stage
 
 
-def vql_stage(vql='', account=None):
+def vql_stage(account=None, vql=''):
     q = {}
 
     # Limit the results for the account
@@ -36,7 +36,7 @@ def vql_stage(vql='', account=None):
             continue
 
         # Find the field, operator, and value
-        matches = re.match(CUSTOMER_PATTERN, clause)
+        matches = re.match(CLAUSE_PATTERN, clause)
         if not matches:
             continue
 

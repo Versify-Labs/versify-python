@@ -2,6 +2,7 @@ aws_requests_auth
 email-validator
 dnspython
 fastapi
+hubspot-api-client
 ksuid
 lambda-decorators
 mailchimp_transactional

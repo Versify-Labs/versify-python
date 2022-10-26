@@ -13,7 +13,7 @@ user_service = UserService(account_service)
 
 def update_contact_user(contact):
     logger.info(contact)
-    user_service.sync_contact_to_user(contact)
+    # user_service.sync_contact_to_user(contact)
     return True
 
 

@@ -10,7 +10,7 @@ from ..api.errors import NotFoundError
 from ..interfaces.expandable import ExpandableResource
 from ..services._config import config
 from ..utils.mongo import mdb
-from ..utils.pipelines import vql_stage
+from ..utils.pipelines import match_stage, search_stage, vql_stage
 
 logger = Logger()
 tracer = Tracer()
@@ -186,26 +186,13 @@ class ContactService(ExpandableResource):
         return True
 
     def search(self, account_id, query):
-        """Search for contacts.
-
-        Args:
-            account_id (str): The id of the account to search contacts for.
-            query (dict): The query to use.
-
-        Returns:
-            list: The contacts.
-        """
         logger.info('Searching contacts', extra={'query': query})
 
-        # Construct filter
-        filter = {}
-        if account_id:
-            filter['account'] = account_id
-        if query:
-            filter['$text'] = {'$search': query}
-
         # Find documents matching filter
-        cursor = self.collection.find(filter=filter)
+        cursor = self.collection.aggregate([
+            search_stage(index=self.search_index, query=query),
+            match_stage(account=account_id),
+        ])
 
         # Convert cursor to list
         contacts = [self.Model(**doc).to_json() for doc in cursor]
@@ -214,11 +201,7 @@ class ContactService(ExpandableResource):
 
     def aggregate_tags(self, account_id):
         stages = [
-            {
-                "$match": {
-                    'account': account_id
-                }
-            },
+            match_stage(account=account_id),
             {
                 '$unwind': {
                     'path': '$tags',
@@ -256,8 +239,9 @@ class ContactService(ExpandableResource):
 
     def list_segment_contacts(self, account_id, vql):
         stages = [
-            vql_stage(vql=vql, account=account_id),
+            vql_stage(account=account_id, vql=vql),
         ]
+        logger.info(stages)
         cursor = self.collection.aggregate(stages)
         return [self.Model(**doc).to_json() for doc in cursor]
 

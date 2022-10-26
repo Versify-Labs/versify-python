@@ -4,11 +4,12 @@ from aws_lambda_powertools import Logger, Tracer
 from bson.objectid import ObjectId
 from pymongo.collection import ReturnDocument
 
-from ..api.errors import NotFoundError, UsageLimitError
+from ..api.errors import NotFoundError
 from ..interfaces.expandable import ExpandableResource
 from ..services._config import config
 from ..utils.mandrill import mailchimp
 from ..utils.mongo import mdb
+from ..utils.pipelines import match_stage, search_stage
 
 logger = Logger()
 tracer = Tracer()
@@ -169,6 +170,41 @@ class AirdropService(ExpandableResource):
         data = self.Model(**data).to_json()
 
         return data
+
+    def archive(self, airdrop_id: str) -> dict:
+        """Archive an airdrop.
+
+        Args:
+            airdrop_id (str): The id of the airdrop to archive.
+
+        Returns:
+            dict: The airdrop.
+
+        Raises:
+            NotFoundError: If the airdrop does not exist.
+        """
+        logger.info('Archiving airdrop', extra={'id': airdrop_id})
+
+        # Find document matching filter
+        airdrop = self.collection.find_one(filter={'_id': airdrop_id})
+        if not airdrop:
+            raise NotFoundError
+
+        # Update item in DB
+        airdrop = self.collection.find_one_and_update(
+            filter={'_id': airdrop_id},
+            update={'$set': {
+                'archived': True,
+                'updated': int(time.time())
+            }},
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+
+        # Convert to JSON
+        airdrop = self.Model(**airdrop).to_json()
+
+        return airdrop
 
     def complete(self, airdrop_id: str) -> dict:
         """Complete an airdrop.
@@ -382,3 +418,26 @@ class AirdropService(ExpandableResource):
             raise NotFoundError
 
         return True
+
+    def search(self, account_id, query):
+        """Search for airdrops.
+
+        Args:
+            account_id (str): The id of the account to search airdrops for.
+            query (dict): The query to use.
+
+        Returns:
+            list: The airdrops.
+        """
+        logger.info('Searching airdrops', extra={'query': query})
+
+        # Find documents matching filter
+        cursor = self.collection.aggregate([
+            search_stage(index=self.search_index, query=query),
+            match_stage(account=account_id),
+        ])
+
+        # Convert cursor to list
+        airdrops = [self.Model(**doc).to_json() for doc in cursor]
+
+        return airdrops

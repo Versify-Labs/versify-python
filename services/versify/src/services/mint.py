@@ -24,6 +24,7 @@ class MintService(ExpandableResource):
         airdrop_service,
         contact_service,
         mint_link_service,
+        user_service
     ) -> None:
         _config = config['mint']
         self.collection = mdb[_config.db][_config.collection]
@@ -37,9 +38,10 @@ class MintService(ExpandableResource):
         self.airdrop_service = airdrop_service
         self.contact_service = contact_service
         self.mint_link_service = mint_link_service
+        self.user_service = user_service
 
     def create(self, body: dict) -> dict:
-        """Create a new mint. If the mint already exists, update the mint.
+        """Create a new mint.
 
         Args:
             body (dict): The mint to create.
@@ -57,7 +59,20 @@ class MintService(ExpandableResource):
 
         account_id = None
         email = body['email']
-        wallet_address = body['wallet_address']
+
+        # Get users managed wallet address if not provided
+        wallet_address = body.get('wallet_address')
+        if not wallet_address:
+            user = self.user_service.retrieve_by_email(email)
+            for wallet in user['wallets']:
+                if 'managed' in wallet and wallet['managed']:
+                    wallet_address = wallet['address']
+                    body['wallet_address'] = wallet_address
+                    break
+
+        if not wallet_address:
+            raise NotFoundError('No managed wallet found for user')
+
         if body.get('mint_link'):
             mint_link_id = body['mint_link']
             mint_link = self.mint_link_service.retrieve_by_id(mint_link_id)
@@ -72,9 +87,11 @@ class MintService(ExpandableResource):
         body['account'] = account_id
 
         # Upsert contact and add it to mint
-        contact_body = {'account': account_id, 'email': email}
-        if wallet_address:
-            contact_body['wallet_address'] = wallet_address
+        contact_body = {
+            'account': account_id,
+            'email': email,
+            'wallet_address': wallet_address
+        }
         contact = self.contact_service.create(contact_body)
         body['contact'] = contact['id']
 
@@ -84,8 +101,10 @@ class MintService(ExpandableResource):
         # Store new item in DB
         self.collection.insert_one(data.to_bson())
 
-        # Fulfill mint and return
-        return self.fulfill(mint_id)
+        # Fulfill mint with wallet address
+        self.fulfill(mint_id, wallet_address)
+
+        return data.to_json()
 
     def count(self, filter: dict) -> int:
         """Count mints.
@@ -163,14 +182,27 @@ class MintService(ExpandableResource):
 
         return data
 
-    def fulfill(self,  mint_id: str) -> dict:
+    def fulfill(self, mint_id: str, wallet_address: str) -> dict:
+        """Mint a token and update the mint.
+
+        Args:
+            mint_id (str): The id of the mint to fulfill.
+            wallet_address (str): The wallet address to mint to.
+
+        Returns:
+            dict: The mint.
+
+        Raises:
+            NotFoundError: If the mint does not exist.
+
+        """
+        logger.info('Fulfilling mint', extra={'mint_id': mint_id})
 
         # Get the mint, product, and collection
         mint = self.retrieve_by_id(mint_id)
         mint = self.expand(mint, ['product.collection'])
         product = mint['product']
         collection = product['collection']
-        wallet_address = mint['wallet_address']
 
         # Mint token to contract
         tatum = Tatum()

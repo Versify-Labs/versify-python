@@ -53,18 +53,22 @@ class MintLinkService(ExpandableResource):
         body['created'] = int(time.time())
         body['updated'] = int(time.time())
 
-        # Inject with necessary fields
+        # Get account
         account_id = body['account']
         account = self.account_service.retrieve_by_id(account_id)
-        business_branding = account['business_profile']['branding']
-        body['branding'] = {
-            'colors': {
-                'background': business_branding['primary_color'],
-                'button': business_branding['secondary_color']
-            },
-            'logo': business_branding.get('logo'),
-            'name': account['business_profile']['name']
-        }
+        account_name = account['business_profile'].get('name', '')
+        account_logo = account['business_profile']['branding'].get('logo')
+
+        # Inject with necessary fields
+        branding = body.get('branding', {})
+        branding['background_color'] = branding.get('background_color', '#E1E4FF')
+        branding['button_color'] = branding.get('button_color', '#596AFF')
+        branding['font'] = branding.get('font', 'inherit')
+        branding['icon'] = branding.get('icon', account_logo)
+        branding['logo'] = branding.get('logo', account_logo)
+        branding['name'] = branding.get('name', account_name)
+        branding['shapes'] = branding.get('shapes', 'rounded')
+        body['branding'] = branding
         body['url'] = MINT_URL + '/' + body['_id']
 
         # Validate mints against account billing plan
@@ -166,6 +170,9 @@ class MintLinkService(ExpandableResource):
 
         Returns:
             dict: The mint_link.
+
+        Raises:
+            NotFoundError: If the mint_link does not exist.
         """
         logger.info('Archiving mint_link', extra={'id': mint_link_id})
 
@@ -179,6 +186,8 @@ class MintLinkService(ExpandableResource):
             filter={'_id': mint_link_id},
             update={'$set': {
                 'active': False,
+                'archived': True,
+                'updated': int(time.time())
             }},
             upsert=True,
             return_document=ReturnDocument.AFTER

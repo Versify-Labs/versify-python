@@ -3,10 +3,18 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "title": "CreateMint",
-  "required": ["product", "wallet_address"],
+  "required": ["product"],
   "properties": {
     "airdrop": {
       "description": "The airdrop of the mint",
+      "type": "string"
+    },
+    "campaign": {
+      "description": "The campaign that created this mint",
+      "type": "string"
+    },
+    "email": {
+      "description": "The email of the mint",
       "type": "string"
     },
     "mint_link": {

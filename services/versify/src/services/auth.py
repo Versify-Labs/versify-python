@@ -1,5 +1,9 @@
 """Can authenticate an API call with a token and account id."""
+import json
+import os
+
 from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools.utilities import parameters
 from jose import jwt
 
 from ..api.errors import NotFoundError
@@ -18,6 +22,13 @@ class AuthService:
     ) -> None:
         self.account_service = account_service
         self.user_service = user_service
+
+    def get_paragon_api_key(self):
+        secret_name = os.environ['SECRET_NAME']
+        secret_raw = parameters.get_secret(secret_name)
+        secret = json.loads(secret_raw)  # type: ignore
+        paragon_sk = secret['PARAGON_SECRET_KEY']
+        return paragon_sk
 
     def get_user_by_token(self, token: str):
         """Get a user by token.
@@ -64,9 +75,8 @@ class AuthService:
                 user_body['email'] = user['emails'][0]['email']
                 user_body['first_name'] = user['name'].get('first_name')
                 user_body['last_name'] = user['name'].get('last_name')
-                user_body['wallets'] = user['crypto_wallets']
 
-        return self.user_service.login(user_body)
+        return self.user_service.sync(user_body)
 
     def authenticate_account_api_key(self, api_key: str):
         """Authenticate an account using an API key.
@@ -83,6 +93,26 @@ class AuthService:
             account = self.account_service.retrieve_by_api_secret_key(api_key)
         except NotFoundError:
             return False, None, 'Invalid API key'
+        return True, account, None
+
+    def authenticate_paragon_api_key(self, account_id: str, api_key: str):
+        """Authenticate a Paragon API key.
+
+        Args:
+            account_id (str): The id of the account to authenticate.
+            api_key (str): The API key to authenticate with.
+
+        Returns:
+            success: Whether the authentication was successful.
+            error: The error message if authentication failed.
+        """
+        paragon_sk = self.get_paragon_api_key()
+        if api_key != paragon_sk:
+            return False, None, 'Invalid API Key'
+        try:
+            account = self.account_service.retrieve_by_id(account_id)
+        except NotFoundError:
+            return False, None, 'Invalid Account'
         return True, account, None
 
     def authenticate_account_token(self, account_id: str, token: str):

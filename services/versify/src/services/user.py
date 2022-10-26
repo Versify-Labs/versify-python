@@ -1,7 +1,9 @@
+import secrets
 import time
 
 from aws_lambda_powertools import Logger, Tracer
 from bson.objectid import ObjectId
+from eth_account import Account
 from pymongo.collection import ReturnDocument
 
 from ..api.errors import NotFoundError
@@ -90,6 +92,9 @@ class UserService(ExpandableResource):
         # Convert to JSON
         user = self.Model(**user).to_json()
 
+        # Expand user accounts
+        user['accounts'] = self.list_accounts(email=user['email'])
+
         return user
 
     def create(self, body: dict) -> dict:
@@ -107,6 +112,12 @@ class UserService(ExpandableResource):
         body['_id'] = body.get('_id', f'{self.prefix}_{ObjectId()}')
         body['created'] = int(time.time())
         body['updated'] = int(time.time())
+
+        # Create managed wallet
+        managed_wallet = self.generate_managed_wallet()
+        wallets = body.get('wallets', [])
+        wallets.append(managed_wallet)
+        body['wallets'] = wallets
 
         # Validate against schema
         data = self.Model(**body)
@@ -178,16 +189,16 @@ class UserService(ExpandableResource):
 
         return True
 
-    def login(self, user_body: dict) -> dict:
-        """Login a user.
+    def sync(self, user_body: dict) -> dict:
+        """Sync a user with new data from auth provider.
 
         Args:
-            user_body (dict): The user to login.
+            user_body (dict): The data to sync with the existing/new user.
 
         Returns:
-            dict: The user.
+            dict: The user after the sync.
         """
-        logger.info('User login', extra={'user_body': user_body})
+        logger.info('User sync', extra={'user_body': user_body})
 
         # Parse user body
         user_id = user_body.get('id')
@@ -221,5 +232,19 @@ class UserService(ExpandableResource):
 
         return data
 
-    def sync_contact_to_user(self, contact):
-        pass
+    def generate_managed_wallet(self):
+
+        # Create address and private key
+        priv = secrets.token_hex(32)
+        private_key = "0x" + priv
+        account = Account.privateKeyToAccount(private_key)
+        public_address = account.address
+
+        # TODO: Store private key in secrets manager like ADDRESS:PRIVATE_KEY
+
+        return {
+            'address': public_address,
+            'managed': True,
+            'private_key': private_key,
+            'type': 'ethereum'
+        }

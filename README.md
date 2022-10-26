@@ -173,3 +173,11 @@ See the [docs](docs/) folder for the documentation.
     Docs
   </a>
 </p>
+
+pip install \
+    --platform manylinux2014_x86_64 \
+    --target=versify-python \
+    --implementation cp \
+    --python 3.9 \
+    --only-binary=:all: --upgrade \
+    web3

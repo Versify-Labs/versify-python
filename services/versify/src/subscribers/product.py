@@ -19,26 +19,21 @@ airdrop_service = AirdropService(
 def handle_product_archived(product):
     logger.info(product)
 
-    # Disable and archive all mint links for this product
+    # Archive all mint links for this product
     mint_links = mint_link_service.list(
         filter={
             'product': product['id']
         }
     )
     for mint_link in mint_links:
-        mint_link_service.update(mint_link['id'], {
-            'active': False,
-            'archived': True
-        })
+        mint_link_service.archive(mint_link['id'])
 
     # Archive all airdrops for this product
     airdrops = airdrop_service.list(
         filter={'product': product['id']}
     )
     for airdrop in airdrops:
-        airdrop_service.update(airdrop['id'], {
-            'archived': True
-        })
+        airdrop_service.archive(airdrop['id'])
 
     return True
 

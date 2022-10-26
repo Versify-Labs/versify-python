@@ -67,7 +67,18 @@ def authorize_account(event: APIGatewayAuthorizerRequestEvent, context):
     user = None
     error = None
     if token_type.lower() == 'basic':
+
+        # Check account API key
+        logger.info('Checking account API key')
         success, user, error = auth_service.authenticate_account_api_key(token)
+        logger.info('Account API key check result: %s', success)
+
+        # Check Paragon API key
+        logger.info('Checking Paragon API key')
+        if not success:
+            success, user, error = auth_service.authenticate_paragon_api_key(
+                account, token)
+
     if token_type.lower() == 'bearer':
         success, user, error = auth_service.authenticate_account_token(
             account, token)
