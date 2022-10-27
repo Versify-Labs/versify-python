@@ -24,6 +24,7 @@ class MintService(ExpandableResource):
         airdrop_service,
         contact_service,
         mint_link_service,
+        product_service,
         user_service
     ) -> None:
         _config = config['mint']
@@ -38,6 +39,7 @@ class MintService(ExpandableResource):
         self.airdrop_service = airdrop_service
         self.contact_service = contact_service
         self.mint_link_service = mint_link_service
+        self.product_service = product_service
         self.user_service = user_service
 
     def create(self, body: dict) -> dict:
@@ -95,16 +97,34 @@ class MintService(ExpandableResource):
         contact = self.contact_service.create(contact_body)
         body['contact'] = contact['id']
 
+        # Get the product and collection
+        product = self.product_service.retrieve_by_id(body['product'])
+        product = self.product_service.expand(product, ['collection'])
+        collection = product['collection']
+
+        # Mint token to contract
+        tatum = Tatum()
+        response = tatum.mint_token(
+            contract=collection['contract_address'],
+            token=product['token_id'],
+            to=wallet_address
+        )
+        signature = response.get('signatureId')
+
+        # Update mint with txn result
+        body['signature'] = signature
+        body['status'] = 'pending' if signature else 'failed'
+
         # Validate against schema
         data = self.Model(**body)
 
         # Store new item in DB
         self.collection.insert_one(data.to_bson())
 
-        # Fulfill mint with wallet address
-        self.fulfill(mint_id, wallet_address)
+        # Convert to JSON
+        data = data.to_json()
 
-        return data.to_json()
+        return data
 
     def count(self, filter: dict) -> int:
         """Count mints.
@@ -173,53 +193,6 @@ class MintService(ExpandableResource):
         data = self.collection.find_one_and_update(
             filter={'_id': mint_id},
             update={'$set': validated_mint.to_bson()},
-            upsert=True,
-            return_document=ReturnDocument.AFTER
-        )
-
-        # Convert to JSON
-        data = self.Model(**data).to_json()
-
-        return data
-
-    def fulfill(self, mint_id: str, wallet_address: str) -> dict:
-        """Mint a token and update the mint.
-
-        Args:
-            mint_id (str): The id of the mint to fulfill.
-            wallet_address (str): The wallet address to mint to.
-
-        Returns:
-            dict: The mint.
-
-        Raises:
-            NotFoundError: If the mint does not exist.
-
-        """
-        logger.info('Fulfilling mint', extra={'mint_id': mint_id})
-
-        # Get the mint, product, and collection
-        mint = self.retrieve_by_id(mint_id)
-        mint = self.expand(mint, ['product.collection'])
-        product = mint['product']
-        collection = product['collection']
-
-        # Mint token to contract
-        tatum = Tatum()
-        response = tatum.mint_token(
-            contract=collection['contract_address'],
-            token=product['token_id'],
-            to=wallet_address
-        )
-        signature = response.get('signatureId')
-
-        # Update collection with txn result
-        data = self.collection.find_one_and_update(
-            filter={'_id': mint_id},
-            update={'$set': {
-                'signature': signature,
-                'status': 'pending' if signature else 'failed'
-            }},
             upsert=True,
             return_document=ReturnDocument.AFTER
         )

@@ -26,6 +26,9 @@ class UserService(ExpandableResource):
         self.prefix = _config.prefix
         self.search_index = _config.search_index
 
+        # Wallet collection
+        self.wallet_collection = mdb["Accounts"]["Wallets"]
+
         # Internal services
         self.account_service = account_service
 
@@ -241,10 +244,48 @@ class UserService(ExpandableResource):
         public_address = account.address
 
         # TODO: Store private key in secrets manager like ADDRESS:PRIVATE_KEY
+        self.wallet_collection.insert_one({
+            'address': public_address,
+            'private_key': private_key
+        })
 
         return {
             'address': public_address,
             'managed': True,
-            'private_key': private_key,
             'type': 'ethereum'
         }
+
+    def attach_wallet(self, user_id: str, address: str, type: str = 'ethereum') -> dict:
+        """Attach a wallet to the user.
+
+        Args:
+            address (str): The address of the wallet to attach.
+            type (str): The type of the wallet to attach.
+
+        Returns:
+            dict: The user.
+        """
+        logger.info('Attaching wallet', extra={'address': address})
+
+        # Find document matching filter
+        user = self.retrieve_by_id(user_id)
+        old_wallets = user.get('wallets', [])
+        for wallet in old_wallets:
+            old_address = wallet.get('address', '').lower()
+            new_address = address.lower()
+            if old_address == new_address:
+                return user
+
+        # Create new wallet to attach
+        new_wallet = {
+            'address': address,
+            'managed': False,
+            'type': type
+        }
+        user = self.collection.find_one_and_update(
+            filter={'_id': user_id},
+            update={'$push': {'wallets': new_wallet}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+        return user

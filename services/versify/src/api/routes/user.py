@@ -8,6 +8,7 @@ from lambda_decorators import cors_headers
 from ...services import (AccountService, AirdropService, CollectionService,
                          ContactService, EventService, MintLinkService,
                          MintService, ProductService, UserService)
+from ..errors import BadRequestError
 from ..rest import Request, Response
 
 app = APIGatewayRestResolver()
@@ -20,9 +21,11 @@ contact_service = ContactService()
 event_service = EventService()
 mint_link_service = MintLinkService(account_service)
 product_service = ProductService(collection_service)
-airdrop_service = AirdropService(account_service, contact_service, mint_link_service, product_service)
+airdrop_service = AirdropService(
+    account_service, contact_service, mint_link_service, product_service)
 user_service = UserService(account_service)
-mint_service = MintService(airdrop_service, contact_service, mint_link_service, user_service)
+mint_service = MintService(airdrop_service, contact_service,
+                           mint_link_service, product_service, user_service)
 
 
 @app.post('/users/auth')
@@ -93,13 +96,18 @@ def get_mint(id):
     return Response(req, mint).get
 
 
-@app.put('/users/mints/<id>/fulfill')
+@app.post('/users/wallets')
 @tracer.capture_method
-def fulfill_mint(id):
-    req = Request(app, id)
-    wallet_address = req.body['wallet_address']
-    mint = mint_service.fulfill(id, wallet_address)
-    return Response(req, mint).update
+def attach_wallet():
+    req = Request(app)
+    body = req.body
+    user_id = req.user
+    address = body.get('address')
+    type = body.get('type')
+    if not address or not type or not user_id:
+        raise BadRequestError('Missing required fields')
+    user = user_service.attach_wallet(user_id, address, type)
+    return Response(req, user).create
 
 
 @cors_headers

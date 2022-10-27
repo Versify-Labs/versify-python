@@ -24,9 +24,11 @@ contact_service = ContactService()
 event_service = EventService()
 mint_link_service = MintLinkService(account_service)
 product_service = ProductService(collection_service)
-airdrop_service = AirdropService(account_service, contact_service, mint_link_service, product_service)
+airdrop_service = AirdropService(
+    account_service, contact_service, mint_link_service, product_service)
 user_service = UserService(account_service)
-mint_service = MintService(airdrop_service, contact_service, mint_link_service, user_service)
+mint_service = MintService(
+    airdrop_service, contact_service, mint_link_service, product_service, user_service)
 note_service = NoteService()
 signature_service = SignatureService(collection_service, mint_service)
 webhook_service = WebhookService()
@@ -38,16 +40,6 @@ API_VERSION = 'v1'
 ############
 # Accounts #
 ############
-
-
-@app.post(f'/{API_VERSION}/accounts')
-@tracer.capture_method
-def create_account():
-    req = Request(app)
-    body = req.body
-    body['email'] = req.email
-    account = account_service.create(body)
-    return Response(req, account).create
 
 
 @app.get(f'/{API_VERSION}/accounts/<id>')

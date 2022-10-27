@@ -11,18 +11,27 @@ contact_service = ContactService()
 user_service = UserService(account_service)
 
 
-def update_contact_user(contact):
+def sync_contact_user(contact):
     logger.info(contact)
-    # user_service.sync_contact_to_user(contact)
+
+    # See if a user exists for this contact
+    user = user_service.retrieve_by_email(contact['email'])
+
+    # If the user doesn't exist, create it
+    if not user:
+        new_user = {'email': contact['email']}
+        user = user_service.create(new_user)
+        logger.info(user)
+
     return True
 
 
 def handle_contact_created(contact):
-    return update_contact_user(contact)
+    return sync_contact_user(contact)
 
 
 def handle_contact_updated(contact):
-    return update_contact_user(contact)
+    return sync_contact_user(contact)
 
 
 @event_source(data_class=EventBridgeEvent)  # type: ignore

@@ -65,5 +65,4 @@ def handler(event, context):
     source = event.source
     detail_type = event.detail_type
     detail = event.detail
-    if 'user' not in detail_type:
-        return handle_event(source, detail_type, detail)
+    return handle_event(source, detail_type, detail)

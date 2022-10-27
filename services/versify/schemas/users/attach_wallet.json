@@ -1,0 +1,18 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "AttachWallet",
+  "required": ["address"],
+  "properties": {
+    "address": {
+      "description": "The wallet address",
+      "type": "string"
+    },
+    "type": {
+      "description": "The type of wallet",
+      "type": "string",
+      "enum": ["ethereum"]
+    }
+  }
+}

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 from ..interfaces.versify_model import BaseVersifyModel
 
@@ -18,9 +18,6 @@ class Wallet(BaseModel):
     address: str
     managed: bool = False
     type: BlockchainWalletType = BlockchainWalletType.ethereum
-
-    # Do not include this in the response
-    # private_key: Optional[str]
 
 
 class User(BaseVersifyModel):

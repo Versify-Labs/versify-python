@@ -91,23 +91,6 @@ functions:
     description: API endpoints relating to the Account object
     events:
       - http:
-          method: post
-          path: /v1/accounts
-          operationId: CreateAccount
-          authorizer:
-            name: API-AuthorizeUser
-            type: REQUEST
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-            schemas:
-              application/json: ${file(schemas/accounts/create.json)}
-      - http:
           method: get
           path: /v1/accounts/{id}
           operationId: GetAccount
@@ -471,6 +454,7 @@ functions:
             parameters:
               headers:
                 Authorization: true
+                Versify-Account: true
               querystrings:
                 active: false
                 expand: false
@@ -735,25 +719,6 @@ functions:
                 id: true
               querystrings:
                 expand: false
-      - http:
-          method: put
-          path: /v1/mints/{id}/fulfill
-          operationId: FulfillMint
-          authorizer:
-            name: API-AuthorizeAccount
-            type: REQUEST
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              paths:
-                id: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/mints/fulfill.json)}
       - http:
           method: get
           path: /v1/notes
@@ -1163,9 +1128,9 @@ functions:
               paths:
                 id: true
       - http:
-          method: put
-          path: /users/mints/{id}/fulfill
-          operationId: FulfillMint
+          method: post
+          path: /users/wallets
+          operationId: AttachWallet
           authorizer:
             name: API-AuthorizeUser
             type: REQUEST
@@ -1175,10 +1140,10 @@ functions:
             allowCredentials: false
           request:
             parameters:
-              paths:
-                id: true
+              headers:
+                Authorization: true
             schemas:
-              application/json: ${file(schemas/mints/fulfill.json)}
+              application/json: ${file(schemas/users/attach_wallet.json)}
   API-WebhookEndpoints:
     handler: src.api.routes.webhook.handler
     name: API-WebhookEndpoints
@@ -1798,27 +1763,6 @@ functions:
             inputPathsMap:
               detail: "$.detail.fullDocument"
             inputTemplate: '{"detail": <detail>, "detail-type": "mint.updated"}'
-      # MongoMintFulfilled
-      - eventBridge:
-          eventBus: ${ssm:/versify/services/partner/bus/arn}
-          pattern:
-            source:
-              - mongo
-            detail:
-              operationType:
-                - replace
-                - update
-              fullDocument:
-                object:
-                  - mint
-              updateDescription:
-                updatedFields:
-                  wallet_address:
-                    - { "exists": true }
-          inputTransformer:
-            inputPathsMap:
-              detail: "$.detail.fullDocument"
-            inputTemplate: '{"detail": <detail>, "detail-type": "mint.fulfilled"}'
       # MongoNoteCreated
       - eventBridge:
           eventBus: ${ssm:/versify/services/partner/bus/arn}
@@ -2105,6 +2049,19 @@ functions:
               - tatum
             detail-type:
               - transaction.created
+  EventSubscriber-Contact:
+    handler: src.subscribers.contact.handler
+    name: EventSubscriber-Contact
+    description: Handle contact events
+    events:
+      - eventBridge:
+          eventBus: ${ssm:/versify/services/versify/bus/arn}
+          pattern:
+            source:
+              - versify
+            detail-type:
+              - contact.created
+              - contact.updated
   # EventSubscriber-Paragon:
   #   handler: src.subscribers.webhook.handler
   #   name: EventSubscriber-Paragon
