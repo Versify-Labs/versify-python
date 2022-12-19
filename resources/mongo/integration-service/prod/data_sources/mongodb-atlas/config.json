@@ -1,0 +1,17 @@
+{
+    "name": "mongodb-atlas",
+    "type": "mongodb-atlas",
+    "config": {
+        "clusterName": "VersifyProductionCluster",
+        "namespacePreimageConfigs": [
+            {
+                "collectionName": "Contacts",
+                "dbName": "Contacts",
+                "recordPreimages": true
+            }
+        ],
+        "readPreference": "primary",
+        "wireProtocolEnabled": false
+    },
+    "version": 1
+}
