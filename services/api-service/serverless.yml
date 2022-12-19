@@ -1,0 +1,1639 @@
+org: versify
+app: versify
+service: api
+
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    MONGO_DB_URL: ${ssm:/versify/services/mongo/db/url}
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: api-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    STEP_FUNCTION_LOG_ARN: ${ssm:/versify/services/automation/stepfunction/log/arn}
+    STEP_FUNCTION_ROLE_ARN: ${ssm:/versify/services/automation/stepfunction/role/arn}
+    STRIPE_GROWTH_PRICE: ${ssm:/versify/services/stripe/growth/price}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "events:*"
+          Resource:
+            - "arn:aws:events:${aws:region}:*:event-bus/*"
+            - "arn:aws:events:${aws:region}:*:rule/*"
+        - Effect: Allow
+          Action:
+            - "scheduler:*"
+          Resource:
+            - "arn:aws:scheduler:${aws:region}:*:schedule/*"
+        - Effect: Allow
+          Action:
+            - "s3:*"
+          Resource:
+            - "arn:aws:s3:::cdn.versifylabs.com"
+            - "arn:aws:s3:::cdn.versifylabs.com/*"
+            - "arn:aws:s3:::cdn-dev.versifylabs.com"
+            - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - "arn:aws:secretsmanager:${aws:region}:*:secret:/versify/platform/secret*"
+        - Effect: Allow
+          Action:
+            - "states:*"
+          Resource:
+            - "*"
+        - Effect: Allow
+          Action:
+            - "iam:PassRole"
+          Resource:
+            - "*"
+  layers:
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:26
+    - ${ssm:/versify/services/integration/shared/layer/arn}
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  ApiService-AccountEndpoints:
+    handler: src.api.routes.account.handler
+    name: ApiService-AccountEndpoints
+    description: API endpoints that can be called by admins
+    events:
+      - http:
+          method: get
+          path: /v1/accounts/{id}
+          operationId: GetAccount
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /v1/accounts/{id}
+          operationId: UpdateAccount
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/accounts/update.json)}
+      - http:
+          method: post
+          path: /v1/accounts/{id}/billing
+          operationId: CreateAccountBillingSession
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/accounts/{id}/billing/summary
+          operationId: GetAccountBillingSummary
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+      - http:
+          method: post
+          path: /v1/accounts/{id}/checkout
+          operationId: CreateAccountCheckoutSession
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/accounts/{id}/invoices
+          operationId: ListAccountInvoices
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+      - http:
+          method: get
+          path: /v1/accounts/{id}/metrics
+          operationId: ListAccountMetrics
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                objects: false
+      - http:
+          method: post
+          path: /v1/accounts/{id}/members
+          operationId: CreateAccountMember
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/accounts/create_member.json)}
+      - http:
+          method: get
+          path: /v1/accounts/{id}/members
+          operationId: ListAccountMembers
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+      - http:
+          method: get
+          path: /v1/accounts/{id}/subscriptions
+          operationId: ListAccountSubscriptions
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+      - http:
+          method: post
+          path: /v1/accounts/{id}/tokens
+          operationId: CreateAccountToken
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/airdrops
+          operationId: ListAirdrops
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/airdrops
+          operationId: CreateAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/create.json)}
+      - http:
+          method: get
+          path: /v1/airdrops/{id}
+          operationId: GetAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/airdrops/{id}
+          operationId: UpdateAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/update.json)}
+      - http:
+          method: put
+          path: /v1/airdrops/{id}/send
+          operationId: SendAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/claims
+          operationId: ListClaims
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                contact: false
+                expand: false
+                filter: false
+                page_num: false
+                page_size: false
+                product: false
+      - http:
+          method: post
+          path: /v1/claims
+          operationId: CreateClaim
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/claims/create.json)}
+      - http:
+          method: get
+          path: /v1/claims/{id}
+          operationId: GetClaim
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/collections
+          operationId: ListCollections
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                active: false
+                contract_address: false
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                signature: false
+                status: false
+      - http:
+          method: post
+          path: /v1/collections
+          operationId: CreateCollection
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/collections/create.json)}
+      - http:
+          method: get
+          path: /v1/collections/{id}
+          operationId: GetCollection
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/collections/{id}
+          operationId: UpdateCollection
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/collections/update.json)}
+      - http:
+          method: get
+          path: /v1/contacts
+          operationId: ListContacts
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                active: false
+                expand: false
+                filter: false
+                page_num: false
+                page_size: false
+                tags: false
+      - http:
+          method: post
+          path: /v1/contacts
+          operationId: CreateContact
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/contacts/create.json)}
+      - http:
+          method: get
+          path: /v1/contacts/{id}
+          operationId: GetContact
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/contacts/{id}
+          operationId: UpdateContact
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/contacts/update.json)}
+      - http:
+          method: put
+          path: /v1/contacts
+          operationId: BulkUpdateContacts
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            # schemas:
+            #   application/json: ${file(schemas/contacts/bulk_update.json)}
+      - http:
+          method: get
+          path: /v1/events
+          operationId: ListEvents
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                resource_id: false
+                resource_type: false
+                user: false
+      - http:
+          method: post
+          path: /v1/events
+          operationId: CreateEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/events/create.json)}
+      - http:
+          method: get
+          path: /v1/events/{id}
+          operationId: GetEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/journeys
+          operationId: ListJourneys
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/journeys
+          operationId: CreateJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/journeys/create.json)}
+      - http:
+          method: get
+          path: /v1/journeys/{id}
+          operationId: GetJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/journeys/{id}/runs
+          operationId: GetJourneyRuns
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/journeys/{id}
+          operationId: UpdateJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/journeys/update.json)}
+      - http:
+          method: put
+          path: /v1/journeys/{id}/duplicate
+          operationId: DuplicateJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: delete
+          path: /v1/journeys/{id}
+          operationId: DeleteJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/messages
+          operationId: ListMessages
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/messages
+          operationId: CreateMessage
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/messages/create.json)}
+      - http:
+          method: get
+          path: /v1/messages/{id}
+          operationId: GetMessage
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/mint_links
+          operationId: ListMintLinks
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                airdrop: false
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/mint_links
+          operationId: CreateMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/create.json)}
+      - http:
+          method: get
+          path: /v1/mint_links/{id}
+          operationId: GetMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/mint_links/{id}
+          operationId: UpdateMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/update.json)}
+      - http:
+          method: put
+          path: /v1/mint_links/{id}/archive
+          operationId: ArchiveMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/mints
+          operationId: ListMints
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                airdrop: false
+                contact: false
+                expand: false
+                filter: false
+                mint_link: false
+                page_num: false
+                page_size: false
+                product: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: post
+          path: /v1/mints
+          operationId: CreateMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
+          method: get
+          path: /v1/mints/{id}
+          operationId: GetMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/notes
+          operationId: ListNotes
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                resource_id: false
+                resource_type: false
+                user: false
+      - http:
+          method: post
+          path: /v1/notes
+          operationId: CreateNote
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/notes/create.json)}
+      - http:
+          method: delete
+          path: /v1/notes/{id}
+          operationId: DeleteNote
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/products
+          operationId: ListProducts
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/products
+          operationId: CreateProduct
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/products/create.json)}
+      - http:
+          method: get
+          path: /v1/products/{id}
+          operationId: GetProduct
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/products/{id}
+          operationId: UpdateProduct
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/products/update.json)}
+      - http:
+          method: get
+          path: /v1/reports
+          operationId: ListReports
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: post
+          path: /v1/reports
+          operationId: CreateReport
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/reports/create.json)}
+      - http:
+          method: get
+          path: /v1/reports/{id}
+          operationId: GetReport
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /v1/rewards
+          operationId: ListRewards
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                active: false
+                expand: false
+                page_num: false
+                page_size: false
+                product: false
+      - http:
+          method: post
+          path: /v1/rewards
+          operationId: CreateReward
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/rewards/create.json)}
+      - http:
+          method: get
+          path: /v1/rewards/{id}
+          operationId: GetReward
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: put
+          path: /v1/rewards/{id}
+          operationId: UpdateReward
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/rewards/update.json)}
+      - http:
+          method: post
+          path: /v1/rewards/{id}/redemptions
+          operationId: CreateRewardRedemption
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/rewards/redemptions/create.json)}
+      - http:
+          method: get
+          path: /v1/rewards/{id}/redemptions
+          operationId: ListRewardRedemptions
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+      - http:
+          method: get
+          path: /v1/search
+          operationId: Search
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                conditions: false
+                match: false
+                search_type: true
+                query: false
+                vql: false
+      - http:
+          method: get
+          path: /v1/webhooks
+          operationId: ListWebhooks
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                active: false
+                enabled_events: false
+                page_num: false
+                page_size: false
+      - http:
+          method: post
+          path: /v1/webhooks
+          operationId: CreateWebhook
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/webhooks/create.json)}
+      - http:
+          method: get
+          path: /v1/webhooks/{id}
+          operationId: GetWebhook
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: put
+          path: /v1/webhooks/{id}
+          operationId: UpdateWebhook
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+            schemas:
+              application/json: ${file(schemas/webhooks/update.json)}
+      - http:
+          method: delete
+          path: /v1/webhooks/{id}
+          operationId: DeleteWebhook
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /v1/webhook_events
+          operationId: ListWebhookEvents
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                active: false
+                enabled_events: false
+                page_num: false
+                page_size: false
+      - http:
+          method: post
+          path: /v1/webhook_events
+          operationId: CreateWebhookEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/webhook_events/create.json)}
+      - http:
+          method: get
+          path: /v1/webhook_events/{id}
+          operationId: GetWebhookEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+  ApiService-PublicEndpoints:
+    handler: src.api.routes.public.handler
+    name: ApiService-PublicEndpoints
+    description: API endpoints that can be called by consumers
+    events:
+      - http:
+          method: get
+          path: /public/accounts/{id}
+          operationId: GetAccount
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /public/accounts/{id}/branding
+          operationId: GetAccountBranding
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /public/accounts/{id}/assets
+          operationId: ListAccountAssets
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /public/accounts/{id}/journeys
+          operationId: ListAccountJourneys
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /public/accounts/{id}/rewards
+          operationId: ListAccountRewards
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: post
+          path: /public/events
+          operationId: TrackEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+            schemas:
+              application/json: ${file(schemas/events/create.json)}
+      - http:
+          method: get
+          path: /public/mint_links/{id}
+          operationId: GetMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              paths:
+                id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
+          path: /public/signatures/{id}
+          operationId: GetSignature
+          request:
+            parameters:
+              paths:
+                id: true
+  ApiService-UserEndpoints:
+    handler: src.api.routes.user.handler
+    name: ApiService-UserEndpoints
+    description: API endpoints that can be called by users
+    events:
+      - http:
+          method: post
+          path: /users/auth
+          operationId: AuthenticateUser
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: true
+          request:
+            parameters:
+              headers:
+                Authorization: true
+      - http:
+          method: post
+          path: /users/accounts
+          operationId: CreateAccount
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+            schemas:
+              application/json: ${file(schemas/accounts/create.json)}
+      - http:
+          method: post
+          path: /users/claims
+          operationId: CreateClaim
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/claims/create.json)}
+      - http:
+          method: get
+          path: /users/claims
+          operationId: ListClaims
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                airdrop: false
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: get
+          path: /users/claims/{id}
+          operationId: GetClaim
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
+          path: /users/events
+          operationId: ListEvents
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                page_num: false
+                page_size: false
+                filter: false
+      - http:
+          method: post
+          path: /users/mints
+          operationId: CreateMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
+          method: get
+          path: /users/mints
+          operationId: ListMints
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+              querystrings:
+                airdrop: false
+                expand: false
+                mint_link: false
+                page_num: false
+                page_size: false
+                filter: false
+                signature: false
+                status: false
+                transaction: false
+      - http:
+          method: get
+          path: /users/mints/{id}
+          operationId: GetMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: post
+          path: /users/wallets
+          operationId: AttachWallet
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+            schemas:
+              application/json: ${file(schemas/users/attach_wallet.json)}
+  ApiService-WebhookEndpoints:
+    handler: src.api.routes.webhook.handler
+    name: ApiService-WebhookEndpoints
+    description: API endpoints that can be called by partners
+    events:
+      - http:
+          method: post
+          path: /webhook/alchemy
+      - http:
+          method: post
+          path: /webhook/shopify
+      - http:
+          method: post
+          path: /webhook/stripe
+      - http:
+          method: post
+          path: /webhook/tatum

@@ -1,0 +1,12 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateRewardRedemption",
+  "properties": {
+    "reward": {
+      "description": "The ID of the reward to redeem.",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateWebhookEvent",
+  "required": ["data", "type"],
+  "properties": {
+    "data": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "type": {
+      "description": "The type of the event",
+      "type": "string"
+    }
+  }
+}

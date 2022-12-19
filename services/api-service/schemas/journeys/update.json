@@ -1,0 +1,44 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "UpdateJourney",
+  "properties": {
+    "active": {
+      "type": "boolean",
+      "description": "Whether the journey is active or not"
+    },
+    "name": {
+      "description": "The name for the journey",
+      "type": "string"
+    },
+    "trigger": {
+      "description": "The trigger for the journey to start",
+      "type": "object",
+      "properties": {
+        "source": {
+          "description": "The system the event came from",
+          "type": "string"
+        },
+        "detail_type": {
+          "description": "The type of event",
+          "type": "string"
+        }
+      }
+    },
+    "conditions": {
+      "description": "The conditions for the journey to start",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "effects": {
+      "description": "The actions to take in the journey",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

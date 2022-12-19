@@ -1,0 +1,146 @@
+org: versify
+app: versify
+service: automation-service
+
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    MONGO_DB_URL: ${ssm:/versify/services/mongo/db/url}
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: automation-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+    STEP_FUNCTION_LOG_ARN: ${ssm:/versify/services/automation/stepfunction/log/arn}
+    STEP_FUNCTION_ROLE_ARN: ${ssm:/versify/services/automation/stepfunction/role/arn}
+    STRIPE_GROWTH_PRICE: ${ssm:/versify/services/stripe/growth/price}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "events:*"
+          Resource:
+            - "arn:aws:events:${aws:region}:*"
+        - Effect: Allow
+          Action:
+            - "s3:*"
+          Resource:
+            - "arn:aws:s3:::cdn.versifylabs.com"
+            - "arn:aws:s3:::cdn.versifylabs.com/*"
+            - "arn:aws:s3:::cdn-dev.versifylabs.com"
+            - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
+        - Effect: Allow
+          Action:
+            - "secretsmanager:GetSecretValue"
+          Resource:
+            - "arn:aws:secretsmanager:${self:provider.region}:*:secret:/versify/platform/secret*"
+        - Effect: Allow
+          Action:
+            - "ses:SendEmail"
+          Resource:
+            - "arn:aws:ses:${aws:region}:${aws:accountId}:identity/*"
+        - Effect: Allow
+          Action:
+            - "states:*"
+          Resource:
+            - "arn:aws:states:${aws:region}:*"
+        - Effect: Allow
+          Action:
+            - "sqs:*"
+          Resource:
+            - "arn:aws:sqs:${aws:region}:*"
+  layers:
+    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:26
+    - ${ssm:/versify/services/integration/shared/layer/arn}
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  AutomationService-RunTask:
+    handler: src.handlers.handler
+    name: AutomationService-RunTask
+    description: Run a task in the journey automation service
+  # AutomationService-UpdateRun:
+  #   handler: src.handlers.handler
+  #   name: AutomationService-UpdateRun
+  #   description: Run a task in the journey automation service
+  #   events:
+  #     - eventBridge:
+  #         eventBus: default
+  #         pattern:
+  #           account:
+  #             - ${aws:accountId}
+  #           source:
+  #             - "aws.states"
+  #           detail-type:
+  #             - "Step Functions Execution Status Change"
+  #           detail:
+  #             stateMachineArn:
+  #               - "arn:aws:states:${aws:region}:${aws:accountId}:stateMachine:jour*"
+  #             status:
+  #               - "SUCCEEDED"
+  #               - "FAILED"
+  #               - "TIMED_OUT"
+  #               - "ABORTED"
+
+resources:
+  Resources:
+    # IAM Resources
+    AutomationServiceStepFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - "events.amazonaws.com"
+                  - "lambda.amazonaws.com"
+                  - "scheduler.amazonaws.com"
+                  - "states.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          - PolicyName: AutomationServiceStepFunctionPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "states:StartExecution"
+                  Resource:
+                    - "arn:aws:states:us-east-1:*:stateMachine:*"
+        RoleName: AutomationService-StepFunctionRole
+    # Log Resources
+    AutomationServiceStepFunctionLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/step-functions/AutomationService-StepFunction
+        RetentionInDays: 30
+    # Parameters to be used by external services
+    AutomationServiceStepFunctionLogGroupArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/automation/stepfunction/log/arn
+        Type: String
+        Value: !GetAtt AutomationServiceStepFunctionLogGroup.Arn
+    AutomationServiceStepFunctionRoleArnParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: !Sub /versify/services/automation/stepfunction/role/arn
+        Type: String
+        Value: !GetAtt AutomationServiceStepFunctionRole.Arn

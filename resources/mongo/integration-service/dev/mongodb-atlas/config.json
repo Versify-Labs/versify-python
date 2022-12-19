@@ -1,0 +1,22 @@
+{
+    "name": "mongodb-atlas",
+    "type": "mongodb-atlas",
+    "config": {
+        "clusterName": "VersifyDevelopmentCluster",
+        "namespacePreimageConfigs": [
+            {
+                "collectionName": "Rewards",
+                "dbName": "Campaigns",
+                "recordPreimages": true
+            },
+            {
+                "collectionName": "Redemptions",
+                "dbName": "Campaigns",
+                "recordPreimages": true
+            }
+        ],
+        "readPreference": "primary",
+        "wireProtocolEnabled": false
+    },
+    "version": 1
+}

@@ -1,0 +1,29 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateMessage",
+  "required": ["type"],
+  "properties": {
+    "body": {
+      "description": "The body that created this message",
+      "type": "string"
+    },
+    "from_email": {
+      "description": "The email of the message",
+      "type": "string"
+    },
+    "subject": {
+      "description": "The subject that created this message",
+      "type": "string"
+    },
+    "to_email": {
+      "description": "The email of the message",
+      "type": "string"
+    },
+    "type": {
+      "description": "The type of the message",
+      "type": "string"
+    }
+  }
+}

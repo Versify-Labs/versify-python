@@ -1,0 +1,29 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateEvent",
+  "required": ["detail_type"],
+  "properties": {
+    "contact": {
+      "description": "The ID of the user associated with the event",
+      "type": "string"
+    },
+    "email": {
+      "description": "The email of the user associated with the event",
+      "type": "string"
+    },
+    "detail_type": {
+      "description": "The detail_type of the event",
+      "type": "string"
+    },
+    "detail": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source": {
+      "description": "The source of the event",
+      "type": "string"
+    }
+  }
+}

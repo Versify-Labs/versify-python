@@ -1,0 +1,12 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title": "CreateReward",
+  "properties": {
+    "product": {
+      "description": "The airdrop of the mint",
+      "type": "string"
+    }
+  }
+}

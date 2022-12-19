@@ -1,0 +1,11 @@
+aws_requests_auth
+email-validator
+dnspython
+fastapi
+ksuid
+mailchimp_transactional
+pydantic
+pymongo[aws] == 4.1
+python-jose
+requests
+stripe==3.0.0

@@ -1,0 +1,31 @@
+{
+    "id": "6386b0b1a4e9d2324501c7ed",
+    "name": "OnNoteEvent",
+    "type": "DATABASE",
+    "config": {
+        "operation_types": [
+            "DELETE",
+            "REPLACE",
+            "INSERT",
+            "UPDATE"
+        ],
+        "database": "Notes",
+        "collection": "Notes",
+        "service_name": "mongodb-atlas",
+        "match": {},
+        "project": {},
+        "full_document": true,
+        "full_document_before_change": true,
+        "unordered": false,
+        "skip_catchup_events": false,
+        "tolerate_resume_errors": false
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "PublishEvents"
+            }
+        }
+    }
+}
