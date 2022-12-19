@@ -223,7 +223,7 @@ def match(event, all_filters=False):
     # Get contact data
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
-    contact = versify.contact_service.retrieve_by_id(journey_run['contact'])
+    contact = versify.contact_service.get(journey_run['contact'])
 
     # Get the state config
     state = journey['states'][state_name]
@@ -260,7 +260,7 @@ def create_note(event):
     # Get contact data
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
-    contact = versify.contact_service.retrieve_by_id(journey_run['contact'])
+    contact = versify.contact_service.get(journey_run['contact'])
 
     # Get the state config
     state = journey['states'][state_name]
@@ -301,23 +301,28 @@ def send_message(event):
     # Get contact data
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
-    contact = versify.contact_service.retrieve_by_id(journey_run['contact'])
+    contact = versify.contact_service.get(journey_run['contact'])
+    if not contact:
+        raise Exception('Contact not found')
 
     # Get the state config
     state = journey['states'][state_name]
     config = state['config']
 
-    # Send message
+    # Create and send message
     message = versify.message_service.create(
         body={
             'account': journey['account'],
-            'body': config['body'],
-            'contact': contact['id'],
-            'member': config['member'],
-            'subject': config['subject'],
             'type': config['type'],
+            'content_body': config.get('body'),
+            'content_subject': config.get('subject'),
+            'from_email': config['from_email'],
+            'to_contact': contact['id'],
+            'to_email': contact['email'],
+            'to_name': contact.get('name', contact['email']),
         }
     )
+    message = versify.message_service.send(message['id'])
 
     # Update results
     update_run_state_results(journey_run_id, state_name, {
@@ -342,7 +347,9 @@ def send_reward(event):
     # Get contact data
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
-    contact = versify.contact_service.retrieve_by_id(journey_run['contact'])
+    contact = versify.contact_service.get(journey_run['contact'])
+    if not contact:
+        raise Exception('Contact not found')
     product = journey['states'][state_name]['config']['product']
 
     # Create mint
@@ -378,7 +385,9 @@ def tag_contact(event):
     # Get contact data
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
-    contact = versify.contact_service.retrieve_by_id(journey_run['contact'])
+    contact = versify.contact_service.get(journey_run['contact'])
+    if not contact:
+        raise Exception('Contact not found')
     old_tags = contact.get('tags', [])
 
     # Get the state config

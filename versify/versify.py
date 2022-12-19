@@ -32,7 +32,7 @@ class Versify():
         contact = ContactService()
         claim = ClaimService(contact)
         collection = CollectionService()
-        event = EventService()
+        event = EventService(contact)
         journey = JourneyService()
         message = MessageService(contact, user)
         note = NoteService()

@@ -65,7 +65,7 @@ class MintService(ExpandableResource):
 
         # Get users managed wallet address if not provided
         if not email:
-            contact = self.contact_service.retrieve_by_id(contact_id)
+            contact = self.contact_service.get(contact_id)
             email = contact['email']
         user = self.user_service.get(email)
         wallet_address = None

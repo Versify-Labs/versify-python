@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Optional
 
 from bson.objectid import ObjectId
 
@@ -11,13 +12,16 @@ from ..utils.mongo import mdb
 
 class EventService(ExpandableResource):
 
-    def __init__(self) -> None:
+    def __init__(self, contact_service) -> None:
         self.collection = mdb[EventConfig.db][EventConfig.collection]
         self.expandables = EventConfig.expandables
         self.Model = EventConfig.model
         self.object = EventConfig.object
         self.prefix = EventConfig.prefix
         self.search_index = EventConfig.search_index
+
+        # Internal services
+        self.contact_service = contact_service
 
     def create(self, body: dict) -> dict:
         """Create a new event.
@@ -34,6 +38,26 @@ class EventService(ExpandableResource):
         body['_id'] = body.get('_id', f'{self.prefix}_{ObjectId()}')
         body['created'] = int(time.time())
         body['updated'] = int(time.time())
+
+        # Determine contact
+        if body.get('contact'):
+            self.contact_service.get(body['contact'])
+        elif body.get('email'):
+            contact_body = {
+                'account': body['account'],
+                'email': body.pop('email')
+            }
+            contact = self.contact_service.create(contact_body)
+            body['contact'] = contact['id']
+        elif body.get('detail', {}).get('email'):
+            contact_body = {
+                'account': body['account'],
+                'email': body['detail']['email']
+            }
+            contact = self.contact_service.create(contact_body)
+            body['contact'] = contact['id']
+        else:
+            raise ValueError('Missing necessary data to identify contact.')
 
         # Normalize fields
         body['detail_type'] = body.get('detail_type', 'unknown')
@@ -95,7 +119,7 @@ class EventService(ExpandableResource):
 
         return data
 
-    def retrieve_by_id(self, event_id: str) -> dict:
+    def get(self, event_id: str) -> Optional[dict]:
         """Get an event by id.
 
         Args:
@@ -108,11 +132,10 @@ class EventService(ExpandableResource):
 
         # Find document matching filter
         event = self.collection.find_one(filter={'_id': event_id})
-        if not event:
-            raise NotFoundError
 
         # Convert to JSON
-        event = self.Model(**event).to_json()
+        if event:
+            event = self.Model(**event).to_json()
 
         return event
 
@@ -130,7 +153,5 @@ class EventService(ExpandableResource):
         deleted = self.collection.find_one_and_delete({
             '_id': event_id
         })
-        if not deleted:
-            raise NotFoundError
 
-        return True
+        return True if deleted else False

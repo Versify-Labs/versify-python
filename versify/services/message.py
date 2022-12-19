@@ -3,6 +3,8 @@ import time
 
 import boto3
 from bson.objectid import ObjectId
+from pydantic.utils import deep_update
+from pymongo.collection import ReturnDocument
 
 from ..config import MessageConfig
 from ..utils.exceptions import NotFoundError
@@ -27,7 +29,7 @@ class MessageService(ExpandableResource):
         # External services
         self.ses = boto3.client('ses')
 
-    def _send_app_message(self, message: dict, contact: dict) -> str:
+    def _send_app_message(self, message: dict) -> str:
         """Send a app message.
 
         Args:
@@ -38,59 +40,59 @@ class MessageService(ExpandableResource):
             str: Status of the message.
         """
         logging.info('Sending app message', extra={'message': message})
-        return 'pending'
+        return 'sent'
 
-    def _send_email_message(self, body: str, subject: str, from_email: str, to_email: str) -> str:
-        """Send an email message.
+    # def _send_email_message(self, body: str, subject: str, from_email: str, to_email: str) -> str:
+    #     """Send an email message.
 
-        Args:
-            body (str): The body of the message.
-            subject (str): The subject of the message.
-            from_email (str): The email address to send the message from.
-            to_email (str): The email address to send the message to.
+    #     Args:
+    #         body (str): The body of the message.
+    #         subject (str): The subject of the message.
+    #         from_email (str): The email address to send the message from.
+    #         to_email (str): The email address to send the message to.
 
-        Returns:
-            str: Status of the message.
-        """
-        logging.info('Sending email message')
+    #     Returns:
+    #         str: Status of the message.
+    #     """
+    #     logging.info('Sending email message')
 
-        # TODO: Implement from email
-        from_email = 'messages@versifylabs.com'
+    #     # TODO: Implement from email
+    #     from_email = 'messages@versifylabs.com'
 
-        response = self.ses.send_email(
-            Source=from_email,
-            Destination={
-                'ToAddresses': [to_email],
-            },
-            Message={
-                'Subject': {
-                    'Data': subject,
-                    'Charset': 'UTF-8',
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body,
-                        'Charset': 'UTF-8',
-                    },
-                },
-            },
-        )
-        print(response)
+    #     response = self.ses.send_email(
+    #         Source=from_email,
+    #         Destination={
+    #             'ToAddresses': [to_email],
+    #         },
+    #         Message={
+    #             'Subject': {
+    #                 'Data': subject,
+    #                 'Charset': 'UTF-8',
+    #             },
+    #             'Body': {
+    #                 'Text': {
+    #                     'Data': body,
+    #                     'Charset': 'UTF-8',
+    #                 },
+    #             },
+    #         },
+    #     )
+    #     print(response)
 
-        return 'pending'
+    #     return 'pending'
 
-    def _send_sms_message(self, message: dict, contact: dict) -> str:
-        """Send an SMS message.
+    # def _send_sms_message(self, message: dict, contact: dict) -> str:
+    #     """Send an SMS message.
 
-        Args:
-            message (dict): The message to send.
-            contact (dict): The contact to send the message to.
+    #     Args:
+    #         message (dict): The message to send.
+    #         contact (dict): The contact to send the message to.
 
-        Returns:
-            str: Status of the message.
-        """
-        logging.info('Sending SMS message', extra={'message': message})
-        return 'pending'
+    #     Returns:
+    #         str: Status of the message.
+    #     """
+    #     logging.info('Sending SMS message', extra={'message': message})
+    #     return 'pending'
 
     def create(self, body: dict) -> dict:
         """Create a new message. If the message already exists, update the message.
@@ -107,27 +109,6 @@ class MessageService(ExpandableResource):
         body['_id'] = body.get('_id', f'{self.prefix}_{ObjectId()}')
         body['created'] = int(time.time())
         body['updated'] = int(time.time())
-
-        # Get contact and team member objects to send message to and from
-        contact_id = body.get('contact')
-        contact = self.contact_service.retrieve_by_id(contact_id)
-        member_id = body.get('member')
-        member = self.user_service.retrieve_by_id(member_id)
-
-        # Check message type
-        status = 'pending'
-        if body['type'] == 'app':
-            status = self._send_app_message(body, contact)
-        elif body['type'] == 'email':
-            status = self._send_email_message(
-                body=body['body'],
-                subject=body['subject'],
-                from_email=member['email'],
-                to_email=contact['email']
-            )
-        elif body['type'] == 'sms':
-            status = self._send_sms_message(body, contact)
-        body['status'] = status
 
         # Validate against schema
         data = self.Model(**body)
@@ -176,7 +157,7 @@ class MessageService(ExpandableResource):
 
         return data
 
-    def retrieve_by_id(self, message_id: str) -> dict:
+    def get(self, message_id: str) -> dict:
         """Get an message by id.
 
         Args:
@@ -197,6 +178,78 @@ class MessageService(ExpandableResource):
 
         return message
 
+    def update(self, message_id: str, body: dict) -> dict:
+        """Update a message.
+
+        Args:
+            message_id (str): The id of the message to update.
+            body (dict): The fields to update.
+
+        Returns:
+            dict: The message.
+
+        Raises:
+            NotFoundError: If the message does not exist.
+        """
+        logging.info('Updating message', extra={'message_id': message_id})
+
+        # Find document matching filter
+        message = self.get(message_id)
+        if not message:
+            raise NotFoundError
+
+        # Update fields
+        message = deep_update(message, body)
+        message['updated'] = int(time.time())
+
+        # Validate against schema
+        validated_message = self.Model(**message)
+
+        # Update item in DB
+        data = self.collection.find_one_and_update(
+            filter={'_id': message_id},
+            update={'$set': validated_message.to_bson()},
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+
+        # Convert to JSON
+        data = self.Model(**data).to_json()
+
+        return data
+
+    def send(self, message_id: str) -> dict:
+        """Send a message.
+
+        Args:
+            message_id (str): The id of the message to send.
+
+        Returns:
+            dict: The message.
+        """
+        logging.info('Sending message', extra={'id': message_id})
+
+        # Find document matching filter
+        message = self.collection.find_one({'_id': message_id})
+
+        # Check if message exists
+        if not message:
+            raise NotFoundError(f'{self.object} not found')
+
+        status = 'pending'
+        if message['type'] == 'app':
+            status = self._send_app_message(message)
+        # elif message['type'] == 'email':
+        #     status = self._send_email_message(message)
+        # elif message['type'] == 'sms':
+        #     status = self._send_sms_message(message)
+        else:
+            raise ValueError('Invalid message type')
+
+        updated_message = self.update(message_id, {'status': status})
+
+        return updated_message
+
     def delete(self, message_id: str) -> bool:
         """Delete an message.
 
@@ -211,7 +264,5 @@ class MessageService(ExpandableResource):
         deleted = self.collection.find_one_and_delete({
             '_id': message_id
         })
-        if not deleted:
-            raise NotFoundError
 
-        return True
+        return True if deleted else False

@@ -1376,6 +1376,18 @@ functions:
                 id: true
       - http:
           method: get
+          path: /public/accounts/{id}/assets
+          operationId: ListAccountAssets
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+      - http:
+          method: get
           path: /public/accounts/{id}/branding
           operationId: GetAccountBranding
           cors:
@@ -1387,9 +1399,9 @@ functions:
               paths:
                 id: true
       - http:
-          method: get
-          path: /public/accounts/{id}/assets
-          operationId: ListAccountAssets
+          method: post
+          path: /public/accounts/{id}/events
+          operationId: CreateAccountEvent
           cors:
             origin: "*"
             headers: "*"
@@ -1398,6 +1410,8 @@ functions:
             parameters:
               paths:
                 id: true
+            schemas:
+              application/json: ${file(schemas/events/create.json)}
       - http:
           method: get
           path: /public/accounts/{id}/journeys
@@ -1412,6 +1426,21 @@ functions:
                 id: true
       - http:
           method: get
+          path: /public/accounts/{id}/mint_links/{mint_link_id}
+          operationId: GetAccountMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              paths:
+                id: true
+                mint_link_id: true
+              querystrings:
+                expand: false
+      - http:
+          method: get
           path: /public/accounts/{id}/rewards
           operationId: ListAccountRewards
           cors:
@@ -1423,20 +1452,6 @@ functions:
               paths:
                 id: true
       - http:
-          method: post
-          path: /public/events
-          operationId: TrackEvent
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-            schemas:
-              application/json: ${file(schemas/events/create.json)}
-      - http:
           method: get
           path: /public/mint_links/{id}
           operationId: GetMintLink
@@ -1447,7 +1462,7 @@ functions:
           request:
             parameters:
               headers:
-                Authorization: true
+                Authorization: false
               paths:
                 id: true
               querystrings:

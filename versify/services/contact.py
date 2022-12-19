@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, Optional
 
 import simplejson as json
 from bson.json_util import dumps
@@ -103,7 +103,7 @@ class ContactService(ExpandableResource):
 
         return contacts
 
-    def retrieve_by_id(self, contact_id: str) -> dict:
+    def get(self, contact_id: str) -> Optional[dict]:
         """Get an contact by id.
 
         Args:
@@ -116,16 +116,15 @@ class ContactService(ExpandableResource):
 
         # Find document matching filter
         contact = self.collection.find_one(filter={'_id': contact_id})
-        if not contact:
-            raise NotFoundError
 
         # Convert to JSON
-        contact = self.Model(**contact).to_json()
+        if contact:
+            contact = self.Model(**contact).to_json()
 
         return contact
 
     def update(self, contact_id: str, body: dict) -> dict:
-        """Update a contact. If the contact does not exist, create a new contact.
+        """Update a contact.
 
         Args:
             contact_id (str): The id of the contact to update.
@@ -140,7 +139,7 @@ class ContactService(ExpandableResource):
         logging.info('Updating contact', extra={'contact_id': contact_id})
 
         # Find document matching filter
-        contact = self.collection.find_one(filter={'_id': contact_id})
+        contact = self.get(contact_id)
         if not contact:
             raise NotFoundError
 
@@ -165,7 +164,7 @@ class ContactService(ExpandableResource):
         return data
 
     def delete(self, contact_id: str) -> bool:
-        """Delete an contact.
+        """Delete a contact.
 
         Args:
             contact_id (str): The id of the contact to delete.
@@ -178,10 +177,8 @@ class ContactService(ExpandableResource):
         deleted = self.collection.find_one_and_delete({
             '_id': contact_id
         })
-        if not deleted:
-            raise NotFoundError
 
-        return True
+        return True if deleted else False
 
     def search(self, account_id, query):
         logging.info('Searching contacts', extra={'query': query})

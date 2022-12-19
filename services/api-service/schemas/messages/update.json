@@ -2,13 +2,8 @@
   "definitions": {},
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "title": "CreateMessage",
-  "required": ["type"],
+  "title": "UpdateMessage",
   "properties": {
-    "type": {
-      "description": "The type of the message",
-      "type": "string"
-    },
     "content_body": {
       "description": "The body of the message",
       "type": "string"

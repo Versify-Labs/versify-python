@@ -139,10 +139,10 @@ def list_airdrops():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.airdrop_service.count(req.filter)
     airdrops = versify.airdrop_service.list(filter, limit, skip)
     airdrops = versify.airdrop_service.expand(airdrops, req.expand_list)
     airdrops = airdrops.get('data', [])  # type: ignore
-    count = versify.airdrop_service.count(req.filter)
     return ListResponse(req, airdrops, count).json
 
 
@@ -200,10 +200,10 @@ def list_claims():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.claim_service.count(req.filter)
     claims = versify.claim_service.list(filter, limit, skip)
     claims = versify.claim_service.expand(claims, req.expand_list)
     claims = claims.get('data', [])  # type: ignore
-    count = versify.claim_service.count(req.filter)
     return ListResponse(req, claims, count).json
 
 
@@ -254,11 +254,11 @@ def list_collections():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.collection_service.count(req.filter)
     collections = versify.collection_service.list(filter, limit, skip)
     collections = versify.collection_service.expand(
         collections, req.expand_list)
     collections = collections.get('data', [])  # type: ignore
-    count = versify.collection_service.count(req.filter)
     return ListResponse(req, collections, count).json
 
 
@@ -309,10 +309,10 @@ def list_contacts():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.contact_service.count(req.filter)
     contacts = versify.contact_service.list(filter, limit, skip)
     contacts = versify.contact_service.expand(contacts, req.expand_list)
     contacts = contacts.get('data', [])  # type: ignore
-    count = versify.contact_service.count(req.filter)
     return ListResponse(req, contacts, count).json
 
 
@@ -320,7 +320,7 @@ def list_contacts():
 @tracer.capture_method
 def get_contact(id):
     req = AccountRequest(app, id)
-    contact = versify.contact_service.retrieve_by_id(id)
+    contact = versify.contact_service.get(id)
     contact = versify.contact_service.expand(contact, req.expand_list)
     return GetResponse(req, contact).json
 
@@ -373,10 +373,10 @@ def list_events():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.event_service.count(req.filter)
     events = versify.event_service.list(filter, limit, skip)
     events = versify.event_service.expand(events, req.expand_list)
     events = events.get('data', [])  # type: ignore
-    count = versify.event_service.count(req.filter)
     return ListResponse(req, events, count).json
 
 
@@ -384,7 +384,7 @@ def list_events():
 @tracer.capture_method
 def get_event(id):
     req = AccountRequest(app, id)
-    event = versify.event_service.retrieve_by_id(id)
+    event = versify.event_service.get(id)
     event = versify.event_service.expand(event, req.expand_list)
     return GetResponse(req, event).json
 
@@ -411,10 +411,10 @@ def list_journeys():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.journey_service.count(req.filter)
     journeys = versify.journey_service.list(filter, limit, skip)
     journeys = versify.journey_service.expand(journeys, req.expand_list)
     journeys = journeys.get('data', [])  # type: ignore
-    count = versify.journey_service.count(req.filter)
     return ListResponse(req, journeys, count).json
 
 
@@ -435,10 +435,10 @@ def get_journey_runs(id):
     filter['journey'] = id
     limit = req.limit
     skip = req.skip
+    count = versify.journey_run_service.count(req.filter)
     runs = versify.journey_run_service.list(filter, limit, skip)
     runs = versify.journey_run_service.expand(runs, req.expand_list)
     runs = runs.get('data', [])  # type: ignore
-    count = versify.journey_run_service.count(req.filter)
     return ListResponse(req, runs, count).json
 
 
@@ -488,10 +488,10 @@ def list_messages():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.message_service.count(req.filter)
     messages = versify.message_service.list(filter, limit, skip)
     messages = versify.message_service.expand(messages, req.expand_list)
     messages = messages.get('data', [])  # type: ignore
-    count = versify.message_service.count(req.filter)
     return ListResponse(req, messages, count).json
 
 
@@ -526,10 +526,10 @@ def list_mint_links():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.mint_link_service.count(req.filter)
     mint_links = versify.mint_link_service.list(filter, limit, skip)
     mint_links = versify.mint_link_service.expand(mint_links, req.expand_list)
     mint_links = mint_links.get('data', [])  # type: ignore
-    count = versify.mint_link_service.count(req.filter)
     return ListResponse(req, mint_links, count).json
 
 
@@ -579,10 +579,10 @@ def list_mints():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.mint_service.count(req.filter)
     mints = versify.mint_service.list(filter, limit, skip)
     mints = versify.mint_service.expand(mints, req.expand_list)
     mints = mints.get('data', [])  # type: ignore
-    count = versify.mint_service.count(req.filter)
     return ListResponse(req, mints, count).json
 
 
@@ -625,10 +625,10 @@ def list_notes():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.note_service.count(req.filter)
     notes = versify.note_service.list(filter, limit, skip)
     notes = versify.note_service.expand(notes, req.expand_list)
     notes = notes.get('data', [])  # type: ignore
-    count = versify.note_service.count(req.filter)
     return ListResponse(req, notes, count).json
 
 
@@ -679,10 +679,10 @@ def list_products():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.product_service.count(req.filter)
     products = versify.product_service.list(filter, limit, skip)
     products = versify.product_service.expand(products, req.expand_list)
     products = products.get('data', [])  # type: ignore
-    count = versify.product_service.count(req.filter)
     return ListResponse(req, products, count).json
 
 
@@ -732,10 +732,10 @@ def list_rewards():
     filter = req.filter
     limit = req.limit
     skip = req.skip
+    count = versify.reward_service.count(req.filter)
     rewards = versify.reward_service.list(filter, limit, skip)
     rewards = versify.reward_service.expand(rewards, req.expand_list)
     rewards = rewards.get('data', [])  # type: ignore
-    count = versify.reward_service.count(req.filter)
     return ListResponse(req, rewards, count).json
 
 
@@ -774,10 +774,10 @@ def list_reward_redemptions(id):
     filter['reward'] = id
     limit = req.limit
     skip = req.skip
+    count = versify.redemption_service.count(req.filter)
     runs = versify.redemption_service.list(filter, limit, skip)
     runs = versify.redemption_service.expand(runs, req.expand_list)
     runs = runs.get('data', [])  # type: ignore
-    count = versify.redemption_service.count(req.filter)
     return ListResponse(req, runs, count).json
 
 
@@ -925,7 +925,7 @@ def list_webhook_events():
 @tracer.capture_method
 def get_webhook_event(id):
     req = AccountRequest(app, id)
-    webhook_event = versify.webhook_event_service.retrieve_by_id(id)
+    webhook_event = versify.webhook_event_service.get(id)
     webhook_event = versify.webhook_event_service.expand(
         webhook_event, req.expand_list)
     return GetResponse(req, webhook_event).json

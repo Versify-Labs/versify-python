@@ -6,7 +6,7 @@ from aws_lambda_powertools.logging import correlation_paths
 from versify import Versify
 from versify.decorators import cors_headers
 
-from ..rest import GetResponse, ListResponse, PublicRequest
+from ..rest import CreateResponse, GetResponse, ListResponse, PublicRequest
 
 app = APIGatewayRestResolver(strip_prefixes=['/public'])
 logger = Logger()
@@ -34,10 +34,10 @@ def get_account_assets(id):
     filter['account'] = id
     limit = req.limit
     skip = req.skip
+    count = versify.product_service.count(req.filter)
     assets = versify.product_service.list(filter, limit, skip)
     assets = versify.product_service.expand(assets, req.expand_list)
     assets = assets.get('data', [])  # type: ignore
-    count = versify.product_service.count(req.filter)
     return ListResponse(req, assets, count).json
 
 
@@ -53,6 +53,16 @@ def get_account_branding(id):
     return GetResponse(req, branding).json
 
 
+@app.post('/accounts/<id>/events')
+@tracer.capture_method
+def create_account_event(id):
+    req = PublicRequest(app)
+    body = req.body
+    body['account'] = id
+    event = versify.event_service.create(body)
+    return CreateResponse(req, event).json
+
+
 @app.get('/accounts/<id>/journeys')
 @tracer.capture_method
 def get_account_journeys(id):
@@ -61,10 +71,10 @@ def get_account_journeys(id):
     filter['account'] = id
     limit = req.limit
     skip = req.skip
+    count = versify.journey_service.count(req.filter)
     journeys = versify.journey_service.list(filter, limit, skip)
     journeys = versify.journey_service.expand(journeys, req.expand_list)
     journeys = journeys.get('data', [])  # type: ignore
-    count = versify.journey_service.count(req.filter)
     return ListResponse(req, journeys, count).json
 
 
@@ -76,20 +86,11 @@ def get_account_rewards(id):
     filter['account'] = id
     limit = req.limit
     skip = req.skip
+    count = versify.reward_service.count(req.filter)
     rewards = versify.reward_service.list(filter, limit, skip)
     rewards = versify.reward_service.expand(rewards, req.expand_list)
     rewards = rewards.get('data', [])  # type: ignore
-    count = versify.reward_service.count(req.filter)
     return ListResponse(req, rewards, count).json
-
-
-@app.post('/events')
-@tracer.capture_method
-def track_event():
-    req = PublicRequest(app)
-    event = req.body
-    versify.event_service.create(event)
-    return {'success': True}
 
 
 @app.get('/mint_links/<id>')
