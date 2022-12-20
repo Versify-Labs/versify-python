@@ -28,7 +28,7 @@ def get_account(id):
 
 @app.get('/accounts/<id>/assets')
 @tracer.capture_method
-def get_account_assets(id):
+def list_account_assets(id):
     req = PublicRequest(app)
     filter = req.filter
     filter['account'] = id
@@ -43,7 +43,7 @@ def get_account_assets(id):
 
 @app.get('/accounts/<id>/branding')
 @tracer.capture_method
-def get_account_branding(id):
+def list_account_branding(id):
     req = PublicRequest(app)
     account = versify.account_service.retrieve_by_id(id)
     if not account:
@@ -65,7 +65,7 @@ def create_account_event(id):
 
 @app.get('/accounts/<id>/journeys')
 @tracer.capture_method
-def get_account_journeys(id):
+def list_account_journeys(id):
     req = PublicRequest(app)
     filter = req.filter
     filter['account'] = id
@@ -80,7 +80,7 @@ def get_account_journeys(id):
 
 @app.get('/accounts/<id>/rewards')
 @tracer.capture_method
-def get_account_rewards(id):
+def list_account_rewards(id):
     req = PublicRequest(app)
     filter = req.filter
     filter['account'] = id

@@ -62,6 +62,15 @@ def create_account_checkout_session(id):
     return CreateResponse(req, checkout).json
 
 
+@app.get('/accounts/<id>/invoices')
+@tracer.capture_method
+def list_account_invoices(id):
+    req = AccountRequest(app, id)
+    account_id = req.account or id
+    invoices = versify.account_service.list_invoices(account_id)
+    return GetResponse(req, invoices).json
+
+
 @app.post('/accounts/<id>/members')
 @tracer.capture_method
 def create_account_member(id):
@@ -70,24 +79,6 @@ def create_account_member(id):
     body['account'] = req.account
     member = versify.account_service.create_member(id, body)
     return CreateResponse(req, member).json
-
-
-@app.post('/accounts/<id>/tokens')
-@tracer.capture_method
-def create_account_token(id):
-    req = AccountRequest(app, id)
-    account_id = req.account
-    token = versify.account_service.create_token(account_id)  # type: ignore
-    return GetResponse(req, token).json  # type: ignore
-
-
-@app.get('/accounts/<id>/invoices')
-@tracer.capture_method
-def list_account_invoices(id):
-    req = AccountRequest(app, id)
-    account_id = req.account or id
-    invoices = versify.account_service.list_invoices(account_id)
-    return GetResponse(req, invoices).json
 
 
 @app.get('/accounts/<id>/members')
@@ -115,6 +106,15 @@ def list_account_subscriptions(id):
     account_id = req.account or id
     subscriptions = versify.account_service.list_subscriptions(account_id)
     return GetResponse(req, subscriptions).json
+
+
+@app.post('/accounts/<id>/tokens')
+@tracer.capture_method
+def create_account_token(id):
+    req = AccountRequest(app, id)
+    account_id = req.account
+    token = versify.account_service.create_token(account_id)  # type: ignore
+    return GetResponse(req, token).json  # type: ignore
 
 
 ############
@@ -163,14 +163,6 @@ def update_airdrop(id):
     return UpdateResponse(req, airdrop).json
 
 
-@app.delete('/airdrops/<id>')
-@tracer.capture_method
-def delete_airdrop(id):
-    req = AccountRequest(app, id)
-    versify.airdrop_service.delete(id)
-    return DeleteResponse(req).json
-
-
 @app.put('/airdrops/<id>/send')
 @tracer.capture_method
 def send_airdrop(id):
@@ -214,22 +206,6 @@ def get_claim(id):
     claim = versify.claim_service.retrieve_by_id(id)
     claim = versify.claim_service.expand(claim, req.expand_list)
     return GetResponse(req, claim).json
-
-
-@app.put('/claims/<id>')
-@tracer.capture_method
-def update_claim(id):
-    req = AccountRequest(app, id)
-    claim = versify.claim_service.update(id, req.body)
-    return UpdateResponse(req, claim).json
-
-
-@app.delete('/claims/<id>')
-@tracer.capture_method
-def delete_claim(id):
-    req = AccountRequest(app, id)
-    versify.claim_service.delete(id)
-    return DeleteResponse(req).json
 
 
 ###############
@@ -279,14 +255,6 @@ def update_collection(id):
     return UpdateResponse(req, collection).json
 
 
-@app.delete('/collections/<id>')
-@tracer.capture_method
-def delete_collection(id):
-    req = AccountRequest(app, id)
-    versify.collection_service.delete(id)
-    return DeleteResponse(req).json
-
-
 ############
 # Contacts #
 ############
@@ -316,13 +284,23 @@ def list_contacts():
     return ListResponse(req, contacts, count).json
 
 
+@app.put('/contacts')
+@tracer.capture_method
+def update_contacts():
+    req = AccountRequest(app)
+    ids = req.body.get('ids', [])
+    update_body = req.body.get('body', {})
+    modified = versify.contact_service.bulk_update(ids, update_body)
+    return {'modified': modified}
+
+
 @app.get('/contacts/<id>')
 @tracer.capture_method
 def get_contact(id):
     req = AccountRequest(app, id)
     contact = versify.contact_service.get(id)
     contact = versify.contact_service.expand(contact, req.expand_list)
-    return GetResponse(req, contact).json
+    return GetResponse(req, contact).json  # type: ignore
 
 
 @app.put('/contacts/<id>')
@@ -333,22 +311,26 @@ def update_contact(id):
     return UpdateResponse(req, contact).json
 
 
-@app.delete('/contacts/<id>')
+@app.post('/contacts/<id>/notes')
 @tracer.capture_method
-def delete_contact(id):
+def create_contact_note(id):
     req = AccountRequest(app, id)
-    versify.contact_service.delete(id)
-    return DeleteResponse(req).json
+    body = req.body
+    if body.get('user') is None:
+        body['user'] = {
+            'id': req.user or 'system',
+            'email': req.email
+        }
+    note = versify.contact_service.create_note(id, body)
+    return CreateResponse(req, note).json  # type: ignore
 
 
-@app.put('/contacts')
+@app.delete('/contacts/<id>/notes/<note_id>')
 @tracer.capture_method
-def bulk_update_contacts():
-    req = AccountRequest(app)
-    ids = req.body.get('ids', [])
-    update_body = req.body.get('body', {})
-    modified = versify.contact_service.bulk_update(ids, update_body)
-    return {'modified': modified}
+def delete_contact_note(id, note_id):
+    req = AccountRequest(app, id)
+    versify.contact_service.delete_note(id, note_id)
+    return DeleteResponse(req).json
 
 
 ##########
@@ -386,7 +368,7 @@ def get_event(id):
     req = AccountRequest(app, id)
     event = versify.event_service.get(id)
     event = versify.event_service.expand(event, req.expand_list)
-    return GetResponse(req, event).json
+    return GetResponse(req, event).json  # type: ignore
 
 
 ############
@@ -427,21 +409,6 @@ def get_journey(id):
     return GetResponse(req, journey).json
 
 
-@app.get('/journeys/<id>/runs')
-@tracer.capture_method
-def get_journey_runs(id):
-    req = AccountRequest(app)
-    filter = req.filter
-    filter['journey'] = id
-    limit = req.limit
-    skip = req.skip
-    count = versify.journey_run_service.count(req.filter)
-    runs = versify.journey_run_service.list(filter, limit, skip)
-    runs = versify.journey_run_service.expand(runs, req.expand_list)
-    runs = runs.get('data', [])  # type: ignore
-    return ListResponse(req, runs, count).json
-
-
 @app.put('/journeys/<id>')
 @tracer.capture_method
 def update_journey(id):
@@ -464,6 +431,21 @@ def delete_journey(id):
     req = AccountRequest(app, id)
     versify.journey_service.delete(id)
     return DeleteResponse(req).json
+
+
+@app.get('/journeys/<id>/runs')
+@tracer.capture_method
+def list_journey_runs(id):
+    req = AccountRequest(app)
+    filter = req.filter
+    filter['journey'] = id
+    limit = req.limit
+    skip = req.skip
+    count = versify.journey_run_service.count(req.filter)
+    runs = versify.journey_run_service.list(filter, limit, skip)
+    runs = versify.journey_run_service.expand(runs, req.expand_list)
+    runs = runs.get('data', [])  # type: ignore
+    return ListResponse(req, runs, count).json
 
 
 ############
@@ -499,7 +481,7 @@ def list_messages():
 @tracer.capture_method
 def get_message(id):
     req = AccountRequest(app, id)
-    message = versify.message_service.retrieve_by_id(id)
+    message = versify.message_service.get(id)
     message = versify.message_service.expand(message, req.expand_list)
     return GetResponse(req, message).json
 
@@ -595,68 +577,6 @@ def get_mint(id):
     return GetResponse(req, mint).json
 
 
-@app.put('/mints/<id>')
-@tracer.capture_method
-def update_mint(id):
-    req = AccountRequest(app, id)
-    mint = versify.mint_service.update(id, req.body)
-    return UpdateResponse(req, mint).json
-
-
-#########
-# Notes #
-#########
-
-
-@app.post('/notes')
-@tracer.capture_method
-def create_note():
-    req = AccountRequest(app)
-    body = req.body
-    body['account'] = req.account
-    note = versify.note_service.create(body)
-    return CreateResponse(req, note).json
-
-
-@app.get('/notes')
-@tracer.capture_method
-def list_notes():
-    req = AccountRequest(app)
-    filter = req.filter
-    limit = req.limit
-    skip = req.skip
-    count = versify.note_service.count(req.filter)
-    notes = versify.note_service.list(filter, limit, skip)
-    notes = versify.note_service.expand(notes, req.expand_list)
-    notes = notes.get('data', [])  # type: ignore
-    return ListResponse(req, notes, count).json
-
-
-@app.get('/notes/<id>')
-@tracer.capture_method
-def get_note(id):
-    req = AccountRequest(app, id)
-    note = versify.note_service.retrieve_by_id(id)
-    note = versify.note_service.expand(note, req.expand_list)
-    return GetResponse(req, note).json
-
-
-@app.put('/notes/<id>')
-@tracer.capture_method
-def update_note(id):
-    req = AccountRequest(app, id)
-    note = versify.note_service.update(id, req.body)
-    return UpdateResponse(req, note).json
-
-
-@app.delete('/notes/<id>')
-@tracer.capture_method
-def delete_note(id):
-    req = AccountRequest(app, id)
-    versify.note_service.delete(id)
-    return DeleteResponse(req).json
-
-
 ############
 # Products #
 ############
@@ -702,13 +622,6 @@ def update_product(id):
     product = versify.product_service.update(id, req.body)
     return UpdateResponse(req, product).json
 
-
-@app.delete('/products/<id>')
-@tracer.capture_method
-def delete_product(id):
-    req = AccountRequest(app, id)
-    versify.product_service.delete(id)
-    return DeleteResponse(req).json
 
 ###########
 # Rewards #
@@ -871,7 +784,7 @@ def list_webhooks():
 @tracer.capture_method
 def get_webhook(id):
     req = AccountRequest(app, id)
-    webhook = versify.webhook_service.retrieve_by_id(id)
+    webhook = versify.webhook_service.get(id)
     webhook = versify.webhook_service.expand(webhook, req.expand_list)
     return GetResponse(req, webhook).json
 
@@ -925,18 +838,9 @@ def list_webhook_events():
 @tracer.capture_method
 def get_webhook_event(id):
     req = AccountRequest(app, id)
-    webhook_event = versify.webhook_event_service.get(id)
-    webhook_event = versify.webhook_event_service.expand(
-        webhook_event, req.expand_list)
-    return GetResponse(req, webhook_event).json
-
-
-@app.delete('/webhook_events/<id>')
-@tracer.capture_method
-def delete_webhook_event(id):
-    req = AccountRequest(app, id)
-    versify.webhook_event_service.delete(id)
-    return DeleteResponse(req).json
+    event = versify.webhook_event_service.get(id)
+    event = versify.webhook_event_service.expand(event, req.expand_list)
+    return GetResponse(req, event).json
 
 
 @account_required

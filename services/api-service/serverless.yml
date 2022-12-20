@@ -164,23 +164,6 @@ functions:
                 Authorization: true
                 Versify-Account: true
       - http:
-          method: get
-          path: /v1/accounts/{id}/metrics
-          operationId: ListAccountMetrics
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              paths:
-                id: true
-              querystrings:
-                objects: false
-      - http:
           method: post
           path: /v1/accounts/{id}/members
           operationId: CreateAccountMember
@@ -210,6 +193,23 @@ functions:
                 Versify-Account: true
       - http:
           method: get
+          path: /v1/accounts/{id}/metrics
+          operationId: ListAccountMetrics
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+              querystrings:
+                objects: false
+      - http:
+          method: get
           path: /v1/accounts/{id}/subscriptions
           operationId: ListAccountSubscriptions
           cors:
@@ -237,6 +237,23 @@ functions:
               paths:
                 id: true
       - http:
+          method: post
+          path: /v1/airdrops
+          operationId: CreateAirdrop
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/airdrops/create.json)}
+      - http:
           method: get
           path: /v1/airdrops
           operationId: ListAirdrops
@@ -255,23 +272,6 @@ functions:
                 page_size: false
                 filter: false
                 status: false
-      - http:
-          method: post
-          path: /v1/airdrops
-          operationId: CreateAirdrop
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/airdrops/create.json)}
       - http:
           method: get
           path: /v1/airdrops/{id}
@@ -326,6 +326,23 @@ functions:
               querystrings:
                 expand: false
       - http:
+          method: post
+          path: /v1/claims
+          operationId: CreateClaim
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/claims/create.json)}
+      - http:
           method: get
           path: /v1/claims
           operationId: ListClaims
@@ -346,23 +363,6 @@ functions:
                 page_size: false
                 product: false
       - http:
-          method: post
-          path: /v1/claims
-          operationId: CreateClaim
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/claims/create.json)}
-      - http:
           method: get
           path: /v1/claims/{id}
           operationId: GetClaim
@@ -379,6 +379,23 @@ functions:
                 id: true
               querystrings:
                 expand: false
+      - http:
+          method: post
+          path: /v1/collections
+          operationId: CreateCollection
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/collections/create.json)}
       - http:
           method: get
           path: /v1/collections
@@ -401,23 +418,6 @@ functions:
                 filter: false
                 signature: false
                 status: false
-      - http:
-          method: post
-          path: /v1/collections
-          operationId: CreateCollection
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/collections/create.json)}
       - http:
           method: get
           path: /v1/collections/{id}
@@ -455,6 +455,23 @@ functions:
             schemas:
               application/json: ${file(schemas/collections/update.json)}
       - http:
+          method: post
+          path: /v1/contacts
+          operationId: CreateContact
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/contacts/create.json)}
+      - http:
           method: get
           path: /v1/contacts
           operationId: ListContacts
@@ -475,9 +492,9 @@ functions:
                 page_size: false
                 tags: false
       - http:
-          method: post
+          method: put
           path: /v1/contacts
-          operationId: CreateContact
+          operationId: UpdateContacts
           cors:
             origin: "*"
             headers: "*"
@@ -487,10 +504,6 @@ functions:
               headers:
                 Authorization: true
                 Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/contacts/create.json)}
       - http:
           method: get
           path: /v1/contacts/{id}
@@ -528,9 +541,9 @@ functions:
             schemas:
               application/json: ${file(schemas/contacts/update.json)}
       - http:
-          method: put
-          path: /v1/contacts
-          operationId: BulkUpdateContacts
+          method: post
+          path: /v1/contacts/{id}/notes
+          operationId: CreateContactNote
           cors:
             origin: "*"
             headers: "*"
@@ -540,29 +553,28 @@ functions:
               headers:
                 Authorization: true
                 Versify-Account: true
-            # schemas:
-            #   application/json: ${file(schemas/contacts/bulk_update.json)}
-      - http:
-          method: get
-          path: /v1/events
-          operationId: ListEvents
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
+              paths:
+                id: true
               querystrings:
                 expand: false
-                page_num: false
-                page_size: false
-                filter: false
-                resource_id: false
-                resource_type: false
-                user: false
+      - http:
+          method: delete
+          path: /v1/contacts/{id}/notes/{note_id}
+          operationId: DeleteContactNote
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              paths:
+                id: true
+                note_id: true
+              querystrings:
+                expand: false
       - http:
           method: post
           path: /v1/events
@@ -582,6 +594,24 @@ functions:
               application/json: ${file(schemas/events/create.json)}
       - http:
           method: get
+          path: /v1/events
+          operationId: ListEvents
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+      - http:
+          method: get
           path: /v1/events/{id}
           operationId: GetEvent
           cors:
@@ -597,6 +627,23 @@ functions:
                 id: true
               querystrings:
                 expand: false
+      - http:
+          method: post
+          path: /v1/journeys
+          operationId: CreateJourney
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/journeys/create.json)}
       - http:
           method: get
           path: /v1/journeys
@@ -617,43 +664,9 @@ functions:
                 filter: false
                 status: false
       - http:
-          method: post
-          path: /v1/journeys
-          operationId: CreateJourney
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/journeys/create.json)}
-      - http:
           method: get
           path: /v1/journeys/{id}
           operationId: GetJourney
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              paths:
-                id: true
-              querystrings:
-                expand: false
-      - http:
-          method: get
-          path: /v1/journeys/{id}/runs
-          operationId: GetJourneyRuns
           cors:
             origin: "*"
             headers: "*"
@@ -722,8 +735,8 @@ functions:
                 expand: false
       - http:
           method: get
-          path: /v1/messages
-          operationId: ListMessages
+          path: /v1/journeys/{id}/runs
+          operationId: ListJourneyRuns
           cors:
             origin: "*"
             headers: "*"
@@ -733,12 +746,10 @@ functions:
               headers:
                 Authorization: true
                 Versify-Account: true
+              paths:
+                id: true
               querystrings:
                 expand: false
-                page_num: false
-                page_size: false
-                filter: false
-                status: false
       - http:
           method: post
           path: /v1/messages
@@ -758,6 +769,25 @@ functions:
               application/json: ${file(schemas/messages/create.json)}
       - http:
           method: get
+          path: /v1/messages
+          operationId: ListMessages
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+                page_num: false
+                page_size: false
+                filter: false
+                status: false
+      - http:
+          method: get
           path: /v1/messages/{id}
           operationId: GetMessage
           cors:
@@ -773,6 +803,23 @@ functions:
                 id: true
               querystrings:
                 expand: false
+      - http:
+          method: post
+          path: /v1/mint_links
+          operationId: CreateMintLink
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mint_links/create.json)}
       - http:
           method: get
           path: /v1/mint_links
@@ -793,23 +840,6 @@ functions:
                 page_size: false
                 filter: false
                 status: false
-      - http:
-          method: post
-          path: /v1/mint_links
-          operationId: CreateMintLink
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/mint_links/create.json)}
       - http:
           method: get
           path: /v1/mint_links/{id}
@@ -864,6 +894,23 @@ functions:
               querystrings:
                 expand: false
       - http:
+          method: post
+          path: /v1/mints
+          operationId: CreateMint
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+              querystrings:
+                expand: false
+            schemas:
+              application/json: ${file(schemas/mints/create.json)}
+      - http:
           method: get
           path: /v1/mints
           operationId: ListMints
@@ -889,23 +936,6 @@ functions:
                 status: false
                 transaction: false
       - http:
-          method: post
-          path: /v1/mints
-          operationId: CreateMint
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/mints/create.json)}
-      - http:
           method: get
           path: /v1/mints/{id}
           operationId: GetMint
@@ -923,30 +953,9 @@ functions:
               querystrings:
                 expand: false
       - http:
-          method: get
-          path: /v1/notes
-          operationId: ListNotes
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-                page_num: false
-                page_size: false
-                filter: false
-                resource_id: false
-                resource_type: false
-                user: false
-      - http:
           method: post
-          path: /v1/notes
-          operationId: CreateNote
+          path: /v1/products
+          operationId: CreateProduct
           cors:
             origin: "*"
             headers: "*"
@@ -959,24 +968,7 @@ functions:
               querystrings:
                 expand: false
             schemas:
-              application/json: ${file(schemas/notes/create.json)}
-      - http:
-          method: delete
-          path: /v1/notes/{id}
-          operationId: DeleteNote
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              paths:
-                id: true
-              querystrings:
-                expand: false
+              application/json: ${file(schemas/products/create.json)}
       - http:
           method: get
           path: /v1/products
@@ -996,23 +988,6 @@ functions:
                 page_size: false
                 filter: false
                 status: false
-      - http:
-          method: post
-          path: /v1/products
-          operationId: CreateProduct
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/products/create.json)}
       - http:
           method: get
           path: /v1/products/{id}
@@ -1050,28 +1025,9 @@ functions:
             schemas:
               application/json: ${file(schemas/products/update.json)}
       - http:
-          method: get
-          path: /v1/reports
-          operationId: ListReports
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-                page_num: false
-                page_size: false
-                filter: false
-                status: false
-      - http:
           method: post
-          path: /v1/reports
-          operationId: CreateReport
+          path: /v1/rewards
+          operationId: CreateReward
           cors:
             origin: "*"
             headers: "*"
@@ -1084,24 +1040,7 @@ functions:
               querystrings:
                 expand: false
             schemas:
-              application/json: ${file(schemas/reports/create.json)}
-      - http:
-          method: get
-          path: /v1/reports/{id}
-          operationId: GetReport
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              paths:
-                id: true
-              querystrings:
-                expand: false
+              application/json: ${file(schemas/rewards/create.json)}
       - http:
           method: get
           path: /v1/rewards
@@ -1121,23 +1060,6 @@ functions:
                 page_num: false
                 page_size: false
                 product: false
-      - http:
-          method: post
-          path: /v1/rewards
-          operationId: CreateReward
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-              querystrings:
-                expand: false
-            schemas:
-              application/json: ${file(schemas/rewards/create.json)}
       - http:
           method: get
           path: /v1/rewards/{id}
@@ -1230,6 +1152,21 @@ functions:
                 query: false
                 vql: false
       - http:
+          method: post
+          path: /v1/webhooks
+          operationId: CreateWebhook
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/webhooks/create.json)}
+      - http:
           method: get
           path: /v1/webhooks
           operationId: ListWebhooks
@@ -1247,21 +1184,6 @@ functions:
                 enabled_events: false
                 page_num: false
                 page_size: false
-      - http:
-          method: post
-          path: /v1/webhooks
-          operationId: CreateWebhook
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-            schemas:
-              application/json: ${file(schemas/webhooks/create.json)}
       - http:
           method: get
           path: /v1/webhooks/{id}
@@ -1310,6 +1232,21 @@ functions:
               paths:
                 id: true
       - http:
+          method: post
+          path: /v1/webhook_events
+          operationId: CreateWebhookEvent
+          cors:
+            origin: "*"
+            headers: "*"
+            allowCredentials: false
+          request:
+            parameters:
+              headers:
+                Authorization: true
+                Versify-Account: true
+            schemas:
+              application/json: ${file(schemas/webhook_events/create.json)}
+      - http:
           method: get
           path: /v1/webhook_events
           operationId: ListWebhookEvents
@@ -1327,21 +1264,6 @@ functions:
                 enabled_events: false
                 page_num: false
                 page_size: false
-      - http:
-          method: post
-          path: /v1/webhook_events
-          operationId: CreateWebhookEvent
-          cors:
-            origin: "*"
-            headers: "*"
-            allowCredentials: false
-          request:
-            parameters:
-              headers:
-                Authorization: true
-                Versify-Account: true
-            schemas:
-              application/json: ${file(schemas/webhook_events/create.json)}
       - http:
           method: get
           path: /v1/webhook_events/{id}
@@ -1389,7 +1311,7 @@ functions:
       - http:
           method: get
           path: /public/accounts/{id}/branding
-          operationId: GetAccountBranding
+          operationId: ListAccountBranding
           cors:
             origin: "*"
             headers: "*"
@@ -1535,14 +1457,11 @@ functions:
               headers:
                 Authorization: true
               querystrings:
-                airdrop: false
                 expand: false
                 page_num: false
                 page_size: false
                 filter: false
-                signature: false
                 status: false
-                transaction: false
       - http:
           method: get
           path: /users/claims/{id}
@@ -1643,9 +1562,6 @@ functions:
       - http:
           method: post
           path: /webhook/alchemy
-      - http:
-          method: post
-          path: /webhook/shopify
       - http:
           method: post
           path: /webhook/stripe

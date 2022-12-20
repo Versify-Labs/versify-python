@@ -9,7 +9,6 @@ from .journey_run import JourneyRunService
 from .message import MessageService
 from .mint import MintService
 from .mint_link import MintLinkService
-from .note import NoteService
 from .product import ProductService
 from .redemption import RedemptionService
 from .report import ReportService

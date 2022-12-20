@@ -9,7 +9,6 @@ from .services.journey_run import JourneyRunService
 from .services.message import MessageService
 from .services.mint import MintService
 from .services.mint_link import MintLinkService
-from .services.note import NoteService
 from .services.product import ProductService
 from .services.redemption import RedemptionService
 from .services.report import ReportService
@@ -35,7 +34,6 @@ class Versify():
         event = EventService(contact)
         journey = JourneyService()
         message = MessageService(contact, user)
-        note = NoteService()
         product = ProductService(account, collection)
         report = ReportService()
         webhook = WebhookService()
@@ -60,7 +58,6 @@ class Versify():
         self.message_service = message
         self.mint_service = mint
         self.mint_link_service = mint_link
-        self.note_service = note
         self.product_service = product
         self.redemption_service = redemption
         self.report_service = report

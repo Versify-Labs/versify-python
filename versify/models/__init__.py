@@ -9,7 +9,6 @@ from .journey_run import JourneyRun
 from .message import Message
 from .mint import Mint
 from .mint_link import MintLink
-from .note import Note
 from .product import Product
 from .redemption import Redemption
 from .report import Report

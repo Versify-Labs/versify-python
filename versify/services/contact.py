@@ -9,8 +9,10 @@ from pydantic.utils import deep_update
 from pymongo.collection import ReturnDocument
 
 from ..config import ContactConfig
+from ..models.contact import Contact, Note
 from ..utils.exceptions import NotFoundError
 from ..utils.expandable import ExpandableResource
+from ..utils.images import get_image
 from ..utils.mongo import mdb
 from ..utils.pipelines import match_stage, search_stage, vql_stage
 
@@ -20,7 +22,7 @@ class ContactService(ExpandableResource):
     def __init__(self):
         self.collection = mdb[ContactConfig.db][ContactConfig.collection]
         self.expandables = ContactConfig.expandables
-        self.Model = ContactConfig.model
+        self.Model = Contact
         self.object = ContactConfig.object
         self.prefix = ContactConfig.prefix
         self.search_index = ContactConfig.search_index
@@ -40,12 +42,10 @@ class ContactService(ExpandableResource):
         body['email'] = body['email'].lower()
 
         # Check if email already exists
-        contacts = self.list(
-            filter={
-                'account': body['account'],
-                'email': body['email']
-            }
-        )
+        contacts = self.list({
+            'account': body['account'],
+            'email': body['email']
+        })
         if len(contacts) > 0:
             contact = contacts[0]
             return self.update(contact['id'], body)
@@ -53,11 +53,12 @@ class ContactService(ExpandableResource):
         # Create fields
         contact_id = f'{self.prefix}_{ObjectId()}'
         body['_id'] = contact_id
+        body['avatar'] = body.get('avatar', get_image(body['email']))
         body['created'] = int(time.time())
         body['updated'] = int(time.time())
 
         # Validate against schema
-        contact = self.Model(**body)
+        contact = Contact(**body)
 
         # Store new item in DB
         self.collection.insert_one(contact.to_bson())
@@ -99,7 +100,7 @@ class ContactService(ExpandableResource):
             '_id', -1).limit(limit).skip(skip)
 
         # Convert cursor to list
-        contacts = [self.Model(**doc).to_json() for doc in cursor]
+        contacts = [Contact(**doc).to_json() for doc in cursor]
 
         return contacts
 
@@ -119,7 +120,7 @@ class ContactService(ExpandableResource):
 
         # Convert to JSON
         if contact:
-            contact = self.Model(**contact).to_json()
+            contact = Contact(**contact).to_json()
 
         return contact
 
@@ -148,7 +149,7 @@ class ContactService(ExpandableResource):
         contact['updated'] = int(time.time())
 
         # Validate against schema
-        validated_contact = self.Model(**contact)
+        validated_contact = Contact(**contact)
 
         # Update item in DB
         data = self.collection.find_one_and_update(
@@ -159,7 +160,7 @@ class ContactService(ExpandableResource):
         )
 
         # Convert to JSON
-        data = self.Model(**data).to_json()
+        data = Contact(**data).to_json()
 
         return data
 
@@ -190,9 +191,44 @@ class ContactService(ExpandableResource):
         ])
 
         # Convert cursor to list
-        contacts = [self.Model(**doc).to_json() for doc in cursor]
+        contacts = [Contact(**doc).to_json() for doc in cursor]
 
         return contacts
+
+    def create_note(self, contact_id, body):
+        logging.info('Creating note')
+
+        # Create fields
+        note_id = f'note_{ObjectId()}'
+        body['id'] = note_id
+        body['created'] = int(time.time())
+        body['updated'] = int(time.time())
+
+        # Validate against schema
+        note = Note(**body).dict()
+
+        # Update item in DB
+        self.collection.find_one_and_update(
+            filter={'_id': contact_id},
+            update={'$push': {'notes': note}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+
+        return note
+
+    def delete_note(self, contact_id, note_id):
+        logging.info('Deleting note')
+
+        # Update item in DB
+        self.collection.find_one_and_update(
+            filter={'_id': contact_id},
+            update={'$pull': {'notes': {'id': note_id}}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER
+        )
+
+        return True
 
     def aggregate_tags(self, account_id):
         stages = [
@@ -238,7 +274,7 @@ class ContactService(ExpandableResource):
         ]
         logging.info(stages)
         cursor = self.collection.aggregate(stages)
-        return [self.Model(**doc).to_json() for doc in cursor]
+        return [Contact(**doc).to_json() for doc in cursor]
 
     def bulk_update(self, ids: List = [], body: dict = {}):
         """Bulk update contacts.
@@ -303,4 +339,4 @@ class ContactService(ExpandableResource):
 
     #     stages = [{"$match": q}]
     #     cursor = self.collection.aggregate(stages)
-    #     return [self.Model(**doc).to_json() for doc in cursor]
+    #     return [Contact(**doc).to_json() for doc in cursor]

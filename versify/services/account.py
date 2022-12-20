@@ -13,6 +13,7 @@ from ..config import (AccountConfig, AirdropConfig, ClaimConfig,
                       MintLinkConfig, ProductConfig, StripeConfig)
 from ..utils.exceptions import NotFoundError
 from ..utils.expandable import ExpandableResource
+from ..utils.images import get_image
 from ..utils.mongo import mdb
 from ..utils.paragon import Paragon
 from ..utils.stripe import stripe
@@ -72,6 +73,8 @@ class AccountService(ExpandableResource):
             'stripe_customer_id': stripe_customer['id']
         }
         body['branding'] = {
+            'icon': get_image(body['name']),
+            'logo': get_image(body['name']),
             'wallet_welcome_message': 'Welcome to ' + body['name'],
             'website_title': f"{body['name']} Rewards Program",
             'website_hero_title':  f"{body['name']} Rewards Program",

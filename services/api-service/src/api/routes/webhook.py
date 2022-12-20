@@ -26,19 +26,6 @@ def alchemy_partner_connector():
     return response
 
 
-@app.post("/shopify")
-@tracer.capture_method
-def shopify_partner_connector():
-    """Consume events from Shopify and publish to the PartnerBus"""
-    payload = app.current_event.json_body
-    detail_type = 'event.created'
-    detail = payload
-    event_bus = 'partner'
-    source = 'shopify'
-    response = publish_event(detail_type, detail, event_bus, source)
-    return response
-
-
 @app.post("/stripe")
 @tracer.capture_method
 def stripe_partner_connector():

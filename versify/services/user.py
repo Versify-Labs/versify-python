@@ -11,6 +11,7 @@ from pymongo.collection import ReturnDocument
 from ..config import UserConfig
 from ..utils.exceptions import NotFoundError
 from ..utils.expandable import ExpandableResource
+from ..utils.images import get_image
 from ..utils.mongo import mdb
 from ..utils.stytch import stytch
 
@@ -68,6 +69,7 @@ class UserService(ExpandableResource):
             body['_id'] = body.get('_id', f'{self.prefix}_{ObjectId()}')
             body['created'] = int(time.time())
             body['updated'] = int(time.time())
+            body['avatar'] = body.get('avatar', get_image(body.get('name')))
             body['wallets'] = [self.generate_managed_wallet()]
             user = self.Model(**body)
             self.collection.insert_one(user.to_bson())

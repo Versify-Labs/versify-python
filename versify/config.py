@@ -5,9 +5,8 @@ import os
 from aws_lambda_powertools.utilities import parameters
 
 from .models import (Account, Airdrop, Claim, Collection, Contact, Event,
-                     Journey, JourneyRun, Message, Mint, MintLink, Note,
-                     Product, Redemption, Report, Reward, User, Webhook,
-                     WebhookEvent)
+                     Journey, JourneyRun, Message, Mint, MintLink, Product,
+                     Redemption, Report, Reward, User, Webhook, WebhookEvent)
 
 ENV = os.environ['ENVIRONMENT']
 SECRET_NAME = parameters.get_secret(os.environ['SECRET_NAME'])
@@ -197,16 +196,6 @@ class MintLinkConfig:
         MINT_URL = "https://dashboard.versifylabs.com/links"
 
 
-class NoteConfig:
-    collection = 'Notes'
-    db = 'Notes'
-    expandables = ['contact']
-    model = Note
-    object = 'note'
-    prefix = 'note'
-    search_index = None
-
-
 class ProductConfig:
     collection = 'Products'
     db = 'Products'
@@ -290,7 +279,6 @@ def get_service_config(service_name):
         'message': MessageConfig,
         'mint': MintConfig,
         'mint_link': MintLinkConfig,
-        'note': NoteConfig,
         'product': ProductConfig,
         'redemption': RedemptionConfig,
         'report': ReportConfig,

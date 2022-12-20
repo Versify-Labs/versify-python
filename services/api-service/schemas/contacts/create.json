@@ -43,6 +43,27 @@
       "description": "The contacts full name.",
       "type": "string"
     },
+    "notes": {
+      "description": "The contacts notes, meant to be displayable on the admin dashboard.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "description": "The attachment of the note.",
+            "type": "string"
+          },
+          "body": {
+            "description": "The body of the note.",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The id of the user who created the note.",
+            "type": "string"
+          }
+        }
+      }
+    },
     "phone": {
       "description": "The contacts phone number. This is for record keeping only.",
       "type": "string"

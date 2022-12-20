@@ -261,27 +261,26 @@ def create_note(event):
     journey = versify.journey_service.get(journey_id)
     journey_run = versify.journey_run_service.retrieve_by_id(journey_run_id)
     contact = versify.contact_service.get(journey_run['contact'])
+    if not contact:
+        raise Exception('Contact not found')
 
     # Get the state config
     state = journey['states'][state_name]
     config = state['config']
-    note = config['note']
+    note_content = config['note']
 
     # Create note
-    note = versify.note_service.create(body={
-        'account': journey['account'],
-        'contact': contact['id'],
-        'content': note,
-        'resource_id': contact['id'],
-        'resource_type': 'contact',
+    note = versify.contact_service.create_note(contact['id'], {
+        'account': contact['account'],
+        'content': note_content,
         'user': {
-            'id': 'system',
+            'id': 'system'
         }
     })
 
     # Update run
     update_run_state_results(journey_run_id, state_name, {
-        'note_id': note['id']
+        'note_id': note['id'],
     })
 
     return {

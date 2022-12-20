@@ -82,7 +82,7 @@ class WebhookEventService(ExpandableResource):
 
         return data
 
-    def retrieve_by_id(self, webhook_event_id: str) -> dict:
+    def get(self, webhook_event_id: str) -> dict:
         """Get an webhook_event by id.
 
         Args:

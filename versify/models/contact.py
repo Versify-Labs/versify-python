@@ -1,12 +1,20 @@
 from typing import Optional
 
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 
 from ._base import BaseAccountModel
 
 
+class Note(BaseModel):
+    id: str
+    object = 'note'
+    created: int
+    content: str = ''
+    user: dict = {}
+
+
 class Contact(BaseAccountModel):
-    object: str = 'contact'
+    object = 'contact'
     active: bool = True
     address: Optional[dict]
     avatar: Optional[str]
@@ -17,6 +25,7 @@ class Contact(BaseAccountModel):
     first_name: Optional[str]
     last_name: Optional[str]
     name: Optional[str]
+    notes: list[Note] = []
     phone: Optional[str]
     shipping: Optional[dict]
     source: str = 'Versify'
