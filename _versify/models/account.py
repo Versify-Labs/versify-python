@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from pydantic import BaseModel, EmailStr
 
@@ -134,3 +134,110 @@ class Account(BaseAccountModel):
     tos_acceptance: Optional[TermsAcceptance]
     type: BusinessType = BusinessType.BUSINESS
     url: Optional[str]
+
+
+class AccountCreateRequest(BaseModel):
+    branding: Branding
+    country: str = DEFAULT_COUNTRY
+    currency: str = DEFAULT_CURRENCY
+    email: EmailStr
+    name: Optional[str]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_url: Optional[str]
+    timezone: str = 'America/New_York'
+    tos_acceptance: Optional[TermsAcceptance]
+    type: BusinessType = BusinessType.BUSINESS
+    url: Optional[str]
+
+
+class AccountUpdateRequest(BaseModel):
+    branding: Branding
+    country: str = DEFAULT_COUNTRY
+    currency: str = DEFAULT_CURRENCY
+    email: EmailStr
+    name: Optional[str]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_url: Optional[str]
+    timezone: str = 'America/New_York'
+    tos_acceptance: Optional[TermsAcceptance]
+    type: BusinessType = BusinessType.BUSINESS
+    url: Optional[str]
+
+
+class AccountQuery(BaseModel):
+    age: int
+
+
+class AccountAdminResponse(BaseModel):
+    id: str
+    object: str = 'account'
+    active: bool = True
+    authentication: Authentication
+    billing: Billing
+    branding: Branding
+    country: str = DEFAULT_COUNTRY
+    currency: str = DEFAULT_CURRENCY
+    email: EmailStr
+    name: Optional[str]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_url: Optional[str]
+    team: List[TeamMember] = []
+    timezone: str = 'America/New_York'
+    tos_acceptance: Optional[TermsAcceptance]
+    type: BusinessType = BusinessType.BUSINESS
+    url: Optional[str]
+
+
+class AccountMemberResponse(BaseModel):
+    id: str
+    object: str = 'account'
+    active: bool = True
+    branding: Branding
+    country: str = DEFAULT_COUNTRY
+    currency: str = DEFAULT_CURRENCY
+    email: EmailStr
+    name: Optional[str]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_url: Optional[str]
+    team: List[TeamMember] = []
+    timezone: str = 'America/New_York'
+    tos_acceptance: Optional[TermsAcceptance]
+    type: BusinessType = BusinessType.BUSINESS
+    url: Optional[str]
+
+
+class AccountPublicResponse(BaseModel):
+    id: str
+    branding: Branding
+    name: Optional[str]
+    support_email: Optional[str]
+    support_phone: Optional[str]
+    support_url: Optional[str]
+    url: Optional[str]
+
+
+class AccountDeletedResponse(BaseModel):
+    id: str
+    object: str = 'account'
+    deleted: bool = True
+
+
+class AccountListResponse(BaseModel):
+    object: str = 'list'
+    url: str = '/v2/accounts'
+    has_more: bool = False
+    data: list = []
+    count: Optional[int]
+
+
+def get_response_for_role(self, role: TeamMemberRole) -> Type[BaseModel]:
+    if role == TeamMemberRole.ADMIN:
+        return AccountAdminResponse
+    elif role == TeamMemberRole.MEMBER:
+        return AccountMemberResponse
+    else:
+        return AccountPublicResponse

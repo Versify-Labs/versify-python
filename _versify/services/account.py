@@ -219,6 +219,18 @@ class AccountService(ExpandableResource):
 
         return account
 
+    def get(self, account_id: str) -> dict:
+        """Get an account by id.
+
+        Args:
+            account_id (str): The id of the account to retrieve.
+
+        Returns:
+            dict: The account.
+        """
+        return self.retrieve_by_id(account_id)
+        
+
     def update(self, account_id: str, body: dict) -> dict:
         """Update a account. If the account does not exist, create a new account.
 

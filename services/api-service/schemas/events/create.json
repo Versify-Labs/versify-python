@@ -3,7 +3,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "title": "CreateEvent",
-  "required": ["detail_type"],
+  "required": ["email", "detail_type", "detail", "source"],
   "properties": {
     "contact": {
       "description": "The ID of the user associated with the event",

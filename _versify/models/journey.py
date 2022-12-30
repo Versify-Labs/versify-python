@@ -46,6 +46,8 @@ class Offer(BaseModel):
     image: Optional[str] = ''
     cta_text: Optional[str] = ''
     cta_url: Optional[str] = ''
+    primary_color: Optional[str] = ''
+    secondary_color: Optional[str] = ''
 
 
 """

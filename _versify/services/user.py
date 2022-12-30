@@ -180,7 +180,7 @@ class UserService(ExpandableResource):
         body = {'stytch_user': stytch_user_id}
         for factor in auth_factors:
 
-            # Handle Oauth session
+            # Handle OAuth session
             if factor.get('type') == 'oauth':
                 user = stytch().get_user(stytch_user_id)
                 email = user['emails'][0]['email']
@@ -192,7 +192,7 @@ class UserService(ExpandableResource):
                 #     provider = user['providers'][0]
                 #     body['avatar'] = provider.get('profile_picture_url')
 
-            # Handle Magic Link session
+            # Handle magic link or OTP session
             if factor.get('type') in ['magic_link', 'otp']:
                 email_factor = factor.get('email_factor', {})
                 email = email_factor.get('email_address')

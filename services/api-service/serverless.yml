@@ -6,6 +6,11 @@ frameworkVersion: ">=2.24.0"
 
 plugins:
   - serverless-python-requirements
+  - serverless-wsgi
+
+custom:
+  wsgi:
+    app: src/app.app
 
 provider:
   name: aws
@@ -1568,3 +1573,10 @@ functions:
       - http:
           method: post
           path: /webhook/tatum
+  ApiService-App:
+    handler: wsgi_handler.handler
+    name: ApiService-App
+    description: API endpoints handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}

@@ -14,18 +14,6 @@ tracer = Tracer()
 versify = Versify()
 
 
-@app.get('/accounts/<id>')
-@tracer.capture_method
-def get_account(id):
-    req = PublicRequest(app)
-    account = versify.account_service.retrieve_by_id(id)
-    if not account:
-        raise NotFoundError('Account not found')
-    branding = account.get('branding', {})
-    branding['object'] = 'account'
-    return GetResponse(req, branding).json
-
-
 @app.get('/accounts/<id>/assets')
 @tracer.capture_method
 def list_account_assets(id):
@@ -39,18 +27,6 @@ def list_account_assets(id):
     assets = versify.product_service.expand(assets, req.expand_list)
     assets = assets.get('data', [])  # type: ignore
     return ListResponse(req, assets, count).json
-
-
-@app.get('/accounts/<id>/branding')
-@tracer.capture_method
-def list_account_branding(id):
-    req = PublicRequest(app)
-    account = versify.account_service.retrieve_by_id(id)
-    if not account:
-        raise NotFoundError('Account not found')
-    branding = account.get('branding', {})
-    branding['object'] = 'account.branding'
-    return GetResponse(req, branding).json
 
 
 @app.post('/accounts/<id>/events')
@@ -111,6 +87,32 @@ def get_signature(id):
     if not exists:
         raise NotFoundError('Signature not found')
     return True
+
+###### Deprecated ######
+
+
+@app.get('/accounts/<id>')
+@tracer.capture_method
+def get_account(id):
+    req = PublicRequest(app)
+    account = versify.account_service.retrieve_by_id(id)
+    if not account:
+        raise NotFoundError('Account not found')
+    branding = account.get('branding', {})
+    branding['object'] = 'account'
+    return GetResponse(req, branding).json
+
+
+@app.get('/accounts/<id>/branding')
+@tracer.capture_method
+def list_account_branding(id):
+    req = PublicRequest(app)
+    account = versify.account_service.retrieve_by_id(id)
+    if not account:
+        raise NotFoundError('Account not found')
+    branding = account.get('branding', {})
+    branding['object'] = 'account.branding'
+    return GetResponse(req, branding).json
 
 
 @cors_headers
