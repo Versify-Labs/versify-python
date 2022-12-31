@@ -6,9 +6,9 @@ from fastapi import Body, Cookie, Header, Path, Query
 
 
 class Tags(Enum):
-    AUTHENTICATION = 'Authentication'
-    ACCOUNT = 'Account'
-    CONTACT = 'Contact'
+    AUTHENTICATION = "Authentication"
+    ACCOUNT = "Account"
+    CONTACT = "Contact"
 
 
 class BodyParams:
@@ -16,30 +16,19 @@ class BodyParams:
         ...,
         title="Account",
         description="Account to create",
-        example={
-            "domain": "acme.com",
-            "name": "Acme Corp"
-        }
+        example={"domain": "acme.com", "name": "Acme Corp"},
     )
     CREATE_CONTACT = Body(
         ...,
         title="Contact",
         description="Contact to create",
-        example={
-            "email": "jane@example.com",
-            "first_name": "Jane",
-            "last_name": "Doe"
-        }
+        example={"email": "jane@example.com", "first_name": "Jane", "last_name": "Doe"},
     )
     CREATE_USER = Body(
         ...,
         title="User",
         description="User to create",
-        example={
-            "name": "Acme",
-            "first_name": "Jane",
-            "last_name": "Doe"
-        }
+        example={"name": "Acme", "first_name": "Jane", "last_name": "Doe"},
     )
     UPDATE_ACCOUNT = Body(
         ...,
@@ -47,17 +36,13 @@ class BodyParams:
         description="Account to update",
         example={
             "name": "Acme",
-        }
+        },
     )
     UPDATE_CONTACT = Body(
         ...,
         title="Contact",
         description="Contact to update",
-        example={
-            "email": "jane@example.com",
-            "first_name": "Jane",
-            "last_name": "Doe"
-        }
+        example={"email": "jane@example.com", "first_name": "Jane", "last_name": "Doe"},
     )
     UPDATE_USER = Body(
         ...,
@@ -66,17 +51,14 @@ class BodyParams:
         example={
             "avatar": "https://example.com/avatar.png",
             "first_name": "Jane",
-            "last_name": "Doe"
-        }
+            "last_name": "Doe",
+        },
     )
 
 
 class CookieParams:
     SESSION_ID = Cookie(
-        ...,
-        title="Session ID",
-        description="ID of the session",
-        example="sess_1"
+        ..., title="Session ID", description="ID of the session", example="sess_1"
     )
 
 
@@ -109,23 +91,12 @@ class HeaderParams:
 
 class PathParams:
     ACCOUNT_ID = Path(
-        ...,
-        title="Account ID",
-        description="ID of the account",
-        example="acct_1"
+        ..., title="Account ID", description="ID of the account", example="acct_1"
     )
     CONTACT_ID = Path(
-        ...,
-        title="Contact ID",
-        description="ID of the contact",
-        example="cont_1"
+        ..., title="Contact ID", description="ID of the contact", example="cont_1"
     )
-    USER_ID = Path(
-        ...,
-        title="User ID",
-        description="ID of the user",
-        example="user_1"
-    )
+    USER_ID = Path(..., title="User ID", description="ID of the user", example="user_1")
 
 
 class QueryParams:
@@ -133,13 +104,13 @@ class QueryParams:
         default=None,
         title="Active",
         description="Whether the item is active",
-        example=True
+        example=True,
     )
     EMAIL = Query(
         default=None,
         title="Email",
         description="Email of the item to return",
-        example="jane@example.com"
+        example="jane@example.com",
     )
     LIMIT = Query(
         default=10,
@@ -147,14 +118,14 @@ class QueryParams:
         le=100,
         title="Limit amount",
         description="Number of items to return",
-        example=10
+        example=10,
     )
     SKIP = Query(
         default=0,
         ge=0,
         title="Skip amount",
         description="Number of items to skip",
-        example=10
+        example=10,
     )
     Q = Query(
         default=None,
@@ -162,17 +133,12 @@ class QueryParams:
         description="Query to filter items",
         example="Acme",
         min_length=1,
-        max_length=100
+        max_length=100,
     )
 
 
 class ListQueryParams:
-    def __init__(
-        self,
-        limit: int = 100,
-        skip: int = 0,
-        q: Union[str, None] = None
-    ):
+    def __init__(self, limit: int = 100, skip: int = 0, q: Union[str, None] = None):
         self.limit = limit
         self.skip = skip
         self.q = q
@@ -181,14 +147,8 @@ class ListQueryParams:
 tags_metadata = [
     {
         "name": Tags.AUTHENTICATION.value,
-        "description": "Operations related to authentication."
+        "description": "Operations related to authentication.",
     },
-    {
-        "name": Tags.ACCOUNT.value,
-        "description": "Operations with accounts."
-    },
-    {
-        "name": Tags.CONTACT.value,
-        "description": "Operations with contacts."
-    }
+    {"name": Tags.ACCOUNT.value, "description": "Operations with accounts."},
+    {"name": Tags.CONTACT.value, "description": "Operations with contacts."},
 ]

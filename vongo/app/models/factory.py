@@ -9,7 +9,6 @@ from .enums import ObjectPrefixes
 
 
 class PyObjectId(ObjectId):
-
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -34,7 +33,7 @@ def object_id(prefix: str) -> str:
     Returns:
         str: The new object ID
     """
-    return f'{prefix}_{PyObjectId()}'
+    return f"{prefix}_{PyObjectId()}"
 
 
 def account_id() -> str:
@@ -154,6 +153,15 @@ def user_id() -> str:
     return object_id(ObjectPrefixes.USER)
 
 
+def wallet_id() -> str:
+    """Generates a new wallet ID
+
+    Returns:
+        str: The new wallet ID
+    """
+    return object_id(ObjectPrefixes.WALLET)
+
+
 def webhook_id() -> str:
     """Generates a new webhook ID
 
@@ -209,7 +217,7 @@ def generate_avatar(name):
 
 def generate_stripe_customer_id():
     # TODO: Implement this properly with Stripe
-    return f'cus_{secrets.token_hex(16)}'
+    return f"cus_{secrets.token_hex(16)}"
 
 
 def generate_wallet():
@@ -218,9 +226,9 @@ def generate_wallet():
     account = EthAccount.privateKeyToAccount(private_key)
     public_address = account.address
     return {
-        'managed': True,
-        'public_address': public_address,
-        'private_key': private_key,
-        'type': 'ethereum',
-        'verified': True,
+        "managed": True,
+        "public_address": public_address,
+        "private_key": private_key,
+        "type": "ethereum",
+        "verified": True,
     }

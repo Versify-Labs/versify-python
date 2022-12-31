@@ -3,39 +3,36 @@ import warnings
 from typing import Any, Dict, Optional, Set
 
 import requests
-
-from ..config import StytchConfig
+from app.core.config import settings
 
 __version__ = "5.7.0"
 
 
 def _env_url(env: str, suppress_warnings: bool = False) -> str:
-    '''Resolve the base URL for the Stytch API environment.'''
+    """Resolve the base URL for the Stytch API environment."""
 
     # Supported production environments
     if env == "test":
         if not suppress_warnings:
-            warnings.warn(
-                "Test version of Stytch not intended for production use")
+            warnings.warn("Test version of Stytch not intended for production use")
         return "https://test.stytch.com/v1/"
     elif env == "live":
         return "https://api.stytch.com/v1/"
 
     # Internal development override. URL builders assume the base URL has a
     # trailing slash, so add one if it's missing.
-    if not env.endswith('/'):
-        return env + '/'
+    if not env.endswith("/"):
+        return env + "/"
     return env
 
 
 class Stytch:
-
-    def __init__(self, project_id, secret, environment='test'):
+    def __init__(self, project_id, secret, environment="test"):
         self._requester_base = requests
         self.base_url = _env_url(environment, True)
         self.headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Stytch Python v{}'.format(__version__)
+            "Content-Type": "application/json",
+            "User-Agent": "Stytch Python v{}".format(__version__),
         }
         self.auth = requests.auth.HTTPBasicAuth(project_id, secret)
 
@@ -52,13 +49,10 @@ class Stytch:
 
         default_options = {}
         if options.get("ip_match_required"):
-            default_options.update(
-                {"ip_match_required": options["ip_match_required"]}
-            )
+            default_options.update({"ip_match_required": options["ip_match_required"]})
         if options.get("user_agent_match_required"):
             default_options.update(
-                {"user_agent_match_required":
-                    options["user_agent_match_required"]}
+                {"user_agent_match_required": options["user_agent_match_required"]}
             )
 
         return default_options
@@ -78,36 +72,25 @@ class Stytch:
 
     def _get(self, url: str, query_params: Dict = {}):
         response = self._requester_base.get(
-            url,
-            auth=self.auth,
-            headers=self.headers,
-            params=query_params
+            url, auth=self.auth, headers=self.headers, params=query_params
         )
         return response.json()
 
     def _post(self, url: str, data: Dict):
         response = self._requester_base.post(
-            url,
-            auth=self.auth,
-            headers=self.headers,
-            data=json.dumps(data)
+            url, auth=self.auth, headers=self.headers, data=json.dumps(data)
         )
         return response.json()
 
     def _put(self, url: str, data: Dict):
         response = self._requester_base.put(
-            url,
-            auth=self.auth,
-            headers=self.headers,
-            data=json.dumps(data)
+            url, auth=self.auth, headers=self.headers, data=json.dumps(data)
         )
         return response.json()
 
     def _delete(self, url: str):
         response = self._requester_base.delete(
-            url,
-            auth=self.auth,
-            headers=self.headers
+            url, auth=self.auth, headers=self.headers
         )
         return response.json()
 
@@ -141,7 +124,7 @@ class Stytch:
 
 def stytch():
     return Stytch(
-        project_id=StytchConfig.STYTCH_PROJECT_ID,
-        secret=StytchConfig.STYTCH_SECRET,
-        environment=StytchConfig.STYTCH_ENV
+        project_id=settings.STYTCH_PROJECT_ID,
+        secret=settings.STYTCH_SECRET,
+        environment=settings.STYTCH_ENV,
     )

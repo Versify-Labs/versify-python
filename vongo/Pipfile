@@ -4,13 +4,25 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+aws-lambda-powertools = "*"
+base58 = "*"
 beanie = "*"
+boto3 = "*"
+ecdsa = "*"
+eth-account = "*"
 fastapi = "*"
 fastapi-users = {extras = ["beanie", "oauth"], version = "*"}
+jinja2 = "*"
+jmespath = "*"
 jose = "*"
+mnemonic = "*"
 motor = "*"
+pycryptodome = "*"
 pydantic = "*"
+pymongo = "*"
+six = "*"
 stytch = "*"
+uvicorn = "*"
 
 [dev-packages]
 

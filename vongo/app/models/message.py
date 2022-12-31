@@ -5,9 +5,9 @@ from .enums import MessageStatus, MessageType
 
 
 class Message(Base):
-    object: str = 'message'
+    object: str = "message"
     type: MessageType = MessageType.EMAIL
-    content_body: str = ''
+    content_body: str = ""
     content_subject: Optional[str]
     content_preheader: Optional[str]
     from_email: Optional[str]

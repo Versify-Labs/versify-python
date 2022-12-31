@@ -1,6 +1,5 @@
-from typing import Optional
-
-import motor.motor_asyncio
+import os
+from typing import List, Optional
 from beanie import PydanticObjectId
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers
@@ -9,28 +8,36 @@ from fastapi_users.authentication import (
     BearerTransport,
     JWTStrategy,
 )
-from fastapi_users.db import BeanieBaseUser, BeanieUserDatabase, ObjectIDIDMixin
-
-DATABASE_URL = "mongodb://localhost:27017"
-client = motor.motor_asyncio.AsyncIOMotorClient(
-    DATABASE_URL, uuidRepresentation="standard"
+from fastapi_users.db import (
+    BaseOAuthAccount,
+    BeanieBaseUser,
+    BeanieUserDatabase,
+    ObjectIDIDMixin,
 )
-
-
-class User(BeanieBaseUser[PydanticObjectId]):
-    pass
-
-
-async def get_user_db():
-    yield BeanieUserDatabase(User)
-
+from httpx_oauth.clients.google import GoogleOAuth2
+from pydantic import Field
 
 SECRET = "SECRET"
 
+google_oauth_client = GoogleOAuth2(
+    os.getenv("GOOGLE_OAUTH_CLIENT_ID", ""),
+    os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+)
 
-class UserManager(
-    ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]  # type: ignore
-):
+
+class OAuthAccount(BaseOAuthAccount):
+    pass
+
+
+class User(BeanieBaseUser[PydanticObjectId]):
+    oauth_accounts: List[OAuthAccount] = Field(default_factory=list)
+
+
+async def get_user_db():
+    yield BeanieUserDatabase(User, OAuthAccount)
+
+
+class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
@@ -67,7 +74,6 @@ auth_backend = AuthenticationBackend(
     get_strategy=get_jwt_strategy,
 )
 
-_fapi_users = FastAPIUsers[User, PydanticObjectId]  # type: ignore
-fastapi_users = _fapi_users(get_user_manager, [auth_backend])
+fastapi_users = FastAPIUsers[User, PydanticObjectId](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)

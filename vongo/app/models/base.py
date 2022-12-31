@@ -9,6 +9,7 @@ class Base(BaseModel):
 
     class Config:
         """Pydantic config"""
+
         allow_population_by_field_name = False
         arbitrary_types_allowed = True  # required for the _id
         json_encoders = {ObjectId: str}

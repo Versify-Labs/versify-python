@@ -1,10 +1,9 @@
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
-from app.db.base_class import Base
 from app.db.session import SessionLocal
+from app.models.base import Base
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from pymongo.database import Database
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -25,19 +24,14 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
         # db_name = model.db_name
         # collection_name = model.collection_name
-        db_name = 'Dev'
-        collection_name = 'Users'
+        db_name = "Dev"
+        collection_name = "Users"
         self.collection = session.get_collection(db_name, collection_name)
 
     def get(self, id: Any) -> Optional[ModelType]:
-        return self.collection.find_one({'_id': id})
+        return self.collection.find_one({"_id": id})
 
-    def get_multi(
-        self,
-        *,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[ModelType]:
+    def get_multi(self, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
 
         return self.collection.find({}).skip(skip).limit(limit)
 
@@ -48,10 +42,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def update(
-        self,
-        *,
-        db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+        self, *, db_obj: ModelType, obj_in: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_in, dict):
@@ -62,12 +53,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
         self.collection.find_one_and_update(
-            filter={'_id': db_obj.id},
-            update={'$set': db_obj},
-            upsert=True
+            filter={"_id": db_obj.id}, update={"$set": db_obj}, upsert=True
         )
         return db_obj
 
     def remove(self, *, id: int) -> ModelType:
-        obj = self.collection.find_one_and_delete({'_id': id})
+        obj = self.collection.find_one_and_delete({"_id": id})
         return obj

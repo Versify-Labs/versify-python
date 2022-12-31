@@ -7,13 +7,13 @@ from .enums import CollectionStatus
 
 
 class Collection(Base):
-    object: str = 'collection'
+    object: str = "collection"
     active: bool = True
     contract_address: Optional[str]
     default: Optional[bool] = False
-    description: Optional[str] = 'Default collection'
+    description: Optional[str] = "Default collection"
     image: Optional[str] = DEFAULT_LOGO
-    name: str = ''
+    name: str = ""
     signature: Optional[str]
     status: CollectionStatus = CollectionStatus.NEW
     tags: list = []
