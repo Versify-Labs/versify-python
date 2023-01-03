@@ -1,10 +1,9 @@
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
-from pydantic import EmailStr, Field, HttpUrl, validator
-
-from .base import Base
-from .enums import (
+from app.models.base import Base
+from app.models.enums import (
     ActionType,
+    ContactQueryField,
     Operator,
     RunStatus,
     SubscriptionPlan,
@@ -12,11 +11,16 @@ from .enums import (
     TeamMemberRole,
     TriggerType,
 )
-from .factory import api_public_key, api_secret_key, generate_stripe_customer_id
+from app.models.factory import (
+    api_public_key,
+    api_secret_key,
+    generate_stripe_customer_id,
+)
+from pydantic import EmailStr, Field, HttpUrl, validator
 
 
 class Authentication(Base):
-    """Settings used to configure how this account can be accessed"""
+    """Settings used to configure how this account can be accessed."""
 
     api_public_key: str = Field(
         default_factory=api_public_key,
@@ -32,33 +36,26 @@ class Authentication(Base):
     )
 
 
-class Filter(Base):
-    """URL pattern used to configure the account's brand"""
+class Author(Base):
+    """Author of a piece of content."""
 
-    field: str = Field(
-        ..., description="The field to filter on", example="url", title="Field"
-    )
-    operator: Operator = Field(
-        ..., description="The operator to use", example="contains", title="Operator"
-    )
-    value: str = Field(
-        ..., description="The value to filter on", example="example.com", title="Value"
-    )
-
-
-class Image(Base):
-    name: str = Field(
-        ..., description="The name of the image", example="Logo", title="Image Name"
-    )
-    url: HttpUrl = Field(
+    id: str = Field(
         ...,
-        description="The URL of the image",
-        example="https://example.com/logo.png",
-        title="Image URL",
+        description="The ID of the author",
+        example="usr_1232313123123123132",
+        title="Author ID",
+    )
+    name: str = Field(
+        ...,
+        description="The name of the author",
+        example="Jane Doe",
+        title="Author Name",
     )
 
 
 class Billing(Base):
+    """Billing information for an account."""
+
     stripe_customer_id: str = Field(
         default_factory=generate_stripe_customer_id,
         description="The Stripe customer ID",
@@ -80,8 +77,13 @@ class Billing(Base):
 
 
 class Brand(Base):
-    logo: Union[Image, None] = Field(
-        default=None, description="The logo of the brand", title="Logo"
+    """A brand used to customize the look and feel of an account."""
+
+    logo: Union[HttpUrl, None] = Field(
+        default=None,
+        description="The URL of the brand's logo",
+        example="https://example.com/logo.png",
+        title="Logo URL",
     )
     action_color: Union[str, None] = Field(
         default=None,
@@ -115,7 +117,32 @@ class Brand(Base):
     )
 
 
+class Filter(Base):
+    """A filter that can be used to filter data."""
+
+    field: str = Field(
+        ...,
+        description="The field to filter the data on",
+        example=ContactQueryField.EMAIL,
+        title="Filter Field",
+    )
+    operator: Operator = Field(
+        ...,
+        description="The operator to use",
+        example=Operator.ENDS_WITH,
+        title="Filter Operator",
+    )
+    value: str = Field(
+        ...,
+        description="The value to filter by",
+        example="gmail.com",
+        title="Filter Value",
+    )
+
+
 class IdentityProvider(Base):
+    """An identity provider for a user."""
+
     provider_type: str = Field(
         ...,
         description="The type of the identity provider",
@@ -130,14 +157,41 @@ class IdentityProvider(Base):
     )
 
 
-class Note(Base):
-    id: str = Field(
-        ..., description="The ID of the note", example="123", title="Note ID"
-    )
-    author: dict = Field(
+class Location(Base):
+    """A location for a person."""
+
+    city: str = Field(
         ...,
-        description="The author of the note",
-        example={"id": "123", "name": "Jane Doe"},
+        description="The city of the location",
+        example="San Francisco",
+        title="City",
+    )
+    country: str = Field(
+        ...,
+        description="The country of the location",
+        example="United States",
+        title="Country",
+    )
+    region: str = Field(
+        ...,
+        description="The region of the location",
+        example="CA",
+        title="Region",
+    )
+
+
+class Note(Base):
+    """A note for a resource."""
+
+    id: str = Field(
+        ...,
+        description="The ID of the note",
+        example="not_12312312312312",
+        title="Note ID",
+    )
+    author: Author = Field(
+        ...,
+        description="The creator of the note. Contains user ID, name, etc.",
         title="Note Author",
     )
     created: int = Field(
@@ -155,6 +209,8 @@ class Note(Base):
 
 
 class PersonName(Base):
+    """A person's name."""
+
     first_name: Union[str, None] = Field(
         default=None,
         description="The first name of the person",
@@ -164,7 +220,7 @@ class PersonName(Base):
     middle_name: Union[str, None] = Field(
         default=None,
         description="The middle name of the person",
-        example="M.",
+        example="Middle",
         title="Middle Name",
     )
     last_name: Union[str, None] = Field(
@@ -176,12 +232,56 @@ class PersonName(Base):
 
     @validator("first_name", "middle_name", "last_name", pre=True)
     def validate_names(cls, v):
-        if v and v is not None and not v.isalpha():
+        if not v:
+            return None
+        if not v.isalpha():
             raise ValueError("Names must only contain letters")
         return v.title()
 
 
+class Query(Base):
+    """A query that can be used to filter data."""
+
+    field: Union[str, None] = Field(
+        default=None,
+        description="The field to query the data on",
+        example=ContactQueryField.EMAIL,
+        title="Query Field",
+    )
+    operator: Operator = Field(
+        ...,
+        description="The operator to use",
+        example=Operator.EQUALS,
+        title="Query Operator",
+    )
+    value: Union[str, int, float, bool, EmailStr, HttpUrl, List[Dict]] = Field(
+        ...,
+        description="The value to query by",
+        example="gmail.com",
+        title="Query Value",
+    )
+
+
+class SocialProfile(Base):
+    """A social profile for a contact."""
+
+    name: str = Field(
+        ...,
+        description="The name of the social network",
+        example="Facebook",
+        title="Social Network Name",
+    )
+    url: HttpUrl = Field(
+        ...,
+        description="The URL of the social profile",
+        example="https://www.facebook.com/jane.doe",
+        title="Social Profile URL",
+    )
+
+
 class TeamMember(Base):
+    """A team member."""
+
     email: EmailStr = Field(
         ...,
         description="The email of the team member",
@@ -240,6 +340,8 @@ class TermsAcceptance(Base):
 
 
 class Offer(Base):
+    """An offer for a journey."""
+
     name: Optional[str] = ""
     description: Optional[str] = ""
     image: Optional[str] = ""
@@ -250,6 +352,8 @@ class Offer(Base):
 
 
 class TriggerScheduleConfig(Base):
+    """A trigger schedule configuration."""
+
     at: Optional[int]  # Ex: '1601514370'
     cron: Optional[str]  # Ex: '0 20 * * ? *'
     rate: Optional[str]  # Ex: '5 minutes'
@@ -258,6 +362,8 @@ class TriggerScheduleConfig(Base):
 
 
 class TriggerConfig(Base):
+    """A trigger configuration."""
+
     schedule: Optional[TriggerScheduleConfig]
     source: str
     detail_type: str
@@ -265,11 +371,14 @@ class TriggerConfig(Base):
 
 
 class Trigger(Base):
+    """A trigger for a journey."""
+
     type: TriggerType
     config: TriggerConfig
 
 
 class ActionConfig(Base):
+    """An action configuration."""
 
     # CREATE_NOTE
     note: Optional[str]
@@ -295,6 +404,8 @@ class ActionConfig(Base):
 
 
 class Action(Base):
+    """An action for a journey."""
+
     type: ActionType = ActionType.WAIT
     comment: Optional[str]
     config: ActionConfig
@@ -303,8 +414,13 @@ class Action(Base):
 
 
 class RunStateResult(Base):
+    """The result of a run state."""
+
     name: str = Field(
-        ..., description="The name of the state", example="state_1", title="State Name"
+        ...,
+        description="The name of the state in the run",
+        example="state_1",
+        title="State Name",
     )
     result: dict = Field(
         default={},

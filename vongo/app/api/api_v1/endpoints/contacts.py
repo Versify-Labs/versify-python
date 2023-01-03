@@ -1,27 +1,31 @@
-from fastapi import APIRouter, Request
-
-router = APIRouter(
-    prefix="/contacts",
-    tags=["Contacts"]
+from app.api.deps import (
+    current_active_account,
+    current_active_user,
+    current_user_account_role,
 )
-
-
-@router.post(
-    path="",
-    summary="Create an contact",
-    description="Create an contact",
-    tags=["Contacts"],
-    status_code=201,
-    response_model=None,
-    response_description="The created contact",
+from app.crud import versify
+from app.models.account import Account
+from app.models.contact import (
+    ContactCreateRequest,
+    ContactCreateResponse,
+    ContactDeleteRequest,
+    ContactDeleteResponse,
+    ContactGetRequest,
+    ContactGetResponse,
+    ContactListRequest,
+    ContactListResponse,
+    ContactSearchRequest,
+    ContactSearchResponse,
+    ContactUpdateRequest,
+    ContactUpdateResponse,
 )
-def create_contact(
-    request: Request
-):
-    """
-    Create Contact
-    """
-    return {"message": "Not implemented"}
+from app.models.enums import TeamMemberRole
+from app.models.params import BodyParams, PathParams
+from app.models.user import User
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status as http_status
+
+router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
 
 @router.get(
@@ -30,168 +34,190 @@ def create_contact(
     description="List contacts with optional filters and pagination parameters",
     tags=["Contacts"],
     status_code=200,
-    response_model=None,
+    response_model=ContactListResponse,
     response_description="The list of contacts",
 )
 def list_contacts(
-    request: Request
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_list_request: ContactListRequest = Depends(),
 ):
-    """
-    List Contacts
-    """
-    return {"message": "Not implemented"}
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to list contacts.",
+        )
+    count = versify.contacts.count(
+        account=current_account.id,
+        owner=contact_list_request.owner,
+        status=contact_list_request.status,
+        tags=contact_list_request.tags,
+    )
+    contacts = versify.contacts.list(
+        page_num=contact_list_request.page_num,
+        page_size=contact_list_request.page_size,
+        account=current_account.id,
+        owner=contact_list_request.owner,
+        status=contact_list_request.status,
+        tags=contact_list_request.tags,
+    )
+    return {"count": count, "data": contacts, "has_more": count > len(contacts)}
+
+
+@router.post(
+    path="/search",
+    summary="Search contacts",
+    description="Search contacts with query string",
+    tags=["Contacts"],
+    status_code=200,
+    response_model=ContactSearchResponse,
+    response_description="The list of contacts",
+)
+def search_contacts(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_search_request: ContactSearchRequest = BodyParams.SEARCH_CONTACTS,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to search contacts.",
+        )
+    contact_search_request_dict = contact_search_request.dict()
+    query = contact_search_request_dict["query"]
+    contacts = versify.contacts.search(account=current_account.id, query=query)
+    return {"count": len(contacts), "data": contacts}
+
+
+@router.post(
+    path="",
+    summary="Create contact",
+    description="Create a contact",
+    tags=["Contacts"],
+    status_code=201,
+    response_model=ContactCreateResponse,
+    response_description="The created contact",
+)
+def create_contact(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_create: ContactCreateRequest = BodyParams.CREATE_CONTACT,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create contacts.",
+        )
+    body = contact_create.dict()
+    body["account"] = current_account.id
+    create_result = versify.contacts.create(body)
+    return create_result
 
 
 @router.get(
     path="/{contact_id}",
-    summary="Get an contact",
-    description="Get an contact",
+    summary="Get contact",
+    description="Get a contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=None,
+    response_model=ContactGetResponse,
     response_description="The contact",
 )
 def get_contact(
-    request: Request
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_id: str = PathParams.CONTACT_ID,
 ):
-    """
-    Get Contact
-    """
-    return {"message": "Not implemented"}
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view contacts.",
+        )
+    contact = versify.contacts.get(contact_id)
+    if not contact:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Contact not found",
+        )
+    if contact.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view contacts for this account.",
+        )
+    return contact
 
 
 @router.put(
     path="/{contact_id}",
-    summary="Update an contact",
+    summary="Update contact",
     description="Update an contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=None,
+    response_model=ContactUpdateResponse,
     response_description="The updated contact",
 )
 def update_contact(
-    request: Request
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_id: str = PathParams.CONTACT_ID,
+    contact_update: ContactUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
-    """
-    Update Contact
-    """
-    return {"message": "Not implemented"}
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update contacts.",
+        )
+    contact = versify.contacts.get(contact_id)
+    if not contact:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Contact not found",
+        )
+    if contact.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update contacts for this account.",
+        )
+    body = contact_update.dict()
+    update_result = versify.contacts.update(contact_id, body)
+    return update_result
 
 
 @router.delete(
     path="/{contact_id}",
-    summary="Delete an contact",
+    summary="Delete contact",
     description="Delete an contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=None,
+    response_model=ContactDeleteResponse,
     response_description="The deleted contact",
 )
 def delete_contact(
-    request: Request
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    contact_id: str = PathParams.CONTACT_ID,
 ):
-    """
-    Delete Contact
-    """
-    return {"message": "Not implemented"}
-
-
-# from ..database import versify
-# from ..dependencies import get_current_active_user
-# from ..metadata import BodyParams
-# from ..models import Contact, ContactCreate, User
-
-
-# @router.post(
-#     path="",
-#     summary="Create a contact",
-#     description="Create a contact",
-#     status_code=status.HTTP_201_CREATED,
-#     response_model=Contact,
-#     response_description="The created contact",
-# )
-# async def create_account(
-#     user: User = Depends(get_current_active_user),
-#     # account_id: str = PathParams.ACCOUNT_ID,
-#     contact: ContactCreate = BodyParams.CREATE_ACCOUNT,
-# ):
-#     body = contact.dict()
-#     body["team"] = [{
-#         "email": user.email,
-#         "role": "admin",
-#         "user": user.id
-#     }]
-#     created_contact = versify.create_contact(body)
-#     return created_contact
-
-# @router.get(
-#     path="",
-#     summary="List contacts",
-#     description="List contacts with optional filters and pagination parameters",
-#     status_code=status.HTTP_200_OK,
-#     response_model=List[Contact],
-#     response_description="The list of contacts",
-# )
-# async def list_contacts_for_account(
-#     authorization: str = HeaderParams.AUTHORIZATION,
-#     account_id: str = PathParams.ACCOUNT_ID,
-#     active: Union[bool, None] = QueryParams.ACTIVE,
-#     email:  Union[EmailStr, None] = QueryParams.EMAIL,
-#     commons: ListQueryParams = Depends(),
-# ):
-#     if not authorization:
-#         raise HTTPException(status_code=401, detail="Unauthorized")
-#     if account_id not in [account['id'] for account in mock.accounts_db]:
-#         raise HTTPException(status_code=404, detail="Contact not found")
-#     filter = {
-#         'account': account_id,
-#         'active': active
-#     }
-#     if active is not None:
-#         filter['active'] = active
-#     if email:
-#         filter['email'] = email
-#     if commons.q:
-#         filter['email'] = commons.q
-#     return mock.contacts_db[commons.skip: commons.skip + commons.limit]
-
-# @router.get(
-#     path="/{contact_id}",
-#     summary="Get a contact",
-#     description="Get a contact for an account by ID",
-#     status_code=status.HTTP_200_OK,
-#     response_model=Contact,
-#     response_description="The contact",
-# )
-# async def get_contact_for_account(
-#     authorization: str = HeaderParams.AUTHORIZATION,
-#     account_id: str = PathParams.ACCOUNT_ID,
-#     contact_id: str = PathParams.CONTACT_ID,
-# ):
-#     if not authorization:
-#         raise HTTPException(status_code=401, detail="Unauthorized")
-#     if account_id not in [account['id'] for account in mock.accounts_db]:
-#         raise HTTPException(status_code=404, detail="Contact not found")
-#     return {"account": account_id, "contact": contact_id}
-
-# @router.put(
-#     path="/{contact_id}",
-#     summary="Update a contact",
-#     description="Update a contact for an account by ID",
-#     status_code=status.HTTP_200_OK,
-#     response_model=Contact,
-#     response_description="The updated contact",
-# )
-# async def update_contact_for_account(
-#     authorization: str = HeaderParams.AUTHORIZATION,
-#     account_id: str = PathParams.ACCOUNT_ID,
-#     contact_id: str = PathParams.CONTACT_ID,
-#     contact_body: Contact = BodyParams.UPDATE_CONTACT
-# ):
-#     if not authorization:
-#         raise HTTPException(status_code=401, detail="Unauthorized")
-#     if account_id not in [account['id'] for account in mock.accounts_db]:
-#         raise HTTPException(status_code=404, detail="Contact not found")
-#     contact_body_encoded = jsonable_encoder(contact_body)
-#     contact_output = versify.update_contact(contact_id, contact_body_encoded)
-#     return contact_output
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete contacts.",
+        )
+    contact = versify.contacts.get(contact_id)
+    if not contact:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Contact not found",
+        )
+    if contact.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete contacts for this account.",
+        )
+    delete_result = versify.contacts.delete(contact_id)
+    return delete_result

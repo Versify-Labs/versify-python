@@ -1,14 +1,9 @@
-# from typing import Union
+from typing import Union
 
-# from app.crud import versify
-# from fastapi import APIRouter, Body, Depends, Query, status
+from app.crud import versify
+from fastapi import APIRouter, Body, Depends, Query, Request, status
 
-# from ...deps import get_current_user
-
-# router = APIRouter(
-#     prefix="/v2/oauth",
-#     tags=["Authentication"]
-# )
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 # @router.get('/register', status_code=status.HTTP_200_OK)

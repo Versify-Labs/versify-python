@@ -1,14 +1,15 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Sequence, Union
 
-from fastapi_users import schemas
-from fastapi_users.db import BeanieBaseUser
 from pydantic import EmailStr, Field, root_validator
 
+from .base import Base
 from .factory import current_timestamp, generate_avatar, user_id
 from .globals import IdentityProvider, PersonName
 
 
-class User(BeanieBaseUser):
+class User(Base):
+    """A user document in the database."""
+
     id: str = Field(
         alias="_id",
         default_factory=user_id,
@@ -84,11 +85,6 @@ class User(BeanieBaseUser):
         example=1601059200,
         title="Updated Timestamp",
     )
-    wallets: List[str] = Field(
-        default=[],
-        description="The wallets the user has",
-        title="Wallets",
-    )
 
     @root_validator(pre=True)
     def default_values(cls, values):
@@ -98,19 +94,9 @@ class User(BeanieBaseUser):
         return values
 
 
-class UserRead(schemas.BaseUser):
-    name: PersonName = Field(
-        default=PersonName(), description="The name of the user", title="Name"
-    )
+class UserUpdate(Base):
+    """A user update ressponse body."""
 
-
-class UserCreate(schemas.BaseUserCreate):
-    name: Union[PersonName, None] = Field(
-        ..., description="The name of the user ", title="Name"
-    )
-
-
-class UserUpdate(schemas.BaseUserUpdate):
     avatar: Union[str, None] = Field(
         default=None,
         description="The URL of the user's avatar",
@@ -118,11 +104,73 @@ class UserUpdate(schemas.BaseUserUpdate):
         title="Avatar URL",
     )
     name: Union[PersonName, None] = Field(
-        default=None, description="The name of the user being updated", title="Name"
+        default=None, description="The name of the user", title="Name"
     )
     phone_number: Union[str, None] = Field(
         default=None,
         description="The phone number of the user",
         example="+15555555555",
         title="Phone Number",
+    )
+
+
+class UserDeleted(Base):
+    """A user deleted response body."""
+
+    id: str = Field(
+        alias="_id",
+        default_factory=user_id,
+        description="Unique identifier for the user",
+        example="user_5f9f1c5b0b9b4b0b9c1c5b0b",
+        title="User ID",
+    )
+    object: str = Field(
+        default="user",
+        description='The object type. Always "user"',
+        example="user",
+        title="Object Type",
+    )
+    deleted: bool = Field(
+        default=True,
+        description="Whether the user has been deleted",
+        example=True,
+        title="Deleted",
+    )
+
+
+class UserList(Base):
+    """A user list response body."""
+
+    object: str = Field(
+        default="list",
+        description='The object type. Always "list"',
+        example="list",
+        title="Object Type",
+    )
+    count: int = Field(
+        default=0,
+        description="The number of users in the list",
+        example=1,
+        title="Count",
+    )
+    data: List[User] = Field(
+        default=[],
+        description="The list of users",
+        title="Users",
+    )
+    has_more: bool = Field(
+        default=False,
+        description="Whether there are more users to retrieve",
+        example=True,
+        title="Has More",
+    )
+
+
+class UserSearch(Base):
+    """A user search response body."""
+
+    results: Sequence[User] = Field(
+        default=[],
+        description="The list of users",
+        title="Users",
     )

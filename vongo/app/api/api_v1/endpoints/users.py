@@ -1,96 +1,112 @@
-from fastapi import APIRouter, Request
+from app.api.deps import current_active_user
+from app.crud import versify
+from app.models.params import BodyParams, PathParams
+from app.models.user import User, UserDeleted, UserList, UserSearch, UserUpdate
+from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(
-    prefix="/users",
-    tags=["Users"]
-)
-
-
-@router.post(
-    path="",
-    summary="Create an user",
-    description="Create an user",
-    tags=["Users"],
-    status_code=201,
-    response_model=None,
-    response_description="The created user",
-)
-def create_user(
-    request: Request
-):
-    """
-    Create User
-    """
-    return {"message": "Not implemented"}
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get(
-    path="",
-    summary="List users",
-    description="List users with optional filters and pagination parameters",
-    tags=["Users"],
+    path="/me",
+    summary="Get current user",
+    description="Get current user",
     status_code=200,
-    response_model=None,
-    response_description="The list of users",
+    response_model=User,
+    response_description="The current user",
 )
-def list_users(
-    request: Request
+def get_current_user(user: User = Depends(current_active_user)):
+    """
+    Get Current User
+    """
+    return user
+
+
+@router.put(
+    path="/me",
+    summary="Update current user",
+    description="Update current user",
+    status_code=200,
+    response_model=User,
+    response_description="The updated current user",
+)
+def update_current_user(
+    current_user: User = Depends(current_active_user),
+    user_update: UserUpdate = BodyParams.UPDATE_USER,
 ):
     """
-    List Users
+    Update Current User
     """
-    return {"message": "Not implemented"}
+    updated_user = versify.users.update(current_user.id, user_update.dict())
+    return updated_user
 
 
 @router.get(
     path="/{user_id}",
-    summary="Get an user",
+    summary="Get user",
     description="Get an user",
-    tags=["Users"],
     status_code=200,
-    response_model=None,
+    response_model=User,
     response_description="The user",
 )
 def get_user(
-    request: Request
+    current_user: User = Depends(current_active_user),
+    user_id: str = PathParams.USER_ID,
 ):
     """
     Get User
     """
-    return {"message": "Not implemented"}
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to view this user",
+        )
+    return current_user
 
 
 @router.put(
     path="/{user_id}",
-    summary="Update an user",
+    summary="Update user",
     description="Update an user",
-    tags=["Users"],
     status_code=200,
-    response_model=None,
+    response_model=User,
     response_description="The updated user",
 )
 def update_user(
-    request: Request
+    current_user: User = Depends(current_active_user),
+    user_id: str = PathParams.USER_ID,
+    user_update: UserUpdate = BodyParams.UPDATE_USER,
 ):
     """
     Update User
     """
-    return {"message": "Not implemented"}
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to update this user",
+        )
+    updated_user = versify.users.update(user_id, user_update.dict())
+    return updated_user
 
 
 @router.delete(
     path="/{user_id}",
-    summary="Delete an user",
+    summary="Delete user",
     description="Delete an user",
-    tags=["Users"],
     status_code=200,
-    response_model=None,
+    response_model=UserDeleted,
     response_description="The deleted user",
 )
 def delete_user(
-    request: Request
+    current_user: User = Depends(current_active_user),
+    user_id: str = PathParams.USER_ID,
 ):
     """
     Delete User
     """
-    return {"message": "Not implemented"}
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to delete this user",
+        )
+    raise HTTPException(status_code=501, detail="Not implemented yet")

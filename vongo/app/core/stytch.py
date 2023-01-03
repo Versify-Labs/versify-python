@@ -122,7 +122,7 @@ class Stytch:
         return self._get("{0}/{1}".format(self.user_url, user_id))
 
 
-def stytch():
+def load_stytch():
     return Stytch(
         project_id=settings.STYTCH_PROJECT_ID,
         secret=settings.STYTCH_SECRET,

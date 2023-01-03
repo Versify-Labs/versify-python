@@ -12,7 +12,7 @@ class Base(BaseModel):
 
         allow_population_by_field_name = False
         arbitrary_types_allowed = True  # required for the _id
-        json_encoders = {ObjectId: str}
+        json_encoders = {ObjectId: str, set: list}
 
     def bson(self) -> Dict[str, Any]:
         """Converts the model to a BSON document"""

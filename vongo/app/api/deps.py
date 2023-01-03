@@ -1,21 +1,13 @@
-import stytch
-from app.core.config import settings
+from app.core.stytch import load_stytch
 from app.crud import versify
+from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.params import HeaderParams
 from app.models.user import User
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, HTTPException
+from jose import JWTError, jwt
 
-# from jose import JWTError, jwt
-
-
-def get_stytch_user(stytch_user_id: str):
-    stytch_client = stytch.Client(
-        project_id=settings.STYTCH_PROJECT_ID,  # type: ignore
-        secret=settings.STYTCH_SECRET,  # type: ignore
-        environment=settings.STYTCH_ENV,  # type: ignore
-    )
-    stytch_user_response = stytch_client.users.get(stytch_user_id)
-    stytch_user = stytch_user_response.json()
-    return stytch_user
+stytch = load_stytch()
 
 
 def convert_stytch_user(stytch_user):
@@ -56,14 +48,6 @@ def convert_stytch_user(stytch_user):
     return user_body
 
 
-def get_user_body_from_stytch(stytch_user_id: str):
-    if not stytch_user_id:
-        raise HTTPException(status_code=400, detail="Invalid Stytch User ID")
-    stytch_user = get_stytch_user(stytch_user_id)
-    versify_user = convert_stytch_user(stytch_user)
-    return versify_user
-
-
 def get_user_body_from_stytch_claims(claims):
 
     session = claims.get("https://stytch.com/session")
@@ -76,7 +60,7 @@ def get_user_body_from_stytch_claims(claims):
     user_body = {}
     for factor in session.get("authentication_factors", []):
         if factor.get("type") == "oauth":
-            stytch_user = get_stytch_user(stytch_user_id)
+            stytch_user = stytch.get_user(stytch_user_id)
             user_body = convert_stytch_user(stytch_user)
         elif factor.get("type") in ["magic_link", "otp"]:
             email_factor = factor.get("email_factor", {})
@@ -89,79 +73,82 @@ def get_user_body_from_stytch_claims(claims):
     return user_body
 
 
-# async def get_current_user(authorization: str = Header(None, alias="Authorization")):
+def current_user(
+    authorization: str = HeaderParams.AUTHORIZATION,
+):
 
-#     # Verify the authorization header is present and valid
-#     if not authorization:
-#         raise HTTPException(status_code=400, detail="Authorization Header Missing")
-#     auth_type, token = authorization.split(" ")
-#     if not auth_type or not token:
-#         raise HTTPException(status_code=400, detail="Authorization Header Malformed")
-#     if auth_type.lower() != "bearer":
-#         raise HTTPException(status_code=400, detail="Authorization Type Not Supported")
+    # Verify the authorization header is present and valid
+    if not authorization:
+        raise HTTPException(status_code=400, detail="Missing Header: Authorization")
+    auth_type, token = authorization.split(" ")
+    if not auth_type or not token:
+        raise HTTPException(status_code=400, detail="Malformed Header: Authorization")
+    if auth_type.lower() != "bearer":
+        raise HTTPException(status_code=400, detail="Authorization Type Not Supported")
 
-#     # Verify the token is valid
-#     try:
-#         from jose import jwt
+    # Verify the token is valid
+    try:
+        claims = jwt.get_unverified_claims(token)
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Invalid Token")
+    if not claims:
+        raise HTTPException(status_code=400, detail="Invalid Token")
 
-#         claims = jwt.get_unverified_claims(token)
-#     except JWTError:  # type: ignore
-#         raise HTTPException(status_code=400, detail="Invalid Token")
-#     if not claims:
-#         raise HTTPException(status_code=400, detail="Invalid Token")
+    user_body = get_user_body_from_stytch_claims(claims)
+    if not user_body.get("email"):
+        raise HTTPException(
+            status_code=400, detail="Could not identify user email address"
+        )
 
-#     user_body = get_user_body_from_stytch_claims(claims)
-#     if not user_body.get("email"):
-#         raise HTTPException(
-#             status_code=400, detail="Could not identify user email address"
-#         )
+    user = versify.get_user_by_email(user_body["email"])
+    if not user:
+        user = versify.create_user(user_body)
 
-#     user = versify.get_user_by_email(user_body["email"])
-#     if not user:
-#         user = versify.create_user(user_body)
-
-#     return user
-
-
-# async def get_current_active_user(
-#     user: User = Depends(get_current_user),
-# ):
-#     if not user.active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     return user
+    return user
 
 
-# async def get_current_active_account_member(
-#     user: User = Depends(get_current_active_user),
-#     account_id: str = metadata.PathParams.ACCOUNT_ID,
-# ):
-#     if not user.active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     role = None
-#     user_accounts = versify.list_accounts_by_email(user.email)
-#     for account in user_accounts:
-#         if account.id == account_id:
-#             for teammate in account.team:
-#                 if teammate.email == user.email:
-#                     role = teammate.role
-#     if not role:
-#         raise HTTPException(status_code=403, detail="Forbidden")
-#     return user
+def current_active_user(
+    user: User = Depends(current_user),
+):
+    if not user.active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user
 
 
-# async def get_current_active_account_admin(
-#     user: User = Depends(get_current_active_user),
-#     account_id: str = metadata.PathParams.ACCOUNT_ID,
-# ):
-#     if not user.active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     role = None
-#     user_accounts = versify.list_accounts_by_email(user.email)
-#     for account in user_accounts:
-#         if account.id == account_id:
-#             for teammate in account.team:
-#                 if teammate.email == user.email:
-#                     role = teammate.role
-#     if not role:
-#         raise HTTPException(status_code=403, detail="Forbidden")
-#     return role == 'admin'
+def current_account(account_id: str = HeaderParams.VERSIFY_ACCOUNT):
+
+    # Verify the Versify-Account header is present and valid
+    if not account_id:
+        raise HTTPException(status_code=400, detail="Missing Header: Versify-Account")
+
+    # Verify the account exists
+    account = versify.get_account_by_id(account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Account Not Found")
+
+    return account
+
+
+def current_active_account(
+    account: Account = Depends(current_account),
+):
+    if not account.active:
+        raise HTTPException(status_code=400, detail="Account Inactive")
+    return account
+
+
+def get_current_user_account_role(
+    account: Account,
+    user: User,
+):
+    for account_user in account.team:
+        if account_user.email == user.email:
+            return account_user.role
+    return TeamMemberRole.GUEST
+
+
+def current_user_account_role(
+    account: Account = Depends(current_active_account),
+    user: User = Depends(current_active_user),
+) -> TeamMemberRole:
+    return get_current_user_account_role(account, user)

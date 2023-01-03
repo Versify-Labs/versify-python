@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class AccountStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
 class ActionType(str, Enum):
     CREATE_NOTE = "create_note"
     SEND_APP_MESSAGE = "send_app_message"
@@ -22,6 +27,11 @@ class AirdropStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class AssetStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
 class BlockchainType(str, Enum):
     POLYGON = "polygon"
 
@@ -35,6 +45,20 @@ class ClaimStatus(str, Enum):
     REQUESTED = "requested"
     APPROVED = "approved"
     REJECTED = "rejected"
+
+
+class ContactStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
+class ContactQueryField(str, Enum):
+    CREATED = "created"
+    EMAIL = "email"
+    PHONE_NUMBER = "phone_number"
+    STATUS = "status"
+    TAGS = "tags"
+    UPDATED = "updated"
 
 
 class CollectionStatus(str, Enum):
@@ -87,18 +111,35 @@ class ObjectPrefixes(str, Enum):
 
 
 class Operator(str, Enum):
-    EQUAL = "equal"
-    NOT_EQUAL = "not_equal"
-    EXISTS = "exists"
-    NOT_EXISTS = "not_exists"
-    STARTS_WITH = "starts_with"
-    NOT_STARTS_WITH = "not_starts_with"
-    ENDS_WITH = "ends_with"
-    NOT_ENDS_WITH = "not_ends_with"
-    GREATER_THAN = "greater_than"
-    GREATER_THAN_OR_EQUAL = "greater_than_or_equal"
-    LESS_THAN = "less_than"
-    LESS_THAN_OR_EQUAL = "less_than_or_equal"
+
+    # Logical
+    AND = "AND"
+    OR = "OR"
+    NOT = "NOT"
+
+    # All
+    EQUALS = "="
+    NOT_EQUALS = "!="
+    EXISTS = "EXISTS"
+    NOT_EXISTS = "!EXISTS"
+
+    # String
+    CONTAINS = "~"
+    NOT_CONTAINS = "!~"
+    STARTS_WITH = "^"
+    NOT_STARTS_WITH = "!^"
+    ENDS_WITH = "$"
+    NOT_ENDS_WITH = "!$"
+
+    # Integer
+    GREATER_THAN = ">"
+    GREATER_THAN_OR_EQUAL = ">="
+    LESS_THAN = "<"
+    LESS_THAN_OR_EQUAL = "<="
+
+    # Array
+    IN = "IN"
+    NOT_IN = "NIN"
 
 
 class ReportStatus(str, Enum):
@@ -140,6 +181,7 @@ class SubscriptionStatus(str, Enum):
 
 class TeamMemberRole(str, Enum):
     ADMIN = "admin"
+    GUEST = "guest"
     MEMBER = "member"
     SUPPORT = "support"
 

@@ -3,13 +3,12 @@ from pathlib import Path
 from app.api.api_v1.api import api_router
 from app.core.config import settings
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 app = FastAPI(
     title="Versify API",
@@ -21,6 +20,60 @@ app = FastAPI(
     },
     terms_of_service="https://versifylabs.com/legal/terms",
     version=__version__,
+    openapi_tags=[
+        {
+            "name": "Accounts",
+            "description": "Operations related to creating, reading, updating and deleting accounts.",
+        },
+        {
+            "name": "Assets",
+            "description": "Operations related to creating, reading, updating and deleting assets.",
+        },
+        {
+            "name": "Claims",
+            "description": "Operations related to creating, reading, updating and deleting claims.",
+        },
+        {
+            "name": "Collections",
+            "description": "Operations related to creating, reading, updating and deleting collections.",
+        },
+        {
+            "name": "Contacts",
+            "description": "Operations related to creating, reading, updating and deleting contacts.",
+        },
+        {
+            "name": "Events",
+            "description": "Operations related to creating, reading, updating and deleting events.",
+        },
+        {
+            "name": "Journeys",
+            "description": "Operations related to creating, reading, updating and deleting journeys.",
+        },
+        {
+            "name": "Messages",
+            "description": "Operations related to creating, reading, updating and deleting messages.",
+        },
+        {
+            "name": "Mints",
+            "description": "Operations related to creating, reading, updating and deleting mints.",
+        },
+        {
+            "name": "Redemptions",
+            "description": "Operations related to creating, reading, updating and deleting redemptions.",
+        },
+        {
+            "name": "Rewards",
+            "description": "Operations related to creating, reading, updating and deleting rewards.",
+        },
+        {
+            "name": "Webhooks",
+            "description": "Operations related to creating, reading, updating and deleting webhooks.",
+        },
+        {
+            "name": "Users",
+            "description": "Operations related to creating, reading, updating and deleting users.",
+        },
+    ],
 )
 
 root_router = APIRouter()

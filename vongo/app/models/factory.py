@@ -2,10 +2,9 @@ import secrets
 import time
 
 from app.core.constants import DEFAULT_LOGO
+from app.models.enums import ObjectPrefixes
 from bson.objectid import ObjectId
 from eth_account import Account as EthAccount
-
-from .enums import ObjectPrefixes
 
 
 class PyObjectId(ObjectId):
