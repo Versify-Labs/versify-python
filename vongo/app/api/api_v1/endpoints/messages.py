@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/messages",
-    tags=["Messages"]
-)
+router = APIRouter(prefix="/messages", tags=["Messages"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created message",
 )
-def create_message(
-    request: Request
-):
+def create_message(request: Request):
     """
     Create Message
     """
@@ -33,9 +28,7 @@ def create_message(
     response_model=None,
     response_description="The list of messages",
 )
-def list_messages(
-    request: Request
-):
+def list_messages(request: Request):
     """
     List Messages
     """
@@ -51,9 +44,7 @@ def list_messages(
     response_model=None,
     response_description="The message",
 )
-def get_message(
-    request: Request
-):
+def get_message(request: Request):
     """
     Get Message
     """
@@ -69,9 +60,7 @@ def get_message(
     response_model=None,
     response_description="The updated message",
 )
-def update_message(
-    request: Request
-):
+def update_message(request: Request):
     """
     Update Message
     """
@@ -87,9 +76,7 @@ def update_message(
     response_model=None,
     response_description="The deleted message",
 )
-def delete_message(
-    request: Request
-):
+def delete_message(request: Request):
     """
     Delete Message
     """

@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/redemptions",
-    tags=["Redemptions"]
-)
+router = APIRouter(prefix="/redemptions", tags=["Redemptions"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created redemption",
 )
-def create_redemption(
-    request: Request
-):
+def create_redemption(request: Request):
     """
     Create Redemption
     """
@@ -33,9 +28,7 @@ def create_redemption(
     response_model=None,
     response_description="The list of redemptions",
 )
-def list_redemptions(
-    request: Request
-):
+def list_redemptions(request: Request):
     """
     List Redemptions
     """
@@ -51,9 +44,7 @@ def list_redemptions(
     response_model=None,
     response_description="The redemption",
 )
-def get_redemption(
-    request: Request
-):
+def get_redemption(request: Request):
     """
     Get Redemption
     """
@@ -69,9 +60,7 @@ def get_redemption(
     response_model=None,
     response_description="The updated redemption",
 )
-def update_redemption(
-    request: Request
-):
+def update_redemption(request: Request):
     """
     Update Redemption
     """
@@ -87,9 +76,7 @@ def update_redemption(
     response_model=None,
     response_description="The deleted redemption",
 )
-def delete_redemption(
-    request: Request
-):
+def delete_redemption(request: Request):
     """
     Delete Redemption
     """

@@ -1,11 +1,10 @@
 from typing import Any, Dict, Optional
 
+from app.models.base import Base
+from app.models.enums import RunStatus
+from app.models.factory import current_timestamp, journey_id, journey_run_id
+from app.models.globals import Action, RunStateResult, Trigger
 from pydantic import Field
-
-from .base import Base
-from .enums import RunStatus
-from .factory import current_timestamp, journey_id, journey_run_id
-from .globals import Action, RunStateResult, Trigger
 
 
 class JourneyRun(Base):

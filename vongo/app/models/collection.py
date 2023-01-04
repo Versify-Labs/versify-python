@@ -1,9 +1,8 @@
 from typing import Optional
 
 from app.core.constants import DEFAULT_LOGO
-
-from .base import Base
-from .enums import CollectionStatus
+from app.models.base import Base
+from app.models.enums import CollectionStatus
 
 
 class Collection(Base):

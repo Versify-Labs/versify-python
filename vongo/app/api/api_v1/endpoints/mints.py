@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/mints",
-    tags=["Mints"]
-)
+router = APIRouter(prefix="/mints", tags=["Mints"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created mint",
 )
-def create_mint(
-    request: Request
-):
+def create_mint(request: Request):
     """
     Create Mint
     """
@@ -33,9 +28,7 @@ def create_mint(
     response_model=None,
     response_description="The list of mints",
 )
-def list_mints(
-    request: Request
-):
+def list_mints(request: Request):
     """
     List Mints
     """
@@ -51,9 +44,7 @@ def list_mints(
     response_model=None,
     response_description="The mint",
 )
-def get_mint(
-    request: Request
-):
+def get_mint(request: Request):
     """
     Get Mint
     """
@@ -69,9 +60,7 @@ def get_mint(
     response_model=None,
     response_description="The updated mint",
 )
-def update_mint(
-    request: Request
-):
+def update_mint(request: Request):
     """
     Update Mint
     """
@@ -87,9 +76,7 @@ def update_mint(
     response_model=None,
     response_description="The deleted mint",
 )
-def delete_mint(
-    request: Request
-):
+def delete_mint(request: Request):
     """
     Delete Mint
     """

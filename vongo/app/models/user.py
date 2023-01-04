@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Sequence, Union
 
+from app.models.base import Base
+from app.models.factory import current_timestamp, generate_avatar, user_id
+from app.models.globals import IdentityProvider, PersonName
 from pydantic import EmailStr, Field, root_validator
-
-from .base import Base
-from .factory import current_timestamp, generate_avatar, user_id
-from .globals import IdentityProvider, PersonName
 
 
 class User(Base):

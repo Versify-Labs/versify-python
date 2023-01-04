@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/rewards",
-    tags=["Rewards"]
-)
+router = APIRouter(prefix="/rewards", tags=["Rewards"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created reward",
 )
-def create_reward(
-    request: Request
-):
+def create_reward(request: Request):
     """
     Create Reward
     """
@@ -33,9 +28,7 @@ def create_reward(
     response_model=None,
     response_description="The list of rewards",
 )
-def list_rewards(
-    request: Request
-):
+def list_rewards(request: Request):
     """
     List Rewards
     """
@@ -51,9 +44,7 @@ def list_rewards(
     response_model=None,
     response_description="The reward",
 )
-def get_reward(
-    request: Request
-):
+def get_reward(request: Request):
     """
     Get Reward
     """
@@ -69,9 +60,7 @@ def get_reward(
     response_model=None,
     response_description="The updated reward",
 )
-def update_reward(
-    request: Request
-):
+def update_reward(request: Request):
     """
     Update Reward
     """
@@ -87,9 +76,7 @@ def update_reward(
     response_model=None,
     response_description="The deleted reward",
 )
-def delete_reward(
-    request: Request
-):
+def delete_reward(request: Request):
     """
     Delete Reward
     """

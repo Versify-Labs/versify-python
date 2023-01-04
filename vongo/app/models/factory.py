@@ -4,7 +4,6 @@ import time
 from app.core.constants import DEFAULT_LOGO
 from app.models.enums import ObjectPrefixes
 from bson.objectid import ObjectId
-from eth_account import Account as EthAccount
 
 
 class PyObjectId(ObjectId):
@@ -219,15 +218,15 @@ def generate_stripe_customer_id():
     return f"cus_{secrets.token_hex(16)}"
 
 
-def generate_wallet():
-    priv = secrets.token_hex(32)
-    private_key = "0x" + priv
-    account = EthAccount.privateKeyToAccount(private_key)
-    public_address = account.address
-    return {
-        "managed": True,
-        "public_address": public_address,
-        "private_key": private_key,
-        "type": "ethereum",
-        "verified": True,
-    }
+# def generate_wallet():
+#     priv = secrets.token_hex(32)
+#     private_key = "0x" + priv
+#     account = EthAccount.privateKeyToAccount(private_key)
+#     public_address = account.address
+#     return {
+#         "managed": True,
+#         "public_address": public_address,
+#         "private_key": private_key,
+#         "type": "ethereum",
+#         "verified": True,
+#     }

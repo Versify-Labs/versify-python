@@ -1,0 +1,51 @@
+org: versify
+app: versify
+service: app-service
+
+frameworkVersion: ">=2.24.0"
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
+    LOG_LEVEL: INFO
+    MONGO_DB_URL: ${ssm:/versify/services/mongo/db/url}
+    POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+    POWERTOOLS_LOGGER_LOG_EVENT: true
+    POWERTOOLS_METRICS_NAMESPACE: versify
+    POWERTOOLS_SERVICE_NAME: api-service
+    POWERTOOLS_TRACE_DISABLED: false
+    SECRET_NAME: /versify/platform/secret
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+          Resource:
+            - "arn:aws:ssm:${aws:region}:*:parameter/*"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - "arn:aws:secretsmanager:${aws:region}:*:secret:/versify/platform/secret*"
+  layers:
+    - ${ssm:/versify/services/integration/shared/layer/arn}
+  runtime: python3.9
+  timeout: 30
+  tracing:
+    lambda: true
+
+functions:
+  AppService-Api:
+    handler: app.main.handler
+    name: AppService-Api
+    description: API endpoints handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}

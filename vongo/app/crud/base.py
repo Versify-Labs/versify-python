@@ -1,62 +1,167 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from pprint import pprint
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from app.db.session import SessionLocal
-from app.models.base import Base
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
-
-ModelType = TypeVar("ModelType", bound=Base)
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
-
-session = SessionLocal()
+from app.models.enums import Operator
+from app.models.factory import current_timestamp
+from pymongo import ASCENDING, ReturnDocument
 
 
-class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType]):
-        """
-        CRUD object with default methods to Create, Read, Update, Delete (CRUD).
+class BaseResource:
+    def __init__(self, db_session: SessionLocal):
+        db_name = self.__class__.__module__.split(".")[1]
+        db_collection = self.__class__.__name__.lower()
+        self.collection = db_session.get_collection(db_name, db_collection)
 
-        **Parameters**
-        * `model`: A SQLAlchemy model class
-        * `schema`: A Pydantic model (schema) class
-        """
-        self.model = model
-        # db_name = model.db_name
-        # collection_name = model.collection_name
-        db_name = "Dev"
-        collection_name = "Users"
-        self.collection = session.get_collection(db_name, collection_name)
+    def _parse_filters(self, **filters: Dict[str, Any]) -> Dict[str, Any]:
+        filters_copy = filters.copy()
+        for key, value in filters_copy.items():
+            if value is None:
+                del filters[key]
+            elif isinstance(value, list):
+                filters[key] = {"$in": value}
+            elif isinstance(value, str):
+                filters[key] = {"$regex": value}
+        return filters
 
-    def get(self, id: Any) -> Optional[ModelType]:
-        return self.collection.find_one({"_id": id})
+    def _parse_query(self, query: Dict[str, Any] = {}) -> dict:
+        # TODO: Handle custom fields
 
-    def get_multi(self, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
+        print()
+        print("Query:")
+        pprint(query)
 
-        return self.collection.find({}).skip(skip).limit(limit)
+        field = query.get("field")
+        operator = query.get("operator")
+        value = query.get("value")
+        print("field:", field)
+        print("operator:", operator)
+        print("value:", value)
 
-    def create(self, *, obj_in: CreateSchemaType) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.model(**obj_in_data)  # type: ignore
-        self.collection.insert_one(db_obj)  # type: ignore
-        return db_obj
+        # Handle logical operators
+        if operator == Operator.AND and isinstance(value, list):
+            return {"$and": [self._parse_query(q) for q in value]}
+        elif operator == Operator.OR and isinstance(value, list):
+            return {"$or": [self._parse_query(q) for q in value]}
+        elif operator == Operator.NOT and isinstance(value, dict):
+            return {"$not": self._parse_query(value)}
 
-    def update(
-        self, *, db_obj: ModelType, obj_in: Union[UpdateSchemaType, Dict[str, Any]]
-    ) -> ModelType:
-        obj_data = jsonable_encoder(db_obj)
-        if isinstance(obj_in, dict):
-            update_data = obj_in
+        # Handle all types
+        elif operator == Operator.EQUALS:
+            return {field: value}
+        elif operator == Operator.NOT_EQUALS:
+            return {field: {"$ne": value}}
+        elif operator == Operator.EXISTS:
+            return {field: {"$exists": True}}
+        elif operator == Operator.NOT_EXISTS:
+            return {field: {"$exists": False}}
+
+        # Handle strings
+        elif operator == Operator.CONTAINS:
+            return {field: {"$regex": value}}
+        elif operator == Operator.NOT_CONTAINS:
+            return {field: {"$not": {"$regex": value}}}
+        elif operator == Operator.STARTS_WITH:
+            return {field: {"$regex": f"^{value}"}}
+        elif operator == Operator.NOT_STARTS_WITH:
+            return {field: {"$not": {"$regex": f"^{value}"}}}
+        elif operator == Operator.ENDS_WITH:
+            return {field: {"$regex": f"{value}$"}}
+        elif operator == Operator.NOT_ENDS_WITH:
+            return {field: {"$not": {"$regex": f"{value}$"}}}
+
+        # Handle numbers
+        elif operator == Operator.GREATER_THAN:
+            return {field: {"$gt": value}}
+        elif operator == Operator.GREATER_THAN_OR_EQUAL:
+            return {field: {"$gte": value}}
+        elif operator == Operator.LESS_THAN:
+            return {field: {"$lt": value}}
+        elif operator == Operator.LESS_THAN_OR_EQUAL:
+            return {field: {"$lte": value}}
+
+        # Handle lists
+        elif operator == Operator.IN:
+            return {field: {"$in": value}}
+        elif operator == Operator.NOT_IN:
+            return {field: {"$nin": value}}
+
+        # Return empty dict if no match
         else:
-            update_data = obj_in.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
-                setattr(db_obj, field, update_data[field])
-        self.collection.find_one_and_update(
-            filter={"_id": db_obj.id}, update={"$set": db_obj}, upsert=True
-        )
-        return db_obj
+            return {}
 
-    def remove(self, *, id: int) -> ModelType:
-        obj = self.collection.find_one_and_delete({"_id": id})
-        return obj
+    def _create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        data["created"] = current_timestamp()
+        data["updated"] = current_timestamp()
+        return self.collection.insert_one(data).inserted_id
+
+    def _count(
+        self,
+        **filters: Dict[str, Any],
+    ) -> int:
+        filters = self._parse_filters(**filters)
+        return self.collection.count_documents(filters)
+
+    def _delete(
+        self,
+        **filters: Dict[str, Any],
+    ) -> bool:
+        filters = self._parse_filters(**filters)
+        deleted = self.collection.delete_one(filters).deleted_count
+        return deleted > 0
+
+    def _get(
+        self,
+        **filters: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        filters = self._parse_filters(**filters)
+        return self.collection.find_one(filters)
+
+    def _list(
+        self,
+        page_num: Union[int, None] = None,
+        page_size: Union[int, None] = None,
+        sort: List[Tuple[str, int]] = [("created", ASCENDING)],
+        **filters: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        list_args = {}
+        if page_num is not None and page_size is not None:
+            list_args["limit"] = page_size
+            list_args["skip"] = (page_num - 1) * page_size
+        if sort:
+            list_args["sort"] = sort
+        filters = self._parse_filters(**filters)
+        return list(self.collection.find(filters, **list_args))
+
+    def _search(
+        self,
+        page_num: Union[int, None] = None,
+        page_size: Union[int, None] = None,
+        account: Union[str, None] = None,
+        query: Dict[str, Any] = {},
+    ) -> List[Dict[str, Any]]:
+        list_args = {}
+        if page_num is not None and page_size is not None:
+            list_args["limit"] = page_size
+            list_args["skip"] = (page_num - 1) * page_size
+        filters = self._parse_query(query)
+        if account:
+            filters["account"] = account
+        print()
+        print("Filters:")
+        pprint(filters)
+        return list(self.collection.find(filters, **list_args))
+
+    def _update(self, id: str, body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        updates = {}
+        for key, value in body.items():
+            if value is not None:
+                updates[key] = value
+        if not updates or len(updates.keys()) < 1:
+            return self.collection.find_one({"_id": id})
+        updates["updated"] = current_timestamp()
+        return self.collection.find_one_andupdate(
+            filter={"_id": id},
+            update={"$set": updates},
+            return_document=ReturnDocument.AFTER,
+        )

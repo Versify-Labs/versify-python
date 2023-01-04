@@ -3,7 +3,7 @@ from typing import List, Union
 from app.models.base import Base
 from app.models.enums import AssetStatus, BlockchainType
 from app.models.factory import asset_id, current_timestamp
-from app.models.globals import Location, Note, PersonName, Query, SocialProfile
+from app.models.globals import Note, Query
 from fastapi import Query as QueryParam
 from pydantic import Field, HttpUrl, validator
 

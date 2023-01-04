@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/claims",
-    tags=["Claims"]
-)
+router = APIRouter(prefix="/claims", tags=["Claims"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created claim",
 )
-def create_claim(
-    request: Request
-):
+def create_claim(request: Request):
     """
     Create Claim
     """
@@ -33,9 +28,7 @@ def create_claim(
     response_model=None,
     response_description="The list of claims",
 )
-def list_claims(
-    request: Request
-):
+def list_claims(request: Request):
     """
     List Claims
     """
@@ -51,9 +44,7 @@ def list_claims(
     response_model=None,
     response_description="The claim",
 )
-def get_claim(
-    request: Request
-):
+def get_claim(request: Request):
     """
     Get Claim
     """
@@ -69,9 +60,7 @@ def get_claim(
     response_model=None,
     response_description="The updated claim",
 )
-def update_claim(
-    request: Request
-):
+def update_claim(request: Request):
     """
     Update Claim
     """
@@ -87,9 +76,7 @@ def update_claim(
     response_model=None,
     response_description="The deleted claim",
 )
-def delete_claim(
-    request: Request
-):
+def delete_claim(request: Request):
     """
     Delete Claim
     """

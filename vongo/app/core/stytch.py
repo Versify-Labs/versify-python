@@ -4,8 +4,7 @@ from typing import Any, Dict, Optional, Set
 
 import requests
 from app.core.config import settings
-
-__version__ = "5.7.0"
+from requests.auth import HTTPBasicAuth
 
 
 def _env_url(env: str, suppress_warnings: bool = False) -> str:
@@ -27,14 +26,16 @@ def _env_url(env: str, suppress_warnings: bool = False) -> str:
 
 
 class Stytch:
+
+    __version__ = "5.7.0"
+
     def __init__(self, project_id, secret, environment="test"):
-        self._requester_base = requests
+        self.auth = HTTPBasicAuth(project_id, secret)
         self.base_url = _env_url(environment, True)
         self.headers = {
             "Content-Type": "application/json",
-            "User-Agent": "Stytch Python v{}".format(__version__),
+            "User-Agent": f"Stytch Python v{Stytch.__version__}",
         }
-        self.auth = requests.auth.HTTPBasicAuth(project_id, secret)
 
     @property
     def user_url(self):
@@ -71,27 +72,25 @@ class Stytch:
         return True
 
     def _get(self, url: str, query_params: Dict = {}):
-        response = self._requester_base.get(
+        response = requests.get(
             url, auth=self.auth, headers=self.headers, params=query_params
         )
         return response.json()
 
     def _post(self, url: str, data: Dict):
-        response = self._requester_base.post(
+        response = requests.post(
             url, auth=self.auth, headers=self.headers, data=json.dumps(data)
         )
         return response.json()
 
     def _put(self, url: str, data: Dict):
-        response = self._requester_base.put(
+        response = requests.put(
             url, auth=self.auth, headers=self.headers, data=json.dumps(data)
         )
         return response.json()
 
     def _delete(self, url: str):
-        response = self._requester_base.delete(
-            url, auth=self.auth, headers=self.headers
-        )
+        response = requests.delete(url, auth=self.auth, headers=self.headers)
         return response.json()
 
     def create_user(

@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/collections",
-    tags=["Collections"]
-)
+router = APIRouter(prefix="/collections", tags=["Collections"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created collection",
 )
-def create_collection(
-    request: Request
-):
+def create_collection(request: Request):
     """
     Create Collection
     """
@@ -33,9 +28,7 @@ def create_collection(
     response_model=None,
     response_description="The list of collections",
 )
-def list_collections(
-    request: Request
-):
+def list_collections(request: Request):
     """
     List Collections
     """
@@ -51,9 +44,7 @@ def list_collections(
     response_model=None,
     response_description="The collection",
 )
-def get_collection(
-    request: Request
-):
+def get_collection(request: Request):
     """
     Get Collection
     """
@@ -69,9 +60,7 @@ def get_collection(
     response_model=None,
     response_description="The updated collection",
 )
-def update_collection(
-    request: Request
-):
+def update_collection(request: Request):
     """
     Update Collection
     """
@@ -87,9 +76,7 @@ def update_collection(
     response_model=None,
     response_description="The deleted collection",
 )
-def delete_collection(
-    request: Request
-):
+def delete_collection(request: Request):
     """
     Delete Collection
     """

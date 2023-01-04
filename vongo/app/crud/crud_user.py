@@ -1,26 +1,46 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from app.crud.base import CRUDBase
-from app.models.user import User, UserCreate, UserUpdate
-from pymongo.database import Database
-
-
-class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    def get_by_email(self, db: Database, *, email: str) -> Optional[User]:
-        return db.query(User).filter(User.email == email).first()
-
-    def update(
-        self, db: Database, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
-    ) -> User:
-        if isinstance(obj_in, dict):
-            update_data = obj_in
-        else:
-            update_data = obj_in.dict(exclude_unset=True)
-
-        return super().update(db, db_obj=db_obj, obj_in=update_data)
-
-    def is_superuser(self, user: User) -> bool:
-        return user.is_superuser
+from app.crud.base import BaseResource
+from app.db.session import SessionLocal
+from app.models.user import User
 
 
-user = CRUDUser(User)
+class UserResource(BaseResource):
+    def __init__(self, db_session: SessionLocal):
+        db_name = "Dev"
+        db_collection = "Users"
+        self.collection = db_session.get_collection(db_name, db_collection)
+
+    def count(self, **kwargs) -> int:
+        return self._count(**kwargs)
+
+    def create(self, body: Dict[str, Any] = {}) -> User:
+        user_body = User(**body)
+        self._create(user_body.bson())
+        return user_body
+
+    def delete(self, id: str) -> bool:
+        return self._delete(**{"_id": id})
+
+    def get(self, id: str) -> Optional[User]:
+        user = self._get(**{"_id": id})
+        return User(**user) if user else None
+
+    def get_by_email(self, email: str) -> Optional[User]:
+        user = self._get(**{"email": email})
+        return User(**user) if user else None
+
+    def list(self, **kwargs) -> List[User]:
+        users = self._list(**kwargs)
+        return [User(**user) for user in users]
+
+    def list_by_email(self, email: str) -> List[User]:
+        return self.list(**{"email": email})
+
+    def search(self, query: Dict[str, Any], **kwargs) -> List[User]:
+        users = self._search(query=query, **kwargs)
+        return [User(**user) for user in users]
+
+    def update(self, id: str, body: Dict[str, Any]) -> Optional[User]:
+        user = self._update(id, body)
+        return User(**user) if user else None

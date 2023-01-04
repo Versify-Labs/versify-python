@@ -1,11 +1,10 @@
 from typing import Any, Union
 
-from app.core.pywallet import create_wallet
-from pydantic import Field, root_validator
-
-from .base import Base
-from .enums import WalletType
-from .factory import current_timestamp, wallet_id
+# from app.core.pywallet import create_wallet
+from app.models.base import Base
+from app.models.enums import WalletType
+from app.models.factory import current_timestamp, wallet_id
+from pydantic import Field
 
 
 class Wallet(Base):
@@ -104,8 +103,8 @@ class Wallet(Base):
         title="Extended Public Key",
     )
 
-    @root_validator(pre=True)
-    def default_values(cls, values):
-        new_wallet = create_wallet()
-        values.update(new_wallet)
-        return values
+    # @root_validator(pre=True)
+    # def default_values(cls, values):
+    #     new_wallet = create_wallet()
+    #     values.update(new_wallet)
+    #     return values

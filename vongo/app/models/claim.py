@@ -1,10 +1,9 @@
 from typing import Any, Dict, Optional
 
+from app.models.base import Base
+from app.models.enums import ClaimStatus
+from app.models.factory import claim_id, current_timestamp
 from pydantic import Field
-
-from .base import Base
-from .enums import ClaimStatus
-from .factory import claim_id, current_timestamp, user_id
 
 
 class Claim(Base):

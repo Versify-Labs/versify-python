@@ -1,10 +1,9 @@
 from typing import Any, Dict, Optional
 
+from app.models.base import Base
+from app.models.enums import MintStatus
+from app.models.factory import current_timestamp, mint_id
 from pydantic import EmailStr, Field
-
-from .base import Base
-from .enums import MintStatus
-from .factory import current_timestamp, mint_id
 
 
 class Mint(Base):

@@ -1,7 +1,7 @@
 from typing import Optional
 
-from .base import Base
-from .enums import MessageStatus, MessageType
+from app.models.base import Base
+from app.models.enums import MessageStatus, MessageType
 
 
 class Message(Base):

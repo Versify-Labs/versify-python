@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/webhooks",
-    tags=["Webhooks"]
-)
+router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created webhook",
 )
-def create_webhook(
-    request: Request
-):
+def create_webhook(request: Request):
     """
     Create Webhook
     """
@@ -33,9 +28,7 @@ def create_webhook(
     response_model=None,
     response_description="The list of webhooks",
 )
-def list_webhooks(
-    request: Request
-):
+def list_webhooks(request: Request):
     """
     List Webhooks
     """
@@ -51,9 +44,7 @@ def list_webhooks(
     response_model=None,
     response_description="The webhook",
 )
-def get_webhook(
-    request: Request
-):
+def get_webhook(request: Request):
     """
     Get Webhook
     """
@@ -69,9 +60,7 @@ def get_webhook(
     response_model=None,
     response_description="The updated webhook",
 )
-def update_webhook(
-    request: Request
-):
+def update_webhook(request: Request):
     """
     Update Webhook
     """
@@ -87,9 +76,7 @@ def update_webhook(
     response_model=None,
     response_description="The deleted webhook",
 )
-def delete_webhook(
-    request: Request
-):
+def delete_webhook(request: Request):
     """
     Delete Webhook
     """

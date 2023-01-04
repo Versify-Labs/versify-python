@@ -1,4 +1,4 @@
-from typing import List, Sequence, Union
+from typing import List, Union
 
 from app.models.base import Base
 from app.models.enums import AccountStatus

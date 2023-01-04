@@ -4,6 +4,7 @@ from app.api.api_v1.api import api_router
 from app.core.config import settings
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.templating import Jinja2Templates
+from mangum import Mangum
 
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
@@ -76,22 +77,27 @@ app = FastAPI(
     ],
 )
 
+
 root_router = APIRouter()
 
 
 @root_router.get(path="/", tags=["Root"], status_code=200)
 def root(request: Request):
-    """
-    Root GET
-    """
     return TEMPLATES.TemplateResponse(
         name="index.html",
         context={"request": request, "recipes": []},
     )
 
 
+@root_router.get(path="/info", tags=["Root"], status_code=200)
+def info():
+    return settings.dict()
+
+
 app.include_router(root_router, include_in_schema=False)
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+handler = Mangum(app)
 
 
 if __name__ == "__main__":

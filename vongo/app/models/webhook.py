@@ -1,9 +1,8 @@
 from typing import Optional
 
+from app.models.base import Base
+from app.models.factory import current_timestamp, webhook_event_id, webhook_id
 from pydantic import Field
-
-from .base import Base
-from .factory import current_timestamp, webhook_event_id, webhook_id
 
 
 class Webhook(Base):

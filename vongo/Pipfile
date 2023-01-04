@@ -5,26 +5,16 @@ name = "pypi"
 
 [packages]
 aws-lambda-powertools = "*"
-base58 = "*"
-beanie = "*"
-boto3 = "*"
-ecdsa = "*"
-eth-account = "*"
 fastapi = "*"
-fastapi-users = {extras = ["beanie", "oauth"], version = "*"}
-jinja2 = "*"
-jmespath = "*"
-mnemonic = "*"
-motor = "*"
-pycryptodome = "*"
-pydantic = "*"
+mangum = "*"
+pydantic = {extras = ["email"], version = "*"}
 pymongo = "*"
-six = "*"
-stytch = "*"
-uvicorn = "*"
 python-jose = "*"
+requests = "*"
+jinja2 = "*"
 
 [dev-packages]
+uvicorn = "*"
 
 [requires]
 python_version = "3.9"

@@ -1,7 +1,7 @@
 from app.core.stytch import load_stytch
 from app.crud import versify
 from app.models.account import Account
-from app.models.enums import TeamMemberRole
+from app.models.enums import AccountStatus, TeamMemberRole
 from app.models.params import HeaderParams
 from app.models.user import User
 from fastapi import Depends, HTTPException
@@ -100,9 +100,9 @@ def current_user(
             status_code=400, detail="Could not identify user email address"
         )
 
-    user = versify.get_user_by_email(user_body["email"])
+    user = versify.users.get_by_email(user_body["email"])
     if not user:
-        user = versify.create_user(user_body)
+        user = versify.users.create(user_body)
 
     return user
 
@@ -122,7 +122,7 @@ def current_account(account_id: str = HeaderParams.VERSIFY_ACCOUNT):
         raise HTTPException(status_code=400, detail="Missing Header: Versify-Account")
 
     # Verify the account exists
-    account = versify.get_account_by_id(account_id)
+    account = versify.accounts.get_by_id(account_id)
     if not account:
         raise HTTPException(status_code=404, detail="Account Not Found")
 
@@ -132,7 +132,7 @@ def current_account(account_id: str = HeaderParams.VERSIFY_ACCOUNT):
 def current_active_account(
     account: Account = Depends(current_account),
 ):
-    if not account.active:
+    if not account.status == AccountStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Account Inactive")
     return account
 

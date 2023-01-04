@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/journeys",
-    tags=["Journeys"]
-)
+router = APIRouter(prefix="/journeys", tags=["Journeys"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created journey",
 )
-def create_journey(
-    request: Request
-):
+def create_journey(request: Request):
     """
     Create Journey
     """
@@ -33,9 +28,7 @@ def create_journey(
     response_model=None,
     response_description="The list of journeys",
 )
-def list_journeys(
-    request: Request
-):
+def list_journeys(request: Request):
     """
     List Journeys
     """
@@ -51,9 +44,7 @@ def list_journeys(
     response_model=None,
     response_description="The journey",
 )
-def get_journey(
-    request: Request
-):
+def get_journey(request: Request):
     """
     Get Journey
     """
@@ -69,9 +60,7 @@ def get_journey(
     response_model=None,
     response_description="The updated journey",
 )
-def update_journey(
-    request: Request
-):
+def update_journey(request: Request):
     """
     Update Journey
     """
@@ -87,9 +76,7 @@ def update_journey(
     response_model=None,
     response_description="The deleted journey",
 )
-def delete_journey(
-    request: Request
-):
+def delete_journey(request: Request):
     """
     Delete Journey
     """

@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Request
 
-router = APIRouter(
-    prefix="/events",
-    tags=["Events"]
-)
+router = APIRouter(prefix="/events", tags=["Events"])
 
 
 @router.post(
@@ -15,9 +12,7 @@ router = APIRouter(
     response_model=None,
     response_description="The created event",
 )
-def create_event(
-    request: Request
-):
+def create_event(request: Request):
     """
     Create Event
     """
@@ -33,9 +28,7 @@ def create_event(
     response_model=None,
     response_description="The list of events",
 )
-def list_events(
-    request: Request
-):
+def list_events(request: Request):
     """
     List Events
     """
@@ -51,9 +44,7 @@ def list_events(
     response_model=None,
     response_description="The event",
 )
-def get_event(
-    request: Request
-):
+def get_event(request: Request):
     """
     Get Event
     """
@@ -69,9 +60,7 @@ def get_event(
     response_model=None,
     response_description="The updated event",
 )
-def update_event(
-    request: Request
-):
+def update_event(request: Request):
     """
     Update Event
     """
@@ -87,9 +76,7 @@ def update_event(
     response_model=None,
     response_description="The deleted event",
 )
-def delete_event(
-    request: Request
-):
+def delete_event(request: Request):
     """
     Delete Event
     """
