@@ -1,22 +1,31 @@
-from fastapi import APIRouter, Request
+from app.api.deps import (
+    current_active_account,
+    current_active_user,
+    current_user_account_role,
+)
+from app.crud import versify
+from app.models.account import Account
+from app.models.event import (
+    EventCreateRequest,
+    EventCreateResponse,
+    EventDeleteRequest,
+    EventDeleteResponse,
+    EventGetRequest,
+    EventGetResponse,
+    EventListRequest,
+    EventListResponse,
+    EventSearchRequest,
+    EventSearchResponse,
+    EventUpdateRequest,
+    EventUpdateResponse,
+)
+from app.models.enums import TeamMemberRole
+from app.models.params import BodyParams, PathParams
+from app.models.user import User
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status as http_status
 
 router = APIRouter(prefix="/events", tags=["Events"])
-
-
-@router.post(
-    path="",
-    summary="Create an event",
-    description="Create an event",
-    tags=["Events"],
-    status_code=201,
-    response_model=None,
-    response_description="The created event",
-)
-def create_event(request: Request):
-    """
-    Create Event
-    """
-    return {"message": "Not implemented"}
 
 
 @router.get(
@@ -25,59 +34,184 @@ def create_event(request: Request):
     description="List events with optional filters and pagination parameters",
     tags=["Events"],
     status_code=200,
-    response_model=None,
+    response_model=EventListResponse,
     response_description="The list of events",
 )
-def list_events(request: Request):
-    """
-    List Events
-    """
-    return {"message": "Not implemented"}
+def list_events(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_list_request: EventListRequest = Depends(),
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to list events.",
+        )
+    count = versify.events.count(
+        account=current_account.id,
+    )
+    events = versify.events.list(
+        page_num=event_list_request.page_num,
+        page_size=event_list_request.page_size,
+        account=current_account.id,
+    )
+    return {"count": count, "data": events, "has_more": count > len(events)}
+
+
+@router.post(
+    path="/search",
+    summary="Search events",
+    description="Search events with query string",
+    tags=["Events"],
+    status_code=200,
+    response_model=EventSearchResponse,
+    response_description="The list of events",
+)
+def search_events(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_search_request: EventSearchRequest = BodyParams.SEARCH_CONTACTS,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to search events.",
+        )
+    event_search_request_dict = event_search_request.dict()
+    query = event_search_request_dict["query"]
+    events = versify.events.search(account=current_account.id, query=query)
+    return {"count": len(events), "data": events}
+
+
+@router.post(
+    path="",
+    summary="Create event",
+    description="Create a event",
+    tags=["Events"],
+    status_code=201,
+    response_model=EventCreateResponse,
+    response_description="The created event",
+)
+def create_event(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_create: EventCreateRequest = BodyParams.CREATE_CONTACT,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create events.",
+        )
+    body = event_create.dict()
+    body["account"] = current_account.id
+    create_result = versify.events.create(body)
+    return create_result
 
 
 @router.get(
     path="/{event_id}",
-    summary="Get an event",
-    description="Get an event",
+    summary="Get event",
+    description="Get a event",
     tags=["Events"],
     status_code=200,
-    response_model=None,
+    response_model=EventGetResponse,
     response_description="The event",
 )
-def get_event(request: Request):
-    """
-    Get Event
-    """
-    return {"message": "Not implemented"}
+def get_event(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_id: str = PathParams.CONTACT_ID,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view events.",
+        )
+    event = versify.events.get(event_id)
+    if not event:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+    if event.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view events for this account.",
+        )
+    return event
 
 
 @router.put(
     path="/{event_id}",
-    summary="Update an event",
+    summary="Update event",
     description="Update an event",
     tags=["Events"],
     status_code=200,
-    response_model=None,
+    response_model=EventUpdateResponse,
     response_description="The updated event",
 )
-def update_event(request: Request):
-    """
-    Update Event
-    """
-    return {"message": "Not implemented"}
+def update_event(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_id: str = PathParams.CONTACT_ID,
+    event_update: EventUpdateRequest = BodyParams.UPDATE_CONTACT,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update events.",
+        )
+    event = versify.events.get(event_id)
+    if not event:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+    if event.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update events for this account.",
+        )
+    body = event_update.dict()
+    update_result = versify.events.update(event_id, body)
+    return update_result
 
 
 @router.delete(
     path="/{event_id}",
-    summary="Delete an event",
+    summary="Delete event",
     description="Delete an event",
     tags=["Events"],
     status_code=200,
-    response_model=None,
+    response_model=EventDeleteResponse,
     response_description="The deleted event",
 )
-def delete_event(request: Request):
-    """
-    Delete Event
-    """
-    return {"message": "Not implemented"}
+def delete_event(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    event_id: str = PathParams.CONTACT_ID,
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete events.",
+        )
+    event = versify.events.get(event_id)
+    if not event:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+    if event.account != current_account.id:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete events for this account.",
+        )
+    delete_result = versify.events.delete(event_id)
+    return delete_result

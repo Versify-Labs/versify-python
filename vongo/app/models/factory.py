@@ -216,17 +216,3 @@ def generate_avatar(name):
 def generate_stripe_customer_id():
     # TODO: Implement this properly with Stripe
     return f"cus_{secrets.token_hex(16)}"
-
-
-# def generate_wallet():
-#     priv = secrets.token_hex(32)
-#     private_key = "0x" + priv
-#     account = EthAccount.privateKeyToAccount(private_key)
-#     public_address = account.address
-#     return {
-#         "managed": True,
-#         "public_address": public_address,
-#         "private_key": private_key,
-#         "type": "ethereum",
-#         "verified": True,
-#     }

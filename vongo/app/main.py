@@ -3,6 +3,7 @@ from pathlib import Path
 from app.api.api_v1.api import api_router
 from app.core.config import settings
 from fastapi import APIRouter, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
 
@@ -19,9 +20,27 @@ app = FastAPI(
         "url": "https://versifylabs.com",
         "email": "support@versifylabs.com",
     },
+    servers=[
+        # {
+        #     "url": "https://api.versifylabs.com",
+        #     "description": "Production server",
+        # },
+        {
+            "url": "https://btox1olm2k.execute-api.us-east-1.amazonaws.com/dev",
+            "description": "Development server",
+        },
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Local server",
+        },
+    ],
     terms_of_service="https://versifylabs.com/legal/terms",
     version=__version__,
     openapi_tags=[
+        {
+            "name": "Root",
+            "description": "Operations related to the root of the API.",
+        },
         {
             "name": "Accounts",
             "description": "Operations related to creating, reading, updating and deleting accounts.",
@@ -78,6 +97,18 @@ app = FastAPI(
 )
 
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 root_router = APIRouter()
 
 
@@ -91,10 +122,14 @@ def root(request: Request):
 
 @root_router.get(path="/info", tags=["Root"], status_code=200)
 def info():
-    return settings.dict()
+    return {
+        "title": app.title,
+        "description": app.description,
+        "version": app.version,
+    }
 
 
-app.include_router(root_router, include_in_schema=False)
+app.include_router(root_router, include_in_schema=True)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 handler = Mangum(app)

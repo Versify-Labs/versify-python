@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from app.models.base import Base
 from app.models.enums import (
@@ -17,6 +17,142 @@ from app.models.factory import (
     generate_stripe_customer_id,
 )
 from pydantic import EmailStr, Field, HttpUrl, validator
+
+
+class Query(Base):
+    """A query that can be used to filter data."""
+
+    field: Union[str, None] = Field(
+        default=None,
+        description="The field to query the data on",
+        example=ContactQueryField.EMAIL,
+        title="Query Field",
+    )
+    operator: Operator = Field(
+        ...,
+        description="The operator to use",
+        example=Operator.EQUALS,
+        title="Query Operator",
+    )
+    value: Union[str, int, float, bool, EmailStr, HttpUrl, List[Dict]] = Field(
+        ...,
+        description="The value to query by",
+        example="gmail.com",
+        title="Query Value",
+    )
+
+
+class ActionConfig(Base):
+    """An action configuration."""
+
+    # CREATE_NOTE
+    note: Union[str, None] = Field(
+        default=None,
+        description="The note to create",
+        example="This is a note",
+        title="Note",
+    )
+
+    # SEND_APP_MESSAGE / SEND_EMAIL_MESSAGE
+    body: Union[str, None] = Field(
+        default=None,
+        description="The body of the message",
+        example="This is a message",
+        title="Message Body",
+    )
+    member: Union[str, None] = Field(
+        default=None,
+        description="The member to send the message to",
+        example="member",
+        title="Message Member",
+    )
+    subject: Union[str, None] = Field(
+        default=None,
+        description="The subject of the message",
+        example="This is a message",
+        title="Message Subject",
+    )
+    message_type: Union[str, None] = Field(
+        default=None,
+        description="The type of the message",
+        example="email",
+        title="Message Type",
+    )
+
+    # SEND_REWARD
+    asset: Union[str, None] = Field(
+        default=None,
+        description="The asset to send",
+        example="asset",
+        title="Reward Asset",
+    )
+    quantity: Union[int, None] = Field(
+        default=None,
+        description="The quantity of the reward",
+        example=1,
+        title="Reward Quantity",
+    )
+
+    # TAG_CONTACT
+    tags: Union[list[str], None] = Field(
+        default=None,
+        description="The tags to add to the contact",
+        example=["tag"],
+        title="Tag Contact Tags",
+    )
+
+    # MATCH_ALL/MATCH_ANY
+    filters: list[Query] = Field(
+        default=[],
+        description="The filters to match",
+        example=[
+            {"field": "email", "operator": "EQUALS", "value": ""},
+            {"field": "email", "operator": "EQUALS", "value": ""},
+        ],
+        title="Match Querys",
+    )
+
+    # WAIT
+    seconds: Union[int, None] = Field(
+        default=None,
+        description="The number of seconds to wait",
+        example=1,
+        title="Wait Seconds",
+    )
+
+
+class Action(Base):
+    """An action for a journey."""
+
+    action_type: ActionType = Field(
+        ...,
+        description="The type of action",
+        example=ActionType.CREATE_NOTE,
+        title="Action Type",
+    )
+    comment: Union[str, None] = Field(
+        default=None,
+        description="A comment for the action",
+        example="",
+        title="Action Comment",
+    )
+    config: ActionConfig = Field(
+        ...,
+        description="The configuration for the action",
+        title="Action Configuration",
+    )
+    end: Union[bool, None] = Field(
+        default=None,
+        description="Whether the action ends the journey",
+        example=False,
+        title="Action Ends Journey",
+    )
+    next: Union[str, None] = Field(
+        default=None,
+        description="The next action to run",
+        example="",
+        title="Next Action",
+    )
 
 
 class Authentication(Base):
@@ -117,29 +253,6 @@ class Brand(Base):
     )
 
 
-class Filter(Base):
-    """A filter that can be used to filter data."""
-
-    field: str = Field(
-        ...,
-        description="The field to filter the data on",
-        example=ContactQueryField.EMAIL,
-        title="Filter Field",
-    )
-    operator: Operator = Field(
-        ...,
-        description="The operator to use",
-        example=Operator.ENDS_WITH,
-        title="Filter Operator",
-    )
-    value: str = Field(
-        ...,
-        description="The value to filter by",
-        example="gmail.com",
-        title="Filter Value",
-    )
-
-
 class IdentityProvider(Base):
     """An identity provider for a user."""
 
@@ -208,6 +321,53 @@ class Note(Base):
     )
 
 
+class Offer(Base):
+    """An offer for a journey."""
+
+    name: Union[str, None] = Field(
+        default=None,
+        description="The name of the offer",
+        example="Free Trial",
+        title="Offer Name",
+    )
+    description: Union[str, None] = Field(
+        default=None,
+        description="The description of the offer",
+        example="A free trial of the product",
+        title="Offer Description",
+    )
+    image: Union[str, None] = Field(
+        default=None,
+        description="The image of the offer",
+        example="https://example.com/image.png",
+        title="Offer Image",
+    )
+    cta_text: Union[str, None] = Field(
+        default=None,
+        description="The text of the call to action button",
+        example="Get Started",
+        title="Offer Call to Action Text",
+    )
+    cta_url: Union[str, None] = Field(
+        default=None,
+        description="The URL of the call to action button",
+        example="https://example.com/get-started",
+        title="Offer Call to Action URL",
+    )
+    primary_color: Union[str, None] = Field(
+        default=None,
+        description="The primary color of the offer",
+        example="#000000",
+        title="Offer Primary Color",
+    )
+    secondary_color: Union[str, None] = Field(
+        default=None,
+        description="The secondary color of the offer",
+        example="#ffffff",
+        title="Offer Secondary Color",
+    )
+
+
 class PersonName(Base):
     """A person's name."""
 
@@ -239,26 +399,36 @@ class PersonName(Base):
         return v.title()
 
 
-class Query(Base):
-    """A query that can be used to filter data."""
+class RunStateResult(Base):
+    """The result of a run state."""
 
-    field: Union[str, None] = Field(
+    name: str = Field(
+        ...,
+        description="The name of the state in the run",
+        example="state_1",
+        title="State Name",
+    )
+    result: dict = Field(
+        default={},
+        description="The result of the state",
+        example={"key": "value"},
+        title="State Result",
+    )
+    status: RunStatus = Field(
+        ...,
+        description="The status of the state",
+        example=RunStatus.RUNNING,
+        title="State Status",
+    )
+    time_started: int = Field(
+        ...,
+        description="The timestamp when the state started",
+        title="State Started Timestamp",
+    )
+    time_ended: Union[int, None] = Field(
         default=None,
-        description="The field to query the data on",
-        example=ContactQueryField.EMAIL,
-        title="Query Field",
-    )
-    operator: Operator = Field(
-        ...,
-        description="The operator to use",
-        example=Operator.EQUALS,
-        title="Query Operator",
-    )
-    value: Union[str, int, float, bool, EmailStr, HttpUrl, List[Dict]] = Field(
-        ...,
-        description="The value to query by",
-        example="gmail.com",
-        title="Query Value",
+        description="The timestamp when the state ended",
+        title="State Ended Timestamp",
     )
 
 
@@ -294,7 +464,7 @@ class TeamMember(Base):
         example="member",
         title="Role",
     )
-    user: Optional[str] = Field(
+    user: Union[str, None] = Field(
         default=None,
         description="The user ID of the team member",
         example="1234567890",
@@ -313,25 +483,25 @@ class TeamMember(Base):
 class TermsAcceptance(Base):
     """Details on the acceptance of the Versify Services Agreement"""
 
-    date: Optional[int] = Field(
+    date: Union[int, None] = Field(
         default=None,
         description="The timestamp when the terms were accepted",
         example=1601059200,
         title="Acceptance Timestamp",
     )
-    ip: Optional[str] = Field(
+    ip: Union[str, None] = Field(
         default=None,
         description="The IP address of the user when the terms were accepted",
         example="",
         title="Acceptance IP Address",
     )
-    service_agreement: Optional[str] = Field(
+    service_agreement: Union[str, None] = Field(
         default=None,
         description="The version of the Versify Services Agreement",
         example="1.0",
         title="Acceptance Service Agreement",
     )
-    user_agent: Optional[str] = Field(
+    user_agent: Union[str, None] = Field(
         default=None,
         description="The user agent of the user when the terms were accepted",
         example="",
@@ -339,108 +509,105 @@ class TermsAcceptance(Base):
     )
 
 
-class Offer(Base):
-    """An offer for a journey."""
-
-    name: Optional[str] = ""
-    description: Optional[str] = ""
-    image: Optional[str] = ""
-    cta_text: Optional[str] = ""
-    cta_url: Optional[str] = ""
-    primary_color: Optional[str] = ""
-    secondary_color: Optional[str] = ""
-
-
 class TriggerScheduleConfig(Base):
     """A trigger schedule configuration."""
 
-    at: Optional[int]  # Ex: '1601514370'
-    cron: Optional[str]  # Ex: '0 20 * * ? *'
-    rate: Optional[str]  # Ex: '5 minutes'
-    start: Optional[int]  # Ex: 1601514370
-    end: Optional[int]  # Ex: 1601514370
+    at: Union[int, None] = Field(
+        default=None,
+        description="The timestamp to trigger the event at",
+        example=1601514370,
+        title="Trigger Timestamp",
+    )
+    cron: Union[str, None] = Field(
+        default=None,
+        description="The cron expression to trigger the event at",
+        example="0 20 * * ? *",
+        title="Trigger Cron Expression",
+    )
+    rate: Union[str, None] = Field(
+        default=None,
+        description="The rate to trigger the event at",
+        example="5 minutes",
+        title="Trigger Rate",
+    )
+    start: Union[int, None] = Field(
+        default=None,
+        description="The timestamp to start triggering the event at",
+        example=1601514370,
+        title="Trigger Start Timestamp",
+    )
+    end: Union[int, None] = Field(
+        default=None,
+        description="The timestamp to stop triggering the event at",
+        example=1601514370,
+        title="Trigger End Timestamp",
+    )
 
 
 class TriggerConfig(Base):
     """A trigger configuration."""
 
-    schedule: Optional[TriggerScheduleConfig]
-    source: str
-    detail_type: str
-    detail_filters: list[Filter] = []
+    schedule: Union[TriggerScheduleConfig, None] = Field(
+        default=None,
+        description="The schedule configuration for the trigger",
+        example={
+            "at": 1601514370,
+            "cron": "0 20 * * ? *",
+            "rate": "5 minutes",
+            "start": 1601514370,
+            "end": 1601514370,
+        },
+        title="Trigger Schedule Configuration",
+    )
+    source: str = Field(
+        ...,
+        description="The source of the trigger",
+        example="contact",
+        title="Trigger Source",
+    )
+    detail_type: str = Field(
+        ...,
+        description="The detail type of the trigger",
+        example="contact.created",
+        title="Trigger Detail Type",
+    )
+    detail_filters: list[Query] = Field(
+        default=[],
+        description="The detail filters of the trigger",
+        example=[
+            {"field": "email", "operator": "EQUALS", "value": ""},
+            {"field": "email", "operator": "EQUALS", "value": ""},
+        ],
+        title="Trigger Detail Querys",
+    )
 
 
 class Trigger(Base):
     """A trigger for a journey."""
 
-    type: TriggerType
-    config: TriggerConfig
-
-
-class ActionConfig(Base):
-    """An action configuration."""
-
-    # CREATE_NOTE
-    note: Optional[str]
-
-    # SEND_APP_MESSAGE / SEND_EMAIL_MESSAGE
-    body: Optional[str]
-    member: Optional[str]
-    subject: Optional[str]
-    type: Optional[str]
-
-    # SEND_REWARD
-    asset: Optional[str]
-    quantity: Optional[int]
-
-    # TAG_CONTACT
-    tags: Optional[list[str]]
-
-    # MATCH_ALL/MATCH_ANY
-    filters: list[Filter] = []
-
-    # WAIT
-    seconds: Optional[int]
-
-
-class Action(Base):
-    """An action for a journey."""
-
-    type: ActionType = ActionType.WAIT
-    comment: Optional[str]
-    config: ActionConfig
-    end: Optional[bool]
-    next: Optional[str]
-
-
-class RunStateResult(Base):
-    """The result of a run state."""
-
-    name: str = Field(
+    trigger_type: TriggerType = Field(
         ...,
-        description="The name of the state in the run",
-        example="state_1",
-        title="State Name",
+        description="The type of trigger",
+        example=TriggerType.SCHEDULE,
+        title="Trigger Type",
     )
-    result: dict = Field(
-        default={},
-        description="The result of the state",
-        example={"key": "value"},
-        title="State Result",
-    )
-    status: RunStatus = Field(
+    config: TriggerConfig = Field(
         ...,
-        description="The status of the state",
-        example=RunStatus.RUNNING,
-        title="State Status",
-    )
-    time_started: int = Field(
-        ...,
-        description="The timestamp when the state started",
-        title="State Started Timestamp",
-    )
-    time_ended: Optional[int] = Field(
-        default=None,
-        description="The timestamp when the state ended",
-        title="State Ended Timestamp",
+        description="The configuration for the trigger",
+        example={
+            "schedule": {
+                "at": 1601514370,
+                "cron": "0 20 * * ? *",
+                "rate": "5 minutes",
+                "start": 1601514370,
+                "end": 1601514370,
+            },
+            "source": "contact",
+            "detail_type": "contact.created",
+            "detail_filters": [
+                {"field": "email", "operator": "EQUALS", "value": ""},
+                {"field": "email", "operator": "EQUALS", "value": ""},
+            ],
+        },
+        title="Trigger Configuration",
     )

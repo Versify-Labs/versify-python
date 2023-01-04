@@ -72,17 +72,17 @@ class Wallet(Base):
         example="seed phrase",
         title="Seed Phrase",
     )
-    type: WalletType = Field(
-        default=WalletType.ETHEREUM,
-        description="The type of the wallet",
-        example="ethereum",
-        title="Wallet Type",
-    )
     updated: int = Field(
         default_factory=current_timestamp,
         description="The timestamp when the wallet was last updated",
         example=1601059200,
         title="Updated Timestamp",
+    )
+    wallet_type: WalletType = Field(
+        default=WalletType.ETHEREUM,
+        description="The type of the wallet",
+        example="ethereum",
+        title="Wallet Type",
     )
     wif: Union[str, None] = Field(
         default=None,

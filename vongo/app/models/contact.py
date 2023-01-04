@@ -20,14 +20,14 @@ class Contact(Base):
     )
     object: str = Field(
         default="contact",
-        description="The object type",
+        description="The object type. Always 'contact'",
         example="contact",
         title="Object Type",
     )
     account: str = Field(
         ...,
         description="The account the contact belongs to",
-        example="acct_5f9f1c5b0b9b4b0b9c1c5b0b",
+        example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
         title="Account ID",
     )
     avatar: HttpUrl = Field(

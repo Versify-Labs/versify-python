@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pathlib
-from typing import Dict, List, Union
+from typing import List, Union
 
 from aws_lambda_powertools.utilities import parameters
 from pydantic import AnyHttpUrl, BaseSettings, validator
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
         case_sensitive = True
 
     # FastAPI Settings
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = "/v1"
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
     # AWS Lambda Variables

@@ -1,5 +1,6 @@
 from app.crud.crud_account import AccountResource
 from app.crud.crud_asset import AssetResource
+from app.crud.crud_claim import ClaimResource
 from app.crud.crud_collection import CollectionResource
 from app.crud.crud_contact import ContactResource
 from app.crud.crud_event import EventResource
@@ -18,6 +19,7 @@ class Versify:
         session = SessionLocal()
         self.accounts = AccountResource(session)
         self.assets = AssetResource(session)
+        self.claims = ClaimResource(session)
         self.collections = CollectionResource(session)
         self.contacts = ContactResource(session)
         self.events = EventResource(session)
