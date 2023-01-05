@@ -1,9 +1,8 @@
 from typing import Any, Dict, List, Union
 
 from app.models.base import Base
-from app.models.enums import RunStatus
-from app.models.factory import current_timestamp, journey_id, journey_run_id
-from app.models.globals import Action, Query, RunStateResult, Trigger
+from app.models.factory import current_timestamp, journey_id
+from app.models.globals import Action, Query, Trigger
 from fastapi import Query as QueryParam
 from pydantic import Field
 
@@ -16,11 +15,29 @@ class Journey(Base):
         example="j_1234567890",
         title="Journey ID",
     )
+    object: str = Field(
+        default="journey",
+        description='The object type. Always "journey"',
+        example="journey",
+        title="Object Type",
+    )
+    account: str = Field(
+        ...,
+        description="The account the journey belongs to",
+        example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
+        title="Account ID",
+    )
     active: bool = Field(
         default=True,
         description="Whether the journey is active",
         example=True,
         title="Active",
+    )
+    created: int = Field(
+        default_factory=current_timestamp,
+        description="The timestamp when the journey was created",
+        example=1600000000,
+        title="Created",
     )
     description: str = Field(
         default="",
@@ -28,8 +45,16 @@ class Journey(Base):
         example="My journey",
         title="Description",
     )
+    metadata: Dict[str, Any] = Field(
+        default={},
+        description="Arbitrary metadata associated with the journey",
+        example={"key": "value"},
+        title="Metadata",
+    )
     name: str = Field(
-        description="The name of the journey", example="My Journey", title="Name"
+        description="The name of the journey. Internal facing.",
+        example="My Journey",
+        title="Name",
     )
     start: str = Field(
         default="start",
@@ -67,6 +92,12 @@ class Journey(Base):
             },
         },
         title="Trigger",
+    )
+    updated: int = Field(
+        default_factory=current_timestamp,
+        description="The timestamp when the journey was last updated",
+        example=1600000000,
+        title="Updated",
     )
 
 

@@ -5,12 +5,12 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.message import (
     MessageCreateRequest,
     MessageCreateResponse,
-    MessageDeleteRequest,
     MessageDeleteResponse,
-    MessageGetRequest,
     MessageGetResponse,
     MessageListRequest,
     MessageListResponse,
@@ -19,11 +19,9 @@ from app.models.message import (
     MessageUpdateRequest,
     MessageUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
 
@@ -44,10 +42,7 @@ def list_messages(
     message_list_request: MessageListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list messages.",
-        )
+        raise ForbiddenException()
     count = versify.messages.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_messages(
     message_search_request: MessageSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search messages.",
-        )
+        raise ForbiddenException()
     message_search_request_dict = message_search_request.dict()
     query = message_search_request_dict["query"]
     messages = versify.messages.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_message(
     message_create: MessageCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create messages.",
-        )
+        raise ForbiddenException()
     body = message_create.dict()
     body["account"] = current_account.id
     create_result = versify.messages.create(body)
@@ -127,21 +116,12 @@ def get_message(
     message_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view messages.",
-        )
+        raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Message not found",
-        )
+        raise NotFoundException()
     if message.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view messages for this account.",
-        )
+        raise ForbiddenException()
     return message
 
 
@@ -162,21 +142,12 @@ def update_message(
     message_update: MessageUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update messages.",
-        )
+        raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Message not found",
-        )
+        raise NotFoundException()
     if message.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update messages for this account.",
-        )
+        raise ForbiddenException()
     body = message_update.dict()
     update_result = versify.messages.update(message_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_message(
     message_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete messages.",
-        )
+        raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Message not found",
-        )
+        raise NotFoundException()
     if message.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete messages for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.messages.delete(message_id)
     return delete_result

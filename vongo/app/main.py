@@ -2,6 +2,7 @@ from pathlib import Path
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
+from aws_lambda_powertools import Logger, Metrics, Tracer
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
@@ -10,10 +11,12 @@ from mangum import Mangum
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 
-__version__ = "1.0.0"
+logger: Logger = Logger()
+metrics: Metrics = Metrics()
+tracer: Tracer = Tracer()
 
 app = FastAPI(
-    title="Versify API",
+    title=settings.API_NAME,
     description="Versify API documentation",
     contact={
         "name": "Versify Labs",
@@ -34,8 +37,9 @@ app = FastAPI(
             "description": "Local server",
         },
     ],
+    root_path="/dev",
     terms_of_service="https://versifylabs.com/legal/terms",
-    version=__version__,
+    version=settings.API_VERSION,
     openapi_tags=[
         {
             "name": "Root",
@@ -99,11 +103,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost",
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -132,8 +132,9 @@ def info():
 app.include_router(root_router, include_in_schema=True)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-handler = Mangum(app)
 
+handler = Mangum(app)
+handler = logger.inject_lambda_context(handler, clear_state=True)
 
 if __name__ == "__main__":
     # Use this for debugging purposes only

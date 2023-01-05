@@ -8,9 +8,7 @@ from app.models.account import Account
 from app.models.contact import (
     ContactCreateRequest,
     ContactCreateResponse,
-    ContactDeleteRequest,
     ContactDeleteResponse,
-    ContactGetRequest,
     ContactGetResponse,
     ContactListRequest,
     ContactListResponse,
@@ -20,10 +18,10 @@ from app.models.contact import (
     ContactUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
@@ -44,10 +42,7 @@ def list_contacts(
     contact_list_request: ContactListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list contacts.",
-        )
+        raise ForbiddenException()
     count = versify.contacts.count(
         account=current_account.id,
         owner=contact_list_request.owner,
@@ -81,10 +76,7 @@ def search_contacts(
     contact_search_request: ContactSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search contacts.",
-        )
+        raise ForbiddenException()
     contact_search_request_dict = contact_search_request.dict()
     query = contact_search_request_dict["query"]
     contacts = versify.contacts.search(account=current_account.id, query=query)
@@ -107,10 +99,7 @@ def create_contact(
     contact_create: ContactCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create contacts.",
-        )
+        raise ForbiddenException()
     body = contact_create.dict()
     body["account"] = current_account.id
     create_result = versify.contacts.create(body)
@@ -133,21 +122,12 @@ def get_contact(
     contact_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view contacts.",
-        )
+        raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Contact not found",
-        )
+        raise NotFoundException()
     if contact.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view contacts for this account.",
-        )
+        raise ForbiddenException()
     return contact
 
 
@@ -168,21 +148,12 @@ def update_contact(
     contact_update: ContactUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update contacts.",
-        )
+        raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Contact not found",
-        )
+        raise NotFoundException()
     if contact.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update contacts for this account.",
-        )
+        raise ForbiddenException()
     body = contact_update.dict()
     update_result = versify.contacts.update(contact_id, body)
     return update_result
@@ -204,20 +175,11 @@ def delete_contact(
     contact_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete contacts.",
-        )
+        raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Contact not found",
-        )
+        raise NotFoundException()
     if contact.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete contacts for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.contacts.delete(contact_id)
     return delete_result

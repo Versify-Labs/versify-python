@@ -20,10 +20,10 @@ from app.models.asset import (
     AssetUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
 
@@ -44,10 +44,7 @@ def list_assets(
     asset_list_request: AssetListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list assets.",
-        )
+        raise ForbiddenException()
     count = versify.assets.count(
         account=current_account.id,
         collection=asset_list_request.collection,
@@ -81,10 +78,7 @@ def search_assets(
     asset_search_request: AssetSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search assets.",
-        )
+        raise ForbiddenException()
     asset_search_request_dict = asset_search_request.dict()
     query = asset_search_request_dict["query"]
     assets = versify.assets.search(account=current_account.id, query=query)
@@ -107,10 +101,7 @@ def create_asset(
     asset_create: AssetCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create assets.",
-        )
+        raise ForbiddenException()
     body = asset_create.dict()
     body["account"] = current_account.id
     create_result = versify.assets.create(body)
@@ -133,21 +124,12 @@ def get_asset(
     asset_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view assets.",
-        )
+        raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Asset not found",
-        )
+        raise NotFoundException()
     if asset.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view assets for this account.",
-        )
+        raise ForbiddenException()
     return asset
 
 
@@ -168,21 +150,12 @@ def update_asset(
     asset_update: AssetUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update assets.",
-        )
+        raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Asset not found",
-        )
+        raise NotFoundException()
     if asset.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update assets for this account.",
-        )
+        raise ForbiddenException()
     body = asset_update.dict()
     update_result = versify.assets.update(asset_id, body)
     return update_result
@@ -204,20 +177,11 @@ def delete_asset(
     asset_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete assets.",
-        )
+        raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Asset not found",
-        )
+        raise NotFoundException()
     if asset.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete assets for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.assets.delete(asset_id)
     return delete_result

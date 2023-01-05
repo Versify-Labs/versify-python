@@ -5,12 +5,13 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
+from app.models.params import BodyParams, PathParams
 from app.models.redemption import (
     RedemptionCreateRequest,
     RedemptionCreateResponse,
-    RedemptionDeleteRequest,
     RedemptionDeleteResponse,
-    RedemptionGetRequest,
     RedemptionGetResponse,
     RedemptionListRequest,
     RedemptionListResponse,
@@ -19,11 +20,8 @@ from app.models.redemption import (
     RedemptionUpdateRequest,
     RedemptionUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
-from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/redemptions", tags=["Redemptions"])
 
@@ -44,10 +42,7 @@ def list_redemptions(
     redemption_list_request: RedemptionListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list redemptions.",
-        )
+        raise ForbiddenException()
     count = versify.redemptions.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_redemptions(
     redemption_search_request: RedemptionSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search redemptions.",
-        )
+        raise ForbiddenException()
     redemption_search_request_dict = redemption_search_request.dict()
     query = redemption_search_request_dict["query"]
     redemptions = versify.redemptions.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_redemption(
     redemption_create: RedemptionCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create redemptions.",
-        )
+        raise ForbiddenException()
     body = redemption_create.dict()
     body["account"] = current_account.id
     create_result = versify.redemptions.create(body)
@@ -127,21 +116,12 @@ def get_redemption(
     redemption_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view redemptions.",
-        )
+        raise ForbiddenException()
     redemption = versify.redemptions.get(redemption_id)
     if not redemption:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Redemption not found",
-        )
+        raise NotFoundException()
     if redemption.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view redemptions for this account.",
-        )
+        raise ForbiddenException()
     return redemption
 
 
@@ -162,21 +142,12 @@ def update_redemption(
     redemption_update: RedemptionUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update redemptions.",
-        )
+        raise ForbiddenException()
     redemption = versify.redemptions.get(redemption_id)
     if not redemption:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Redemption not found",
-        )
+        raise NotFoundException()
     if redemption.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update redemptions for this account.",
-        )
+        raise ForbiddenException()
     body = redemption_update.dict()
     update_result = versify.redemptions.update(redemption_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_redemption(
     redemption_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete redemptions.",
-        )
+        raise ForbiddenException()
     redemption = versify.redemptions.get(redemption_id)
     if not redemption:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Redemption not found",
-        )
+        raise NotFoundException()
     if redemption.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete redemptions for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.redemptions.delete(redemption_id)
     return delete_result

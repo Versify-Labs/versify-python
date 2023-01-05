@@ -5,12 +5,13 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
+from app.models.params import BodyParams, PathParams
 from app.models.reward import (
     RewardCreateRequest,
     RewardCreateResponse,
-    RewardDeleteRequest,
     RewardDeleteResponse,
-    RewardGetRequest,
     RewardGetResponse,
     RewardListRequest,
     RewardListResponse,
@@ -19,11 +20,8 @@ from app.models.reward import (
     RewardUpdateRequest,
     RewardUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
-from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/rewards", tags=["Rewards"])
 
@@ -44,10 +42,7 @@ def list_rewards(
     reward_list_request: RewardListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list rewards.",
-        )
+        raise ForbiddenException()
     count = versify.rewards.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_rewards(
     reward_search_request: RewardSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search rewards.",
-        )
+        raise ForbiddenException()
     reward_search_request_dict = reward_search_request.dict()
     query = reward_search_request_dict["query"]
     rewards = versify.rewards.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_reward(
     reward_create: RewardCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create rewards.",
-        )
+        raise ForbiddenException()
     body = reward_create.dict()
     body["account"] = current_account.id
     create_result = versify.rewards.create(body)
@@ -127,21 +116,12 @@ def get_reward(
     reward_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view rewards.",
-        )
+        raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Reward not found",
-        )
+        raise NotFoundException()
     if reward.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view rewards for this account.",
-        )
+        raise ForbiddenException()
     return reward
 
 
@@ -162,21 +142,12 @@ def update_reward(
     reward_update: RewardUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update rewards.",
-        )
+        raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Reward not found",
-        )
+        raise NotFoundException()
     if reward.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update rewards for this account.",
-        )
+        raise ForbiddenException()
     body = reward_update.dict()
     update_result = versify.rewards.update(reward_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_reward(
     reward_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete rewards.",
-        )
+        raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Reward not found",
-        )
+        raise NotFoundException()
     if reward.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete rewards for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.rewards.delete(reward_id)
     return delete_result

@@ -8,9 +8,7 @@ from app.models.account import Account
 from app.models.claim import (
     ClaimCreateRequest,
     ClaimCreateResponse,
-    ClaimDeleteRequest,
     ClaimDeleteResponse,
-    ClaimGetRequest,
     ClaimGetResponse,
     ClaimListRequest,
     ClaimListResponse,
@@ -20,10 +18,10 @@ from app.models.claim import (
     ClaimUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
@@ -44,10 +42,7 @@ def list_claims(
     claim_list_request: ClaimListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list claims.",
-        )
+        raise ForbiddenException()
     count = versify.claims.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_claims(
     claim_search_request: ClaimSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search claims.",
-        )
+        raise ForbiddenException()
     claim_search_request_dict = claim_search_request.dict()
     query = claim_search_request_dict["query"]
     claims = versify.claims.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_claim(
     claim_create: ClaimCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create claims.",
-        )
+        raise ForbiddenException()
     body = claim_create.dict()
     body["account"] = current_account.id
     create_result = versify.claims.create(body)
@@ -127,21 +116,12 @@ def get_claim(
     claim_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view claims.",
-        )
+        raise ForbiddenException()
     claim = versify.claims.get(claim_id)
     if not claim:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Claim not found",
-        )
+        raise NotFoundException()
     if claim.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view claims for this account.",
-        )
+        raise ForbiddenException()
     return claim
 
 
@@ -162,21 +142,12 @@ def update_claim(
     claim_update: ClaimUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update claims.",
-        )
+        raise ForbiddenException()
     claim = versify.claims.get(claim_id)
     if not claim:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Claim not found",
-        )
+        raise NotFoundException()
     if claim.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update claims for this account.",
-        )
+        raise ForbiddenException()
     body = claim_update.dict()
     update_result = versify.claims.update(claim_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_claim(
     claim_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete claims.",
-        )
+        raise ForbiddenException()
     claim = versify.claims.get(claim_id)
     if not claim:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Claim not found",
-        )
+        raise NotFoundException()
     if claim.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete claims for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.claims.delete(claim_id)
     return delete_result

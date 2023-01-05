@@ -5,12 +5,12 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.journey import (
     JourneyCreateRequest,
     JourneyCreateResponse,
-    JourneyDeleteRequest,
     JourneyDeleteResponse,
-    JourneyGetRequest,
     JourneyGetResponse,
     JourneyListRequest,
     JourneyListResponse,
@@ -19,11 +19,9 @@ from app.models.journey import (
     JourneyUpdateRequest,
     JourneyUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/journeys", tags=["Journeys"])
 
@@ -44,10 +42,7 @@ def list_journeys(
     journey_list_request: JourneyListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list journeys.",
-        )
+        raise ForbiddenException()
     count = versify.journeys.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_journeys(
     journey_search_request: JourneySearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search journeys.",
-        )
+        raise ForbiddenException()
     journey_search_request_dict = journey_search_request.dict()
     query = journey_search_request_dict["query"]
     journeys = versify.journeys.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_journey(
     journey_create: JourneyCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create journeys.",
-        )
+        raise ForbiddenException()
     body = journey_create.dict()
     body["account"] = current_account.id
     create_result = versify.journeys.create(body)
@@ -127,21 +116,12 @@ def get_journey(
     journey_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view journeys.",
-        )
+        raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Journey not found",
-        )
+        raise NotFoundException()
     if journey.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view journeys for this account.",
-        )
+        raise ForbiddenException()
     return journey
 
 
@@ -162,21 +142,12 @@ def update_journey(
     journey_update: JourneyUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update journeys.",
-        )
+        raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Journey not found",
-        )
+        raise NotFoundException()
     if journey.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update journeys for this account.",
-        )
+        raise ForbiddenException()
     body = journey_update.dict()
     update_result = versify.journeys.update(journey_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_journey(
     journey_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete journeys.",
-        )
+        raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Journey not found",
-        )
+        raise
     if journey.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete journeys for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.journeys.delete(journey_id)
     return delete_result

@@ -5,12 +5,12 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.mint import (
     MintCreateRequest,
     MintCreateResponse,
-    MintDeleteRequest,
     MintDeleteResponse,
-    MintGetRequest,
     MintGetResponse,
     MintListRequest,
     MintListResponse,
@@ -19,11 +19,9 @@ from app.models.mint import (
     MintUpdateRequest,
     MintUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/mints", tags=["Mints"])
 
@@ -44,10 +42,7 @@ def list_mints(
     mint_list_request: MintListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list mints.",
-        )
+        raise ForbiddenException()
     count = versify.mints.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_mints(
     mint_search_request: MintSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search mints.",
-        )
+        raise ForbiddenException()
     mint_search_request_dict = mint_search_request.dict()
     query = mint_search_request_dict["query"]
     mints = versify.mints.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_mint(
     mint_create: MintCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create mints.",
-        )
+        raise ForbiddenException()
     body = mint_create.dict()
     body["account"] = current_account.id
     create_result = versify.mints.create(body)
@@ -127,21 +116,12 @@ def get_mint(
     mint_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view mints.",
-        )
+        raise ForbiddenException()
     mint = versify.mints.get(mint_id)
     if not mint:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Mint not found",
-        )
+        raise NotFoundException()
     if mint.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view mints for this account.",
-        )
+        raise ForbiddenException()
     return mint
 
 
@@ -162,21 +142,12 @@ def update_mint(
     mint_update: MintUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update mints.",
-        )
+        raise ForbiddenException()
     mint = versify.mints.get(mint_id)
     if not mint:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Mint not found",
-        )
+        raise NotFoundException()
     if mint.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update mints for this account.",
-        )
+        raise ForbiddenException()
     body = mint_update.dict()
     update_result = versify.mints.update(mint_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_mint(
     mint_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete mints.",
-        )
+        raise ForbiddenException()
     mint = versify.mints.get(mint_id)
     if not mint:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Mint not found",
-        )
+        raise NotFoundException()
     if mint.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete mints for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.mints.delete(mint_id)
     return delete_result

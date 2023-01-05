@@ -11,14 +11,23 @@ FUNCTION_NAME=$3
 
 # Get the locations of necessary files
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-VERSIFY_DIR=$DIR/vongo/app
+APP_DIR=$DIR/vongo
 SERVICE_DIR=$DIR/services/$SERVICE_NAME-service
-SERVICE_VERSIFY_DIR=$SERVICE_DIR/app
 
-echo "Copying versify module to $SERVICE_VERSIFY_DIR"
-cp -r $VERSIFY_DIR $SERVICE_VERSIFY_DIR
+# Lock the pipenv and copy the requirements to the service
+echo "Copying requirements to $SERVICE_DIR"
+cd $APP_DIR
+pipenv requirements > requirements.txt
+cp requirements.txt $SERVICE_DIR/requirements.txt
+cd $DIR
+
+# Copy the app directory to the service
+echo "Copying app to $SERVICE_DIR"
+cp -r $APP_DIR/app $SERVICE_DIR/app
+cd $DIR
+
+# Deploy the service
 cd $SERVICE_DIR
-
 if [ "$FUNCTION_NAME" ]
 then
     echo "Deploying function $FUNCTION_NAME to stage $STAGE"
@@ -28,8 +37,9 @@ else
     sls deploy --stage $STAGE
 fi
 
-# Remove the versify module from the service
-rm -rf $SERVICE_VERSIFY_DIR
+# Remove the app directory from the service
+echo "Removing app from $SERVICE_DIR"
+rm -rf $SERVICE_DIR/app
 
 # Return to the original directory
 cd $DIR

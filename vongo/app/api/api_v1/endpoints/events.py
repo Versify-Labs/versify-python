@@ -5,12 +5,11 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
 from app.models.event import (
     EventCreateRequest,
     EventCreateResponse,
-    EventDeleteRequest,
     EventDeleteResponse,
-    EventGetRequest,
     EventGetResponse,
     EventListRequest,
     EventListResponse,
@@ -19,11 +18,10 @@ from app.models.event import (
     EventUpdateRequest,
     EventUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -44,10 +42,7 @@ def list_events(
     event_list_request: EventListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list events.",
-        )
+        raise ForbiddenException()
     count = versify.events.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_events(
     event_search_request: EventSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search events.",
-        )
+        raise ForbiddenException()
     event_search_request_dict = event_search_request.dict()
     query = event_search_request_dict["query"]
     events = versify.events.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_event(
     event_create: EventCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create events.",
-        )
+        raise ForbiddenException()
     body = event_create.dict()
     body["account"] = current_account.id
     create_result = versify.events.create(body)
@@ -127,21 +116,12 @@ def get_event(
     event_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view events.",
-        )
+        raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Event not found",
-        )
+        raise NotFoundException()
     if event.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view events for this account.",
-        )
+        raise ForbiddenException()
     return event
 
 
@@ -162,21 +142,12 @@ def update_event(
     event_update: EventUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update events.",
-        )
+        raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Event not found",
-        )
+        raise NotFoundException()
     if event.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update events for this account.",
-        )
+        raise ForbiddenException()
     body = event_update.dict()
     update_result = versify.events.update(event_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_event(
     event_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete events.",
-        )
+        raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Event not found",
-        )
+        raise NotFoundException()
     if event.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete events for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.events.delete(event_id)
     return delete_result

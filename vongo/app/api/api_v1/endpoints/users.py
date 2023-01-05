@@ -1,7 +1,8 @@
 from app.api.deps import current_active_user
 from app.crud import versify
+from app.models.exceptions import ForbiddenException
 from app.models.params import BodyParams, PathParams
-from app.models.user import User, UserDeleted, UserList, UserSearch, UserUpdate
+from app.models.user import User, UserDeleted, UserUpdate
 from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -57,10 +58,7 @@ def get_user(
     Get User
     """
     if current_user.id != user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to view this user",
-        )
+        raise ForbiddenException()
     return current_user
 
 
@@ -81,10 +79,7 @@ def update_user(
     Update User
     """
     if current_user.id != user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to update this user",
-        )
+        raise ForbiddenException()
     updated_user = versify.users.update(user_id, user_update.dict())
     return updated_user
 
@@ -105,8 +100,5 @@ def delete_user(
     Delete User
     """
     if current_user.id != user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to delete this user",
-        )
+        raise ForbiddenException()
     raise HTTPException(status_code=501, detail="Not implemented yet")

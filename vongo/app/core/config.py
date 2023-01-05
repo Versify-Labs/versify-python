@@ -36,8 +36,14 @@ class Settings(BaseSettings):
         case_sensitive = True
 
     # FastAPI Settings
+    API_NAME: str = "Versify API"
+    API_VERSION: str = '1.0.0'
     API_V1_STR: str = "/v1"
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "https://btox1olm2k.execute-api.us-east-1.amazonaws.com",
+    ]
 
     # AWS Lambda Variables
     AWS_ACCOUNT: str = os.environ.get("AWS_ACCOUNT", "424532774130")

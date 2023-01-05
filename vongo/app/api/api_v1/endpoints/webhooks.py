@@ -5,12 +5,14 @@ from app.api.deps import (
 )
 from app.crud import versify
 from app.models.account import Account
+from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
+from app.models.params import BodyParams, PathParams
+from app.models.user import User
 from app.models.webhook import (
     WebhookCreateRequest,
     WebhookCreateResponse,
-    WebhookDeleteRequest,
     WebhookDeleteResponse,
-    WebhookGetRequest,
     WebhookGetResponse,
     WebhookListRequest,
     WebhookListResponse,
@@ -19,11 +21,7 @@ from app.models.webhook import (
     WebhookUpdateRequest,
     WebhookUpdateResponse,
 )
-from app.models.enums import TeamMemberRole
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
@@ -44,10 +42,7 @@ def list_webhooks(
     webhook_list_request: WebhookListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list webhooks.",
-        )
+        raise ForbiddenException()
     count = versify.webhooks.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_webhooks(
     webhook_search_request: WebhookSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search webhooks.",
-        )
+        raise ForbiddenException()
     webhook_search_request_dict = webhook_search_request.dict()
     query = webhook_search_request_dict["query"]
     webhooks = versify.webhooks.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_webhook(
     webhook_create: WebhookCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create webhooks.",
-        )
+        raise ForbiddenException()
     body = webhook_create.dict()
     body["account"] = current_account.id
     create_result = versify.webhooks.create(body)
@@ -127,21 +116,12 @@ def get_webhook(
     webhook_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view webhooks.",
-        )
+        raise ForbiddenException()
     webhook = versify.webhooks.get(webhook_id)
     if not webhook:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Webhook not found",
-        )
+        raise NotFoundException()
     if webhook.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view webhooks for this account.",
-        )
+        raise ForbiddenException()
     return webhook
 
 
@@ -162,21 +142,12 @@ def update_webhook(
     webhook_update: WebhookUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update webhooks.",
-        )
+        raise ForbiddenException()
     webhook = versify.webhooks.get(webhook_id)
     if not webhook:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Webhook not found",
-        )
+        raise NotFoundException()
     if webhook.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update webhooks for this account.",
-        )
+        raise ForbiddenException()
     body = webhook_update.dict()
     update_result = versify.webhooks.update(webhook_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_webhook(
     webhook_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete webhooks.",
-        )
+        raise ForbiddenException()
     webhook = versify.webhooks.get(webhook_id)
     if not webhook:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Webhook not found",
-        )
+        raise NotFoundException()
     if webhook.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete webhooks for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.webhooks.delete(webhook_id)
     return delete_result

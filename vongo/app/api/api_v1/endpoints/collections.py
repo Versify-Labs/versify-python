@@ -8,9 +8,7 @@ from app.models.account import Account
 from app.models.collection import (
     CollectionCreateRequest,
     CollectionCreateResponse,
-    CollectionDeleteRequest,
     CollectionDeleteResponse,
-    CollectionGetRequest,
     CollectionGetResponse,
     CollectionListRequest,
     CollectionListResponse,
@@ -20,10 +18,10 @@ from app.models.collection import (
     CollectionUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/collections", tags=["Collections"])
 
@@ -44,10 +42,7 @@ def list_collections(
     collection_list_request: CollectionListRequest = Depends(),
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to list collections.",
-        )
+        raise ForbiddenException()
     count = versify.collections.count(
         account=current_account.id,
     )
@@ -75,10 +70,7 @@ def search_collections(
     collection_search_request: CollectionSearchRequest = BodyParams.SEARCH_CONTACTS,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to search collections.",
-        )
+        raise ForbiddenException()
     collection_search_request_dict = collection_search_request.dict()
     query = collection_search_request_dict["query"]
     collections = versify.collections.search(account=current_account.id, query=query)
@@ -101,10 +93,7 @@ def create_collection(
     collection_create: CollectionCreateRequest = BodyParams.CREATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create collections.",
-        )
+        raise ForbiddenException()
     body = collection_create.dict()
     body["account"] = current_account.id
     create_result = versify.collections.create(body)
@@ -127,21 +116,12 @@ def get_collection(
     collection_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view collections.",
-        )
+        raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Collection not found",
-        )
+        raise NotFoundException()
     if collection.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view collections for this account.",
-        )
+        raise ForbiddenException()
     return collection
 
 
@@ -162,21 +142,12 @@ def update_collection(
     collection_update: CollectionUpdateRequest = BodyParams.UPDATE_CONTACT,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update collections.",
-        )
+        raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Collection not found",
-        )
+        raise NotFoundException()
     if collection.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update collections for this account.",
-        )
+        raise ForbiddenException()
     body = collection_update.dict()
     update_result = versify.collections.update(collection_id, body)
     return update_result
@@ -198,20 +169,11 @@ def delete_collection(
     collection_id: str = PathParams.CONTACT_ID,
 ):
     if current_user_account_role == TeamMemberRole.GUEST:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete collections.",
-        )
+        raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
-        raise HTTPException(
-            status_code=http_status.HTTP_404_NOT_FOUND,
-            detail="Collection not found",
-        )
+        raise NotFoundException()
     if collection.account != current_account.id:
-        raise HTTPException(
-            status_code=http_status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete collections for this account.",
-        )
+        raise ForbiddenException()
     delete_result = versify.collections.delete(collection_id)
     return delete_result

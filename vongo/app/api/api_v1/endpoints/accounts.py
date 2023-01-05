@@ -8,9 +8,10 @@ from app.models.account import (
     AccountUpdateRequest,
 )
 from app.models.enums import TeamMemberRole
+from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -69,12 +70,12 @@ async def get_account(
 ):
     account = versify.accounts.get(account_id)
     if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise NotFoundException()
     role = get_current_user_account_role(account, current_user)
     if role == TeamMemberRole.ADMIN or role == TeamMemberRole.MEMBER:
         return account
     else:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ForbiddenException()
 
 
 @router.put(
@@ -92,7 +93,7 @@ async def update_account(
 ):
     account = versify.accounts.get(account_id)
     if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise NotFoundException()
     role = get_current_user_account_role(account, current_user)
     if role == TeamMemberRole.ADMIN:
         updated = versify.accounts.update(account_id, account_update.dict())
@@ -101,7 +102,7 @@ async def update_account(
         updated = versify.accounts.update(account_id, account_update.dict())
         return updated or account
     else:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ForbiddenException()
 
 
 @router.delete(
@@ -118,10 +119,10 @@ async def delete_account(
 ):
     account = versify.accounts.get(account_id)
     if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise NotFoundException()
     role = get_current_user_account_role(account, current_user)
     if role == TeamMemberRole.ADMIN:
         deleted = versify.accounts.delete(account_id)
         return AccountDeleteResponse(id=account_id, deleted=deleted)
     else:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise ForbiddenException()

@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aws-lambda-powertools = "*"
+aws-lambda-powertools = {extras = ["all"], version = "*"}
 fastapi = "*"
+jinja2 = "*"
 mangum = "*"
 pydantic = {extras = ["email"], version = "*"}
 pymongo = "*"
 python-jose = "*"
 requests = "*"
-jinja2 = "*"
 
 [dev-packages]
 uvicorn = "*"
