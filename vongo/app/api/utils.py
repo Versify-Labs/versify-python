@@ -1,3 +1,6 @@
+import logging
+from typing import Optional
+
 from stytch.client import Client as StytchClient
 from stytch.models.sessions import AuthenticateResponse as StytchAuthenticateResponse
 from stytch.models.users import GetResponse as StytchGetResponse
@@ -8,20 +11,34 @@ from ..crud import versify
 from ..models.account import Account
 from ..models.enums import TeamMemberRole
 from ..models.user import User
-from .exceptions import ForbiddenException, UnauthorizedException
+from .exceptions import ForbiddenException, ServerErrorException, UnauthorizedException
 
 STYTCH_MAX_TOKEN_AGE_SECONDS = 3600000000
 
-stytch_client = StytchClient(
-    environment=settings.STYTCH_ENV,  # type: ignore
-    project_id=settings.STYTCH_PROJECT_ID,  # type: ignore
-    secret=settings.STYTCH_SECRET,  # type: ignore
-    suppress_warnings=True,
-)
+
+def load_stytch() -> Optional[StytchClient]:
+    """Load Stytch."""
+
+    try:
+        stytch_client = StytchClient(
+            environment=settings.STYTCH_ENV,  # type: ignore
+            project_id=settings.STYTCH_PROJECT_ID,  # type: ignore
+            secret=settings.STYTCH_SECRET,  # type: ignore
+            suppress_warnings=True,
+        )
+        return stytch_client
+    except Exception as e:
+        logging.error(e)
+        logging.error("Could not load Stytch")
+
+    return None
 
 
 def get_stytch_user(user_id) -> StytchGetResponse:
     """Get a Stytch user."""
+    stytch_client = load_stytch()
+    if not stytch_client:
+        raise ServerErrorException()
     user = stytch_client.users.get(user_id)
     return user
 
@@ -30,6 +47,9 @@ def validate_stytch_token(session_jwt: str) -> StytchAuthenticateResponse:
     """Validate a Stytch token."""
     print(f"\nAccess Token:\n {session_jwt} \n")
 
+    stytch_client = load_stytch()
+    if not stytch_client:
+        raise ServerErrorException()
     resp = stytch_client.sessions.authenticate_jwt(
         session_jwt, max_token_age_seconds=STYTCH_MAX_TOKEN_AGE_SECONDS
     )
