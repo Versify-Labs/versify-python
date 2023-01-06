@@ -7,10 +7,7 @@ from .models import HTTPAuthorizationCredentials, Identity
 from .security import HTTPBearer
 from .utils import get_current_user_account_role, get_user_from_credentials
 
-security = HTTPBearer(
-    scheme_name="Access Token",
-    description="Authorization header using the Bearer scheme.",
-)
+security = HTTPBearer()
 
 
 """

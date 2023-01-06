@@ -12,6 +12,7 @@ from ..models.account import Account
 from ..models.enums import TeamMemberRole
 from ..models.user import User
 from .exceptions import ForbiddenException, ServerErrorException, UnauthorizedException
+from .models import HTTPAuthorizationCredentials
 
 STYTCH_MAX_TOKEN_AGE_SECONDS = 3600000000
 
@@ -34,7 +35,7 @@ def load_stytch() -> Optional[StytchClient]:
     return None
 
 
-def get_stytch_user(user_id) -> StytchGetResponse:
+def get_stytch_user(user_id: str) -> StytchGetResponse:
     """Get a Stytch user."""
     stytch_client = load_stytch()
     if not stytch_client:
@@ -98,7 +99,7 @@ def convert_stytch_user(stytch_user: StytchUser) -> dict:
     return user_body
 
 
-def get_user_from_credentials(credentials):
+def get_user_from_credentials(credentials: HTTPAuthorizationCredentials) -> User:
     """Get the user from the credentials."""
 
     resp = validate_stytch_token(credentials.token)
@@ -118,7 +119,7 @@ def get_user_from_credentials(credentials):
     return user
 
 
-def get_current_user_account_role(account: Account, user: User):
+def get_current_user_account_role(account: Account, user: User) -> TeamMemberRole:
     """Get the current user's role in the account."""
 
     for account_user in account.team:
