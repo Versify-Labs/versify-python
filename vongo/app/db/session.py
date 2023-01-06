@@ -1,7 +1,10 @@
+import logging
+from typing import Optional
+
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
-from typing import Optional
+
 from ..core.config import settings
 
 
@@ -28,10 +31,11 @@ class SessionLocal:
             print("Could not connect to MongoDB")
 
     @property
-    def client(self) -> MongoClient:
+    def client(self) -> Optional[MongoClient]:
 
         if self._client is None:
-            raise ValueError("Database not initialized")
+            logging.error("Database not initialized")
+            return None
 
         return self._client
 
