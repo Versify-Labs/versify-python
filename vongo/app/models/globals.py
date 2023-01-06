@@ -1,7 +1,9 @@
 from typing import Dict, List, Union
 
-from app.models.base import Base, BaseCreate, BaseUpdate
-from app.models.enums import (
+from pydantic import AnyHttpUrl, EmailStr, Field, validator
+
+from .base import Base
+from .enums import (
     ActionType,
     ContactQueryField,
     Operator,
@@ -12,12 +14,7 @@ from app.models.enums import (
     TriggerType,
     WalletPosition,
 )
-from app.models.factory import (
-    api_public_key,
-    api_secret_key,
-    generate_stripe_customer_id,
-)
-from pydantic import AnyHttpUrl, EmailStr, Field, validator
+from .factory import api_public_key, api_secret_key, generate_stripe_customer_id
 
 
 class Query(Base):

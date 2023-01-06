@@ -1,10 +1,11 @@
 from typing import List, Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.enums import ContactStatus
-from app.models.factory import contact_id, current_timestamp
-from app.models.globals import Location, PersonName, SocialProfile
 from pydantic import Field, HttpUrl
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import ContactStatus
+from .factory import contact_id, current_timestamp
+from .globals import Location, PersonName, SocialProfile
 
 
 class Contact(BaseDoc):

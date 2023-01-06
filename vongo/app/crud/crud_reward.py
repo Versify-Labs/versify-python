@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.reward import Reward
+from ..db.session import SessionLocal
+from ..models.reward import Reward
+from .base import BaseResource
 
 
 class RewardResource(BaseResource):

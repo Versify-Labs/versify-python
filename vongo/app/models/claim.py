@@ -1,7 +1,8 @@
-from app.models.base import BaseDoc, BaseCreate, BaseUpdate
-from app.models.enums import ClaimStatus
-from app.models.factory import claim_id
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import ClaimStatus
+from .factory import claim_id
 
 
 class Claim(BaseDoc):

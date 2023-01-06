@@ -1,10 +1,11 @@
 from typing import Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.enums import RunStatus
-from app.models.factory import current_timestamp, journey_id, run_id
-from app.models.globals import Action, RunStateResult, Trigger
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import RunStatus
+from .factory import current_timestamp, journey_id, run_id
+from .globals import Action, RunStateResult, Trigger
 
 
 class Journey(BaseDoc):

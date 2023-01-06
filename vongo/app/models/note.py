@@ -1,6 +1,7 @@
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.factory import note_id
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .factory import note_id
 
 
 class Note(BaseDoc):

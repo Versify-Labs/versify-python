@@ -1,10 +1,11 @@
 import secrets
 import time
 
-from app.core.constants import DEFAULT_LOGO
-from app.models.enums import ObjectPrefixes
 from bson.objectid import ObjectId
 from pydantic import AnyHttpUrl
+
+from ..core.constants import DEFAULT_LOGO
+from .enums import ObjectPrefixes
 
 
 class PyObjectId(ObjectId):

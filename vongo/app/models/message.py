@@ -1,9 +1,10 @@
 from typing import List, Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.enums import MessageStatus, MessageType
-from app.models.factory import message_id
 from pydantic import EmailStr, Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import MessageStatus, MessageType
+from .factory import message_id
 
 
 class Message(BaseDoc):

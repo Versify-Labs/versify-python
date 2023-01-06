@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.tag import Tag
+from ..db.session import SessionLocal
+from ..models.tag import Tag
+from .base import BaseResource
 
 
 class TagResource(BaseResource):

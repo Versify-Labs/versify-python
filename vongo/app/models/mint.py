@@ -1,9 +1,10 @@
 from typing import Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.enums import MintStatus
-from app.models.factory import mint_id
 from pydantic import EmailStr, Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import MintStatus
+from .factory import mint_id
 
 
 class Mint(BaseDoc):

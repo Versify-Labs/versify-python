@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.message import Message
+from ..db.session import SessionLocal
+from ..models.message import Message
+from .base import BaseResource
 
 
 class MessageResource(BaseResource):

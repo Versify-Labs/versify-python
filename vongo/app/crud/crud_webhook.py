@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.webhook import Webhook
+from ..db.session import SessionLocal
+from ..models.webhook import Webhook
+from .base import BaseResource
 
 
 class WebhookResource(BaseResource):

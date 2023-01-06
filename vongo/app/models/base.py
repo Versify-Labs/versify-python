@@ -3,6 +3,8 @@ from typing import Any, Dict, Union
 from bson.objectid import ObjectId
 from pydantic import BaseModel, Field
 
+from .factory import current_timestamp
+
 
 class Base(BaseModel):
     """Base model for all other models"""
@@ -17,9 +19,6 @@ class Base(BaseModel):
     def bson(self) -> Dict[str, Any]:
         """Converts the model to a BSON document"""
         return self.dict(by_alias=True)
-
-
-from app.models.factory import current_timestamp, event_id
 
 
 class BaseDoc(Base):

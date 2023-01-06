@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.journey import Journey, Run
+from ..db.session import SessionLocal
+from ..models.journey import Journey, Run
+from .base import BaseResource
 
 
 class JourneyResource(BaseResource):

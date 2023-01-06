@@ -1,9 +1,10 @@
 from typing import List, Union
 
-from app.models.base import BaseDoc, BaseUpdate
-from app.models.factory import generate_avatar, user_id
-from app.models.globals import IdentityProvider, PersonName
 from pydantic import EmailStr, Field, root_validator
+
+from .base import BaseDoc, BaseUpdate
+from .factory import generate_avatar, user_id
+from .globals import IdentityProvider, PersonName
 
 
 class User(BaseDoc):

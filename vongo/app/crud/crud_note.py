@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.note import Note
+from ..db.session import SessionLocal
+from ..models.note import Note
+from .base import BaseResource
 
 
 class NoteResource(BaseResource):

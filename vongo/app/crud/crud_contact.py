@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.contact import Contact
+from ..db.session import SessionLocal
+from ..models.contact import Contact
+from .base import BaseResource
 
 
 class ContactResource(BaseResource):

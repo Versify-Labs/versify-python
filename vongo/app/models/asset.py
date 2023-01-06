@@ -1,9 +1,10 @@
 from typing import List, Union
 
-from app.models.base import BaseDoc, BaseCreate, BaseUpdate
-from app.models.enums import AssetStatus, BlockchainType
-from app.models.factory import asset_id, current_timestamp
 from pydantic import Field, HttpUrl
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import AssetStatus, BlockchainType
+from .factory import asset_id, current_timestamp
 
 
 class Asset(BaseDoc):

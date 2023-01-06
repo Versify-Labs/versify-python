@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.event import Event
+from ..db.session import SessionLocal
+from ..models.event import Event
+from .base import BaseResource
 
 
 class EventResource(BaseResource):

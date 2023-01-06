@@ -1,9 +1,10 @@
 from typing import Union
 
-from app.models.base import BaseDoc, BaseCreate, BaseUpdate
-from app.models.enums import RewardType
-from app.models.factory import reward_id
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import RewardType
+from .factory import reward_id
 
 
 class Reward(BaseDoc):

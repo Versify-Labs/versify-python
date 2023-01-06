@@ -1,10 +1,11 @@
 from typing import Union
 
-from app.core.constants import DEFAULT_LOGO
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.enums import CollectionStatus
-from app.models.factory import collection_id
 from pydantic import Field
+
+from ..core.constants import DEFAULT_LOGO
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import CollectionStatus
+from .factory import collection_id
 
 
 class Collection(BaseDoc):

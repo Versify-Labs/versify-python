@@ -1,10 +1,11 @@
 from typing import Any, Union
 
-# from app.core.pywallet import create_wallet
-from app.models.base import Base, BaseCreate, BaseUpdate
-from app.models.enums import WalletType
-from app.models.factory import current_timestamp, wallet_id
 from pydantic import Field
+
+# from app.core.pywallet import create_wallet
+from .base import Base, BaseCreate, BaseUpdate
+from .enums import WalletType
+from .factory import current_timestamp, wallet_id
 
 
 class Wallet(Base):

@@ -1,8 +1,9 @@
 from typing import Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.factory import redemption_id
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .factory import redemption_id
 
 
 class Redemption(BaseDoc):

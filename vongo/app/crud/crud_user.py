@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.user import User
+from ..db.session import SessionLocal
+from ..models.user import User
+from .base import BaseResource
 
 
 class UserResource(BaseResource):

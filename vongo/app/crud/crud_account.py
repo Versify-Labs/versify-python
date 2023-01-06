@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.account import Account
-from app.models.globals import AccountMetrics
+from ..db.session import SessionLocal
+from ..models.account import Account
+from ..models.globals import AccountMetrics
+from .base import BaseResource
 
 
 class AccountResource(BaseResource):

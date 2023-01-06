@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.mint import Mint
+from ..db.session import SessionLocal
+from ..models.mint import Mint
+from .base import BaseResource
 
 
 class MintResource(BaseResource):

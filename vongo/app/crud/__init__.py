@@ -1,19 +1,19 @@
-from app.crud.crud_account import AccountResource
-from app.crud.crud_asset import AssetResource
-from app.crud.crud_claim import ClaimResource
-from app.crud.crud_collection import CollectionResource
-from app.crud.crud_contact import ContactResource
-from app.crud.crud_event import EventResource
-from app.crud.crud_journey import JourneyResource, RunResource
-from app.crud.crud_message import MessageResource
-from app.crud.crud_mint import MintResource
-from app.crud.crud_note import NoteResource
-from app.crud.crud_redemption import RedemptionResource
-from app.crud.crud_reward import RewardResource
-from app.crud.crud_tag import TagResource
-from app.crud.crud_user import UserResource
-from app.crud.crud_webhook import WebhookResource
-from app.db.session import SessionLocal
+from ..db.session import SessionLocal
+from .crud_account import AccountResource
+from .crud_asset import AssetResource
+from .crud_claim import ClaimResource
+from .crud_collection import CollectionResource
+from .crud_contact import ContactResource
+from .crud_event import EventResource
+from .crud_journey import JourneyResource, RunResource
+from .crud_message import MessageResource
+from .crud_mint import MintResource
+from .crud_note import NoteResource
+from .crud_redemption import RedemptionResource
+from .crud_reward import RewardResource
+from .crud_tag import TagResource
+from .crud_user import UserResource
+from .crud_webhook import WebhookResource
 
 
 class Versify:

@@ -1,10 +1,11 @@
 from typing import List, Union
 
-from app.models.base import BaseDoc, BaseCreate, BaseUpdate
-from app.models.enums import AccountStatus
-from app.models.factory import account_id, generate_avatar
-from app.models.globals import Billing, Brand, TeamMember
 from pydantic import Field, root_validator
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .enums import AccountStatus
+from .factory import account_id, generate_avatar
+from .globals import Billing, Brand, TeamMember
 
 
 class Account(BaseDoc):

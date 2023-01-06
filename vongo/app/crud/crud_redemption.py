@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from app.crud.base import BaseResource
-from app.db.session import SessionLocal
-from app.models.redemption import Redemption
+from ..db.session import SessionLocal
+from ..models.redemption import Redemption
+from .base import BaseResource
 
 
 class RedemptionResource(BaseResource):

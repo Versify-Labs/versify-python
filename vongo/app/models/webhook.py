@@ -1,8 +1,9 @@
 from typing import Union
 
-from app.models.base import BaseCreate, BaseDoc, BaseUpdate
-from app.models.factory import webhook_id
 from pydantic import Field
+
+from .base import BaseCreate, BaseDoc, BaseUpdate
+from .factory import webhook_id
 
 
 class Webhook(BaseDoc):
