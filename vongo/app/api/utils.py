@@ -1,4 +1,4 @@
-from app.api.exceptions import ForbiddenException, UnauthorizedException
+from ...exceptions import ForbiddenException, UnauthorizedException
 from app.core.config import settings
 from app.crud import versify
 from app.models.account import Account

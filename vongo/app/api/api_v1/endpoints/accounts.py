@@ -1,8 +1,14 @@
 from typing import List, Union
 
-from app.api.deps import get_current_user_account_role, identity, user_required
-from app.api.exceptions import ForbiddenException, NotFoundException
-from app.api.models import (
+from fastapi import APIRouter, Depends, status
+
+from ....crud import versify
+from ....models.account import Account, AccountCreate, AccountUpdate
+from ....models.enums import TeamMemberRole
+from ....models.globals import AccountMetrics
+from ...deps import identity, user_required
+from ...exceptions import ForbiddenException, NotFoundException
+from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
     BodyParams,
@@ -10,11 +16,7 @@ from app.api.models import (
     PathParams,
     QueryParams,
 )
-from app.crud import versify
-from app.models.account import Account, AccountCreate, AccountUpdate
-from app.models.enums import TeamMemberRole
-from app.models.globals import AccountMetrics
-from fastapi import APIRouter, Depends, status
+from ...utils import get_current_user_account_role
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 

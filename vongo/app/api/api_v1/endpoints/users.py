@@ -1,6 +1,6 @@
-from app.api.deps import identity
-from app.api.exceptions import ForbiddenException
-from app.api.models import BodyParams, Identity
+from ...deps import identity
+from ...exceptions import ForbiddenException
+from ...models import BodyParams, Identity
 from app.crud import versify
 from app.models.user import User, UserUpdate
 from fastapi import APIRouter, Depends

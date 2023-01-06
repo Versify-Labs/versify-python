@@ -1,6 +1,6 @@
-from app.api.deps import identity_with_account
-from app.api.exceptions import ForbiddenException, NotFoundException
-from app.api.models import (
+from ...deps import identity_with_account
+from ...exceptions import ForbiddenException, NotFoundException
+from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
     ApiSearchResponse,

@@ -1,6 +1,6 @@
-from app.api.deps import identity_with_account
+from ...deps import identity_with_account
 from app.crud import versify
-from app.api.models import (
+from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
     ApiSearchResponse,
@@ -13,7 +13,7 @@ from app.api.models import (
 from app.models.reward import Reward, RewardCreate, RewardUpdate
 
 from app.models.enums import TeamMemberRole
-from app.api.exceptions import ForbiddenException, NotFoundException
+from ...exceptions import ForbiddenException, NotFoundException
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/rewards", tags=["Rewards"])

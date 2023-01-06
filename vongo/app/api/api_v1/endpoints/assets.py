@@ -1,6 +1,11 @@
-from app.api.deps import identity_with_account
-from app.api.exceptions import ForbiddenException, NotFoundException
-from app.api.models import (
+from fastapi import APIRouter, Depends
+
+from ....crud import versify
+from ....models.asset import Asset, AssetCreate, AssetUpdate
+from ....models.enums import TeamMemberRole
+from ...deps import identity_with_account
+from ...exceptions import ForbiddenException, NotFoundException
+from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
     ApiSearchResponse,
@@ -10,10 +15,6 @@ from app.api.models import (
     QueryParams,
     SearchQuery,
 )
-from app.crud import versify
-from app.models.asset import Asset, AssetCreate, AssetUpdate
-from app.models.enums import TeamMemberRole
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
 

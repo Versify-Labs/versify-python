@@ -1,9 +1,9 @@
 from typing import Union
 
-from app.api.exceptions import ForbiddenException
-from app.api.models import HTTPAuthorizationCredentials, Identity
-from app.api.security import HTTPBearer
-from app.api.utils import get_current_user_account_role, get_user_from_credentials
+from ...exceptions import ForbiddenException
+from ...models import HTTPAuthorizationCredentials, Identity
+from ....security import HTTPBearer
+from ....utils import get_current_user_account_role, get_user_from_credentials
 from app.crud import versify
 from app.models.enums import TeamMemberRole
 from fastapi import Depends, Header

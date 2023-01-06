@@ -1,7 +1,7 @@
 from typing import Optional
 
-from app.api.exceptions import ForbiddenException
-from app.api.models import HTTPAuthorizationCredentials
+from ...exceptions import ForbiddenException
+from ...models import HTTPAuthorizationCredentials
 from fastapi.openapi.models import HTTPBase as HTTPBaseModel
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.openapi.models import SecuritySchemeType

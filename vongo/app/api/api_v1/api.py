@@ -1,4 +1,6 @@
-from app.api.api_v1.endpoints import (
+from fastapi import APIRouter
+
+from .endpoints import (
     accounts,
     assets,
     claims,
@@ -15,7 +17,6 @@ from app.api.api_v1.endpoints import (
     users,
     webhooks,
 )
-from fastapi import APIRouter
 
 api_router = APIRouter()
 api_router.include_router(accounts.router)

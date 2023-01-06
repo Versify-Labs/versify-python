@@ -1,6 +1,11 @@
-from app.api.deps import identity_with_account
-from app.crud import versify
-from app.api.models import (
+from fastapi import APIRouter, Depends
+
+from ....crud import versify
+from ....models.contact import Contact, ContactCreate, ContactUpdate
+from ....models.enums import TeamMemberRole
+from ...deps import identity_with_account
+from ...exceptions import ForbiddenException, NotFoundException
+from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
     ApiSearchResponse,
@@ -10,11 +15,6 @@ from app.api.models import (
     QueryParams,
     SearchQuery,
 )
-from app.models.contact import Contact, ContactCreate, ContactUpdate
-
-from app.models.enums import TeamMemberRole
-from app.api.exceptions import ForbiddenException, NotFoundException
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
