@@ -1,16 +1,23 @@
 -i https://pypi.org/simple
+aiohttp==3.8.3 ; python_version >= '3.6'
+aiosignal==1.3.1 ; python_version >= '3.7'
 anyio==3.6.2 ; python_full_version >= '3.6.2'
+async-timeout==4.0.2 ; python_version >= '3.6'
+attrs==22.2.0 ; python_version >= '3.6'
 aws-lambda-powertools[all]==2.5.0
 aws-xray-sdk==2.11.0
-boto3==1.26.43 ; python_version >= '3.7'
-botocore==1.29.43 ; python_version >= '3.7'
+boto3==1.26.44 ; python_version >= '3.7'
+botocore==1.29.44 ; python_version >= '3.7'
 certifi==2022.12.7 ; python_version >= '3.6'
+cffi==1.15.1
 charset-normalizer==2.1.1 ; python_full_version >= '3.6.0'
+cryptography==39.0.0
 dnspython==2.2.1
 ecdsa==0.18.0 ; python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'
 email-validator==1.3.0
 fastapi==0.88.0
 fastjsonschema==2.16.2
+frozenlist==1.3.3 ; python_version >= '3.7'
 idna==3.4 ; python_version >= '3.5'
 jinja2==3.1.2
 jmespath==1.0.1 ; python_version >= '3.7'
@@ -18,8 +25,11 @@ ksuid==1.3
 mailchimp-transactional==1.0.50
 mangum==0.17.0
 markupsafe==2.1.1 ; python_version >= '3.7'
+multidict==6.0.4 ; python_version >= '3.7'
 pyasn1==0.4.8
+pycparser==2.21
 pydantic[email]==1.10.4
+pyjwt[crypto]==2.6.0 ; python_version >= '3.7'
 pymongo[aws]==4.3.3
 pymongo-auth-aws==1.1.0
 python-dateutil==2.8.2 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
@@ -31,6 +41,8 @@ six==1.16.0 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 
 sniffio==1.3.0 ; python_version >= '3.7'
 starlette==0.22.0 ; python_version >= '3.7'
 stripe==5.0.0
+stytch==6.2.0
 typing-extensions==4.4.0 ; python_version >= '3.7'
 urllib3==1.26.13 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5'
 wrapt==1.14.1 ; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
+yarl==1.8.2 ; python_version >= '3.7'

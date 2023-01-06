@@ -1,26 +1,19 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.crud import versify
-from app.models.account import Account
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
+)
+from app.models.message import Message, MessageCreate, MessageUpdate
+
 from app.models.enums import TeamMemberRole
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.models.message import (
-    MessageCreateRequest,
-    MessageCreateResponse,
-    MessageDeleteResponse,
-    MessageGetResponse,
-    MessageListRequest,
-    MessageListResponse,
-    MessageSearchRequest,
-    MessageSearchResponse,
-    MessageUpdateRequest,
-    MessageUpdateResponse,
-)
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
@@ -32,24 +25,29 @@ router = APIRouter(prefix="/messages", tags=["Messages"])
     description="List messages with optional filters and pagination parameters",
     tags=["Messages"],
     status_code=200,
-    response_model=MessageListResponse,
+    response_model=ApiListResponse,
     response_description="The list of messages",
 )
 def list_messages(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    message_list_request: MessageListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.messages.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     messages = versify.messages.list(
-        page_num=message_list_request.page_num,
-        page_size=message_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": messages, "has_more": count > len(messages)}
 
@@ -60,20 +58,18 @@ def list_messages(
     description="Search messages with query string",
     tags=["Messages"],
     status_code=200,
-    response_model=MessageSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of messages",
 )
 def search_messages(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    message_search_request: MessageSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    message_search_request_dict = message_search_request.dict()
-    query = message_search_request_dict["query"]
-    messages = versify.messages.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    messages = versify.messages.search(account=identity.account.id, query=query)
     return {"count": len(messages), "data": messages}
 
 
@@ -83,19 +79,17 @@ def search_messages(
     description="Create a message",
     tags=["Messages"],
     status_code=201,
-    response_model=MessageCreateResponse,
+    response_model=Message,
     response_description="The created message",
 )
 def create_message(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    message_create: MessageCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    message_create: MessageCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = message_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.messages.create(body)
     return create_result
 
@@ -106,21 +100,19 @@ def create_message(
     description="Get a message",
     tags=["Messages"],
     status_code=200,
-    response_model=MessageGetResponse,
+    response_model=Message,
     response_description="The message",
 )
 def get_message(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     message_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
-        raise NotFoundException()
-    if message.account != current_account.id:
+        raise NotFoundException("Message not found")
+    if message.account != identity.account.id:
         raise ForbiddenException()
     return message
 
@@ -131,25 +123,22 @@ def get_message(
     description="Update an message",
     tags=["Messages"],
     status_code=200,
-    response_model=MessageUpdateResponse,
+    response_model=Message,
     response_description="The updated message",
 )
 def update_message(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     message_id: str = PathParams.CONTACT_ID,
-    message_update: MessageUpdateRequest = BodyParams.UPDATE_CONTACT,
+    message_update: MessageUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
         raise NotFoundException()
-    if message.account != current_account.id:
+    if message.account != identity.account.id:
         raise ForbiddenException()
-    body = message_update.dict()
-    update_result = versify.messages.update(message_id, body)
+    update_result = versify.messages.update(message_id, message_update.dict())
     return update_result
 
 
@@ -159,21 +148,19 @@ def update_message(
     description="Delete an message",
     tags=["Messages"],
     status_code=200,
-    response_model=MessageDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted message",
 )
 def delete_message(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     message_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     message = versify.messages.get(message_id)
     if not message:
         raise NotFoundException()
-    if message.account != current_account.id:
+    if message.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.messages.delete(message_id)
     return delete_result

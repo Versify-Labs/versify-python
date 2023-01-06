@@ -3,13 +3,15 @@ from typing import Any, Dict, List, Optional
 from app.crud.base import BaseResource
 from app.db.session import SessionLocal
 from app.models.account import Account
+from app.models.globals import AccountMetrics
 
 
 class AccountResource(BaseResource):
     def __init__(self, db_session: SessionLocal):
-        db_name = "Dev"
-        db_collection = "Accounts"
-        self.collection = db_session.get_collection(db_name, db_collection)
+        self.model = Account
+        self.db_name = Account.__db__
+        self.db_collection = Account.__collection__
+        self.collection = db_session.get_collection(self.db_name, self.db_collection)
 
     def count(self, **kwargs) -> int:
         return self._count(**kwargs)
@@ -44,3 +46,6 @@ class AccountResource(BaseResource):
     def update(self, id: str, body: Dict[str, Any]) -> Optional[Account]:
         account = self._update(id, body)
         return Account(**account) if account else None
+
+    def get_metrics(self, id: str, object_types: Optional[List[str]]) -> AccountMetrics:
+        return AccountMetrics()

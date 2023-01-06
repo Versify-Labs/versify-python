@@ -1,28 +1,18 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.crud import versify
-from app.models.account import Account
-from app.models.enums import TeamMemberRole
-from app.models.journey import (
-    JourneyCreateRequest,
-    JourneyCreateResponse,
-    JourneyDeleteResponse,
-    JourneyGetResponse,
-    JourneyListRequest,
-    JourneyListResponse,
-    JourneySearchRequest,
-    JourneySearchResponse,
-    JourneyUpdateRequest,
-    JourneyUpdateResponse,
-    RunListRequest,
-    RunListResponse,
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
 )
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
+from app.crud import versify
+from app.models.enums import TeamMemberRole
+from app.models.journey import Journey, JourneyCreate, JourneyUpdate
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/journeys", tags=["Journeys"])
@@ -34,24 +24,29 @@ router = APIRouter(prefix="/journeys", tags=["Journeys"])
     description="List journeys with optional filters and pagination parameters",
     tags=["Journeys"],
     status_code=200,
-    response_model=JourneyListResponse,
+    response_model=ApiListResponse,
     response_description="The list of journeys",
 )
 def list_journeys(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    journey_list_request: JourneyListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.journeys.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     journeys = versify.journeys.list(
-        page_num=journey_list_request.page_num,
-        page_size=journey_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": journeys, "has_more": count > len(journeys)}
 
@@ -62,20 +57,18 @@ def list_journeys(
     description="Search journeys with query string",
     tags=["Journeys"],
     status_code=200,
-    response_model=JourneySearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of journeys",
 )
 def search_journeys(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    journey_search_request: JourneySearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    journey_search_request_dict = journey_search_request.dict()
-    query = journey_search_request_dict["query"]
-    journeys = versify.journeys.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    journeys = versify.journeys.search(account=identity.account.id, query=query)
     return {"count": len(journeys), "data": journeys}
 
 
@@ -85,19 +78,17 @@ def search_journeys(
     description="Create a journey",
     tags=["Journeys"],
     status_code=201,
-    response_model=JourneyCreateResponse,
+    response_model=Journey,
     response_description="The created journey",
 )
 def create_journey(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    journey_create: JourneyCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    journey_create: JourneyCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = journey_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.journeys.create(body)
     return create_result
 
@@ -108,21 +99,19 @@ def create_journey(
     description="Get a journey",
     tags=["Journeys"],
     status_code=200,
-    response_model=JourneyGetResponse,
+    response_model=Journey,
     response_description="The journey",
 )
 def get_journey(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     journey_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
-        raise NotFoundException()
-    if journey.account != current_account.id:
+        raise NotFoundException("Journey not found")
+    if journey.account != identity.account.id:
         raise ForbiddenException()
     return journey
 
@@ -133,25 +122,22 @@ def get_journey(
     description="Update an journey",
     tags=["Journeys"],
     status_code=200,
-    response_model=JourneyUpdateResponse,
+    response_model=Journey,
     response_description="The updated journey",
 )
 def update_journey(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     journey_id: str = PathParams.CONTACT_ID,
-    journey_update: JourneyUpdateRequest = BodyParams.UPDATE_CONTACT,
+    journey_update: JourneyUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
         raise NotFoundException()
-    if journey.account != current_account.id:
+    if journey.account != identity.account.id:
         raise ForbiddenException()
-    body = journey_update.dict()
-    update_result = versify.journeys.update(journey_id, body)
+    update_result = versify.journeys.update(journey_id, journey_update.dict())
     return update_result
 
 
@@ -161,55 +147,19 @@ def update_journey(
     description="Delete an journey",
     tags=["Journeys"],
     status_code=200,
-    response_model=JourneyDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted journey",
 )
 def delete_journey(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     journey_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
-        raise ForbiddenException()
-    journey = versify.journeys.get(journey_id)
-    if not journey:
-        raise
-    if journey.account != current_account.id:
-        raise ForbiddenException()
-    delete_result = versify.journeys.delete(journey_id)
-    return delete_result
-
-
-@router.get(
-    path="/{journey_id}/runs",
-    summary="List journey runs",
-    description="List journey runs",
-    tags=["Journeys"],
-    status_code=200,
-    response_model=RunListResponse,
-    response_description="The list of journey runs",
-)
-def list_runs(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    journey_id: str = PathParams.CONTACT_ID,
-    run_list_request: RunListRequest = Depends(),
-):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     journey = versify.journeys.get(journey_id)
     if not journey:
         raise NotFoundException()
-    if journey.account != current_account.id:
+    if journey.account != identity.account.id:
         raise ForbiddenException()
-    count = versify.runs.count(
-        journey=journey_id,
-    )
-    runs = versify.runs.list(
-        page_num=run_list_request.page_num,
-        page_size=run_list_request.page_size,
-        journey=journey_id,
-    )
-    return {"count": count, "data": runs, "has_more": count > len(runs)}
+    delete_result = versify.journeys.delete(journey_id)
+    return delete_result

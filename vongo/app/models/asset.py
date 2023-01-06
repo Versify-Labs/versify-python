@@ -1,15 +1,16 @@
 from typing import List, Union
 
-from app.models.base import Base
+from app.models.base import BaseDoc, BaseCreate, BaseUpdate
 from app.models.enums import AssetStatus, BlockchainType
 from app.models.factory import asset_id, current_timestamp
-from app.models.globals import Query
-from fastapi import Query as QueryParam
-from pydantic import Field, HttpUrl, validator
+from pydantic import Field, HttpUrl
 
 
-class Asset(Base):
+class Asset(BaseDoc):
     """A asset document in the database."""
+
+    __db__ = "Dev"
+    __collection__ = "Assets"
 
     id: str = Field(
         alias="_id",
@@ -48,12 +49,6 @@ class Asset(Base):
         example="0x1234567890123456789012345678901234567890",
         title="Contract Address",
     )
-    created: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the asset was created",
-        example=1601059200,
-        title="Created Timestamp",
-    )
     description: str = Field(
         ...,
         description="The description of the asset",
@@ -65,12 +60,6 @@ class Asset(Base):
         description="The image of the asset",
         example="https://example.com/image.png",
         title="Image",
-    )
-    metadata: dict = Field(
-        default={},
-        description="Arbitrary metadata associated with the asset",
-        example={"key": "value"},
-        title="Metadata",
     )
     name: str = Field(
         ...,
@@ -95,15 +84,9 @@ class Asset(Base):
         example="1234567890123456789012345678901234567890123456789012345678901234",
         title="Token ID",
     )
-    updated: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the asset was last updated",
-        example=1601059200,
-        title="Updated Timestamp",
-    )
 
 
-class AssetCreateRequest(Base):
+class AssetCreate(BaseCreate):
     """A asset create request body."""
 
     description: str = Field(
@@ -131,167 +114,7 @@ class AssetCreateRequest(Base):
     )
 
 
-class AssetCreateResponse(Asset):
-    """A asset create response body."""
-
-    pass
-
-
-class AssetDeleteRequest:
-    """A asset delete request body."""
-
-    pass
-
-
-class AssetDeleteResponse(Base):
-    """A asset delete response body."""
-
-    id: str = Field(
-        description="Unique identifier for the asset",
-        example="ast_5f9f1c5b0b9b4b0b9c1c5b0b",
-        title="Asset ID",
-    )
-    object: str = Field(
-        default="asset",
-        description="The object type",
-        example="asset",
-        title="Object Type",
-    )
-    deleted: bool = Field(
-        default=True,
-        description="Whether the asset has been deleted",
-        example=True,
-        title="Deleted",
-    )
-
-
-class AssetGetRequest:
-    """A asset get request body."""
-
-    pass
-
-
-class AssetGetResponse(Asset):
-    """A asset get response body."""
-
-    pass
-
-
-class AssetListRequest:
-    """A asset list request body."""
-
-    def __init__(
-        self,
-        page_num: int = QueryParam(
-            default=1,
-            description="The page number to return",
-            example=1,
-            title="Page Number",
-        ),
-        page_size: int = QueryParam(
-            default=20,
-            description="The number of assets to return",
-            example=20,
-            title="Page Size",
-        ),
-        collection: str = QueryParam(
-            default=None,
-            description="The ID of the collection that the asset belongs to",
-            example="collection",
-            title="Collection",
-        ),
-        status: AssetStatus = QueryParam(
-            default=AssetStatus.ACTIVE,
-            description="The status of the asset",
-            example=AssetStatus.ACTIVE,
-            title="Status",
-        )
-    ):
-        self.page_num = page_num
-        self.page_size = page_size
-        self.collection = collection
-        self.status = status
-
-
-class AssetListResponse(Base):
-    """A asset list response body."""
-
-    object: str = Field(
-        default="list",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of assets returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Asset] = Field(
-        default=[],
-        description="The list of assets that match the filters and pagination parameters.",
-        title="Assets",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more assets to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/assets",
-        description="The URL of the list request",
-        example="/v1/assets",
-        title="URL",
-    )
-
-
-class AssetSearchRequest(Base):
-    """A asset search request body."""
-
-    query: Query = Field(
-        ...,
-        description="The query to search for",
-        title="Query",
-    )
-
-
-class AssetSearchResponse(Base):
-    """A asset search response body."""
-
-    object: str = Field(
-        default="search_result",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of assets returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Asset] = Field(
-        default=[],
-        description="The list of assets that match the filters and pagination parameters.",
-        title="Assets",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more assets to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/assets/search",
-        description="The URL of the search request",
-        example="/v1/assets/search",
-        title="URL",
-    )
-
-
-class AssetUpdateRequest(Base):
+class AssetUpdate(BaseUpdate):
     """A asset update request body."""
 
     description: Union[str, None] = Field(
@@ -306,12 +129,6 @@ class AssetUpdateRequest(Base):
         example="https://example.com/image.png",
         title="Image",
     )
-    metadata: Union[dict, None] = Field(
-        default=None,
-        description="Arbitrary metadata associated with the asset",
-        example={"key": "value"},
-        title="Metadata",
-    )
     name: Union[str, None] = Field(
         default=None,
         description="The name of the asset. Displayed on third party apps.",
@@ -323,9 +140,9 @@ class AssetUpdateRequest(Base):
         description="The properties of the asset. Displayed on third party apps.",
         title="Properties",
     )
-
-
-class AssetUpdateResponse(Asset):
-    """A asset update response body."""
-
-    pass
+    status: Union[AssetStatus, None] = Field(
+        default=None,
+        description="The status of the asset",
+        example=AssetStatus.ACTIVE,
+        title="Status",
+    )

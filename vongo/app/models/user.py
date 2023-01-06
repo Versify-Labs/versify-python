@@ -1,13 +1,16 @@
-from typing import Any, Dict, List, Sequence, Union
+from typing import List, Union
 
-from app.models.base import Base
-from app.models.factory import current_timestamp, generate_avatar, user_id
+from app.models.base import BaseDoc, BaseUpdate
+from app.models.factory import generate_avatar, user_id
 from app.models.globals import IdentityProvider, PersonName
 from pydantic import EmailStr, Field, root_validator
 
 
-class User(Base):
+class User(BaseDoc):
     """A user document in the database."""
+
+    __db__ = "Dev"
+    __collection__ = "Users"
 
     id: str = Field(
         alias="_id",
@@ -34,12 +37,6 @@ class User(Base):
         example="https://example.com/avatar.png",
         title="Avatar URL",
     )
-    created: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the user was created",
-        example=1601059200,
-        title="Created Timestamp",
-    )
     email: EmailStr = Field(
         ...,
         description="The email address of the user",
@@ -51,12 +48,6 @@ class User(Base):
         description="Whether the user's email address has been verified",
         example=True,
         title="Email Verified",
-    )
-    metadata: Dict[str, Any] = Field(
-        default={},
-        description="Arbitrary metadata associated with the user",
-        example={"key": "value"},
-        title="Metadata",
     )
     name: PersonName = Field(
         default=PersonName(), description="The name of the user", title="Name"
@@ -78,12 +69,6 @@ class User(Base):
         description="The identity providers the user belongs to",
         title="Identity Providers",
     )
-    updated: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the user was last updated",
-        example=1601059200,
-        title="Updated Timestamp",
-    )
 
     @root_validator(pre=True)
     def default_values(cls, values):
@@ -93,7 +78,7 @@ class User(Base):
         return values
 
 
-class UserUpdate(Base):
+class UserUpdate(BaseUpdate):
     """A user update ressponse body."""
 
     avatar: Union[str, None] = Field(
@@ -110,66 +95,4 @@ class UserUpdate(Base):
         description="The phone number of the user",
         example="+15555555555",
         title="Phone Number",
-    )
-
-
-class UserDeleted(Base):
-    """A user deleted response body."""
-
-    id: str = Field(
-        alias="_id",
-        default_factory=user_id,
-        description="Unique identifier for the user",
-        example="user_5f9f1c5b0b9b4b0b9c1c5b0b",
-        title="User ID",
-    )
-    object: str = Field(
-        default="user",
-        description='The object type. Always "user"',
-        example="user",
-        title="Object Type",
-    )
-    deleted: bool = Field(
-        default=True,
-        description="Whether the user has been deleted",
-        example=True,
-        title="Deleted",
-    )
-
-
-class UserList(Base):
-    """A user list response body."""
-
-    object: str = Field(
-        default="list",
-        description='The object type. Always "list"',
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of users in the list",
-        example=1,
-        title="Count",
-    )
-    data: List[User] = Field(
-        default=[],
-        description="The list of users",
-        title="Users",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more users to retrieve",
-        example=True,
-        title="Has More",
-    )
-
-
-class UserSearch(Base):
-    """A user search response body."""
-
-    results: Sequence[User] = Field(
-        default=[],
-        description="The list of users",
-        title="Users",
     )

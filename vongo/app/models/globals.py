@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from app.models.base import Base
+from app.models.base import Base, BaseCreate, BaseUpdate
 from app.models.enums import (
     ActionType,
     ContactQueryField,
@@ -40,6 +40,46 @@ class Query(Base):
         description="The value to query by",
         example="gmail.com",
         title="Query Value",
+    )
+
+
+class AccountMetrics(Base):
+
+    contacts: int = Field(
+        default=0,
+        description="The number of contacts in the account",
+        example=100,
+        title="Contacts",
+    )
+    journeys: int = Field(
+        default=0,
+        description="The number of journeys in the account",
+        example=100,
+        title="Journeys",
+    )
+    journey_runs: int = Field(
+        default=0,
+        description="The number of journey runs in the account",
+        example=100,
+        title="Journey Runs",
+    )
+    mints: int = Field(
+        default=0,
+        description="The number of mints in the account",
+        example=100,
+        title="Mints",
+    )
+    redemptions: int = Field(
+        default=0,
+        description="The number of redemptions in the account",
+        example=100,
+        title="Redemptions",
+    )
+    rewards: int = Field(
+        default=0,
+        description="The number of rewards in the account",
+        example=100,
+        title="Rewards",
     )
 
 

@@ -1,28 +1,18 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.crud import versify
-from app.models.account import Account
-from app.models.asset import (
-    AssetCreateRequest,
-    AssetCreateResponse,
-    AssetDeleteRequest,
-    AssetDeleteResponse,
-    AssetGetRequest,
-    AssetGetResponse,
-    AssetListRequest,
-    AssetListResponse,
-    AssetSearchRequest,
-    AssetSearchResponse,
-    AssetUpdateRequest,
-    AssetUpdateResponse,
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
 )
+from app.crud import versify
+from app.models.asset import Asset, AssetCreate, AssetUpdate
 from app.models.enums import TeamMemberRole
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
@@ -34,28 +24,29 @@ router = APIRouter(prefix="/assets", tags=["Assets"])
     description="List assets with optional filters and pagination parameters",
     tags=["Assets"],
     status_code=200,
-    response_model=AssetListResponse,
+    response_model=ApiListResponse,
     response_description="The list of assets",
 )
 def list_assets(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    asset_list_request: AssetListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.assets.count(
-        account=current_account.id,
-        collection=asset_list_request.collection,
-        status=asset_list_request.status,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     assets = versify.assets.list(
-        page_num=asset_list_request.page_num,
-        page_size=asset_list_request.page_size,
-        account=current_account.id,
-        collection=asset_list_request.collection,
-        status=asset_list_request.status,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": assets, "has_more": count > len(assets)}
 
@@ -66,20 +57,18 @@ def list_assets(
     description="Search assets with query string",
     tags=["Assets"],
     status_code=200,
-    response_model=AssetSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of assets",
 )
 def search_assets(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    asset_search_request: AssetSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    asset_search_request_dict = asset_search_request.dict()
-    query = asset_search_request_dict["query"]
-    assets = versify.assets.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    assets = versify.assets.search(account=identity.account.id, query=query)
     return {"count": len(assets), "data": assets}
 
 
@@ -89,19 +78,17 @@ def search_assets(
     description="Create a asset",
     tags=["Assets"],
     status_code=201,
-    response_model=AssetCreateResponse,
+    response_model=Asset,
     response_description="The created asset",
 )
 def create_asset(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    asset_create: AssetCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    asset_create: AssetCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = asset_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.assets.create(body)
     return create_result
 
@@ -112,21 +99,19 @@ def create_asset(
     description="Get a asset",
     tags=["Assets"],
     status_code=200,
-    response_model=AssetGetResponse,
+    response_model=Asset,
     response_description="The asset",
 )
 def get_asset(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     asset_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
-        raise NotFoundException()
-    if asset.account != current_account.id:
+        raise NotFoundException("Asset not found")
+    if asset.account != identity.account.id:
         raise ForbiddenException()
     return asset
 
@@ -137,25 +122,22 @@ def get_asset(
     description="Update an asset",
     tags=["Assets"],
     status_code=200,
-    response_model=AssetUpdateResponse,
+    response_model=Asset,
     response_description="The updated asset",
 )
 def update_asset(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     asset_id: str = PathParams.CONTACT_ID,
-    asset_update: AssetUpdateRequest = BodyParams.UPDATE_CONTACT,
+    asset_update: AssetUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
         raise NotFoundException()
-    if asset.account != current_account.id:
+    if asset.account != identity.account.id:
         raise ForbiddenException()
-    body = asset_update.dict()
-    update_result = versify.assets.update(asset_id, body)
+    update_result = versify.assets.update(asset_id, asset_update.dict())
     return update_result
 
 
@@ -165,21 +147,19 @@ def update_asset(
     description="Delete an asset",
     tags=["Assets"],
     status_code=200,
-    response_model=AssetDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted asset",
 )
 def delete_asset(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     asset_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     asset = versify.assets.get(asset_id)
     if not asset:
         raise NotFoundException()
-    if asset.account != current_account.id:
+    if asset.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.assets.delete(asset_id)
     return delete_result

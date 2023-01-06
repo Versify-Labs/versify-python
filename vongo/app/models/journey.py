@@ -1,14 +1,18 @@
-from typing import Any, Dict, List, Union
+from typing import Union
 
-from app.models.base import Base
+from app.models.base import BaseCreate, BaseDoc, BaseUpdate
 from app.models.enums import RunStatus
 from app.models.factory import current_timestamp, journey_id, run_id
-from app.models.globals import Action, Query, RunStateResult, Trigger
-from fastapi import Query as QueryParam
+from app.models.globals import Action, RunStateResult, Trigger
 from pydantic import Field
 
 
-class Journey(Base):
+class Journey(BaseDoc):
+    """A journey document in the database."""
+
+    __db__ = "Dev"
+    __collection__ = "Journeys"
+
     id: str = Field(
         alias="_id",
         default_factory=journey_id,
@@ -34,23 +38,11 @@ class Journey(Base):
         example=True,
         title="Active",
     )
-    created: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the journey was created",
-        example=1600000000,
-        title="Created",
-    )
     description: str = Field(
         default="",
         description="A description of the journey",
         example="My journey",
         title="Description",
-    )
-    metadata: Dict[str, Any] = Field(
-        default={},
-        description="Arbitrary metadata associated with the journey",
-        example={"key": "value"},
-        title="Metadata",
     )
     name: str = Field(
         description="The name of the journey. Internal facing.",
@@ -94,189 +86,26 @@ class Journey(Base):
         },
         title="Trigger",
     )
-    updated: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the journey was last updated",
-        example=1600000000,
-        title="Updated",
-    )
 
 
-class JourneyCreateRequest(Base):
+class JourneyCreate(BaseCreate):
     """A journey create request body."""
 
-    metadata: Union[Dict[str, Any], None] = Field(
-        default=None,
-        description="Arbitrary metadata associated with the journey",
-        example={"key": "value"},
-        title="Metadata",
-    )
-
-
-class JourneyCreateResponse(Journey):
-    """A journey create response body."""
-
     pass
 
 
-class JourneyDeleteRequest:
-    """A journey delete request body."""
-
-    pass
-
-
-class JourneyDeleteResponse(Base):
-    """A journey delete response body."""
-
-    id: str = Field(
-        description="Unique identifier for the journey",
-        example="acct_5f9f1c5b0b9b4b0b9c1c5b0b",
-        title="Journey ID",
-    )
-    object: str = Field(
-        default="journey",
-        description="The object type",
-        example="journey",
-        title="Object Type",
-    )
-    deleted: bool = Field(
-        default=True,
-        description="Whether the journey has been deleted",
-        example=True,
-        title="Deleted",
-    )
-
-
-class JourneyGetRequest:
-    """A journey get request body."""
-
-    pass
-
-
-class JourneyGetResponse(Journey):
-    """A journey get response body."""
-
-    pass
-
-
-class JourneyListRequest:
-    """A journey list request body."""
-
-    def __init__(
-        self,
-        page_num: int = QueryParam(
-            default=1,
-            description="The page number to return",
-            example=1,
-            title="Page Number",
-        ),
-        page_size: int = QueryParam(
-            default=20,
-            description="The number of journeys to return",
-            example=20,
-            title="Page Size",
-        ),
-    ):
-        self.page_num = page_num
-        self.page_size = page_size
-
-
-class JourneyListResponse(Base):
-    """A journey list response body."""
-
-    object: str = Field(
-        default="list",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of journeys returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Journey] = Field(
-        default=[],
-        description="The list of journeys that match the filters and pagination parameters.",
-        title="Journeys",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more journeys to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/journeys",
-        description="The URL of the list request",
-        example="/v1/journeys",
-        title="URL",
-    )
-
-
-class JourneySearchRequest(Base):
-    """A journey search request body."""
-
-    query: Query = Field(
-        ...,
-        description="The query to search for",
-        title="Query",
-    )
-
-
-class JourneySearchResponse(Base):
-    """A journey search response body."""
-
-    object: str = Field(
-        default="search_result",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of journeys returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Journey] = Field(
-        default=[],
-        description="The list of journeys that match the filters and pagination parameters.",
-        title="Journeys",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more journeys to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/journeys/search",
-        description="The URL of the search request",
-        example="/v1/journeys/search",
-        title="URL",
-    )
-
-
-class JourneyUpdateRequest(Base):
+class JourneyUpdate(BaseUpdate):
     """A journey update request body."""
 
-    metadata: Union[Dict[str, Any], None] = Field(
-        default=None,
-        description="Arbitrary metadata associated with the journey",
-        example={"key": "value"},
-        title="Metadata",
-    )
-
-
-class JourneyUpdateResponse(Journey):
-    """A journey update response body."""
-
     pass
 
 
-class Run(Base):
+class Run(BaseDoc):
+    """A run of a journey."""
+
+    __db__ = "Dev"
+    __collection__ = "Runs"
+
     id: str = Field(
         alias="_id",
         default_factory=run_id,
@@ -295,24 +124,6 @@ class Run(Base):
         description="The account the journey belongs to",
         example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
         title="Account ID",
-    )
-    created: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the run was created",
-        example=1601059200,
-        title="Created Timestamp",
-    )
-    metadata: Dict[str, Any] = Field(
-        default={},
-        description="Arbitrary metadata associated with the run",
-        example={"key": "value"},
-        title="Metadata",
-    )
-    updated: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the run was last updated",
-        example=1601059200,
-        title="Updated Timestamp",
     )
     results: dict[str, RunStateResult] = Field(
         default={},
@@ -343,60 +154,4 @@ class Run(Base):
         description="The event that triggered the run",
         example={"key": "value"},
         title="Trigger Event",
-    )
-
-
-class RunListRequest:
-    """A journey run list request body."""
-
-    def __init__(
-        self,
-        page_num: int = QueryParam(
-            default=1,
-            description="The page number to return",
-            example=1,
-            title="Page Number",
-        ),
-        page_size: int = QueryParam(
-            default=20,
-            description="The number of runs to return",
-            example=20,
-            title="Page Size",
-        ),
-    ):
-        self.page_num = page_num
-        self.page_size = page_size
-
-
-class RunListResponse(Base):
-    """A run list response body."""
-
-    object: str = Field(
-        default="list",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of runs returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Run] = Field(
-        default=[],
-        description="The list of runs that match the filters and pagination parameters.",
-        title="Runs",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more runs to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/journeys/{journey_id}/runs",
-        description="The URL of the list request",
-        example="/v1/journeys/{journey_id}/runs",
-        title="URL",
     )

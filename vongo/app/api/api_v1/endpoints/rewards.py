@@ -1,26 +1,19 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.crud import versify
-from app.models.account import Account
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
+)
+from app.models.reward import Reward, RewardCreate, RewardUpdate
+
 from app.models.enums import TeamMemberRole
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.models.params import BodyParams, PathParams
-from app.models.reward import (
-    RewardCreateRequest,
-    RewardCreateResponse,
-    RewardDeleteResponse,
-    RewardGetResponse,
-    RewardListRequest,
-    RewardListResponse,
-    RewardSearchRequest,
-    RewardSearchResponse,
-    RewardUpdateRequest,
-    RewardUpdateResponse,
-)
-from app.models.user import User
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/rewards", tags=["Rewards"])
@@ -32,24 +25,29 @@ router = APIRouter(prefix="/rewards", tags=["Rewards"])
     description="List rewards with optional filters and pagination parameters",
     tags=["Rewards"],
     status_code=200,
-    response_model=RewardListResponse,
+    response_model=ApiListResponse,
     response_description="The list of rewards",
 )
 def list_rewards(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    reward_list_request: RewardListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.rewards.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     rewards = versify.rewards.list(
-        page_num=reward_list_request.page_num,
-        page_size=reward_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": rewards, "has_more": count > len(rewards)}
 
@@ -60,20 +58,18 @@ def list_rewards(
     description="Search rewards with query string",
     tags=["Rewards"],
     status_code=200,
-    response_model=RewardSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of rewards",
 )
 def search_rewards(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    reward_search_request: RewardSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    reward_search_request_dict = reward_search_request.dict()
-    query = reward_search_request_dict["query"]
-    rewards = versify.rewards.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    rewards = versify.rewards.search(account=identity.account.id, query=query)
     return {"count": len(rewards), "data": rewards}
 
 
@@ -83,19 +79,17 @@ def search_rewards(
     description="Create a reward",
     tags=["Rewards"],
     status_code=201,
-    response_model=RewardCreateResponse,
+    response_model=Reward,
     response_description="The created reward",
 )
 def create_reward(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    reward_create: RewardCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    reward_create: RewardCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = reward_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.rewards.create(body)
     return create_result
 
@@ -106,21 +100,19 @@ def create_reward(
     description="Get a reward",
     tags=["Rewards"],
     status_code=200,
-    response_model=RewardGetResponse,
+    response_model=Reward,
     response_description="The reward",
 )
 def get_reward(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     reward_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
-        raise NotFoundException()
-    if reward.account != current_account.id:
+        raise NotFoundException("Reward not found")
+    if reward.account != identity.account.id:
         raise ForbiddenException()
     return reward
 
@@ -131,25 +123,22 @@ def get_reward(
     description="Update an reward",
     tags=["Rewards"],
     status_code=200,
-    response_model=RewardUpdateResponse,
+    response_model=Reward,
     response_description="The updated reward",
 )
 def update_reward(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     reward_id: str = PathParams.CONTACT_ID,
-    reward_update: RewardUpdateRequest = BodyParams.UPDATE_CONTACT,
+    reward_update: RewardUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
         raise NotFoundException()
-    if reward.account != current_account.id:
+    if reward.account != identity.account.id:
         raise ForbiddenException()
-    body = reward_update.dict()
-    update_result = versify.rewards.update(reward_id, body)
+    update_result = versify.rewards.update(reward_id, reward_update.dict())
     return update_result
 
 
@@ -159,21 +148,19 @@ def update_reward(
     description="Delete an reward",
     tags=["Rewards"],
     status_code=200,
-    response_model=RewardDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted reward",
 )
 def delete_reward(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     reward_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     reward = versify.rewards.get(reward_id)
     if not reward:
         raise NotFoundException()
-    if reward.account != current_account.id:
+    if reward.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.rewards.delete(reward_id)
     return delete_result

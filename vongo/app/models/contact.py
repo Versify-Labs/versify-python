@@ -1,15 +1,17 @@
 from typing import List, Union
 
-from app.models.base import Base
+from app.models.base import BaseCreate, BaseDoc, BaseUpdate
 from app.models.enums import ContactStatus
 from app.models.factory import contact_id, current_timestamp
-from app.models.globals import Location, PersonName, Query, SocialProfile
-from fastapi import Query as QueryParam
-from pydantic import Field, HttpUrl, validator
+from app.models.globals import Location, PersonName, SocialProfile
+from pydantic import Field, HttpUrl
 
 
-class Contact(Base):
+class Contact(BaseDoc):
     """A contact document in the database."""
+
+    __db__ = "Dev"
+    __collection__ = "Contacts"
 
     id: str = Field(
         alias="_id",
@@ -42,12 +44,6 @@ class Contact(Base):
         example="Chrome",
         title="Browser",
     )
-    created: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the contact was created",
-        example=1601059200,
-        title="Created Timestamp",
-    )
     email: str = Field(
         ...,
         description="The email address of the contact",
@@ -64,12 +60,6 @@ class Contact(Base):
         default=None,
         description="The location of the contact",
         title="Location",
-    )
-    metadata: dict = Field(
-        default={},
-        description="Arbitrary metadata associated with the contact",
-        example={"key": "value"},
-        title="Metadata",
     )
     name: PersonName = Field(
         default=None,
@@ -99,15 +89,9 @@ class Contact(Base):
         example=ContactStatus.ACTIVE,
         title="Status",
     )
-    updated: int = Field(
-        default_factory=current_timestamp,
-        description="The timestamp when the contact was last updated",
-        example=1601059200,
-        title="Updated Timestamp",
-    )
 
 
-class ContactCreateRequest(Base):
+class ContactCreate(BaseCreate):
     """A contact create request body."""
 
     email: str = Field(
@@ -129,166 +113,7 @@ class ContactCreateRequest(Base):
     )
 
 
-class ContactCreateResponse(Contact):
-    """A contact create response body."""
-
-    pass
-
-
-class ContactDeleteRequest:
-    """A contact delete request body."""
-
-    pass
-
-
-class ContactDeleteResponse(Base):
-    """A contact delete response body."""
-
-    id: str = Field(
-        description="Unique identifier for the contact",
-        example="acct_5f9f1c5b0b9b4b0b9c1c5b0b",
-        title="Contact ID",
-    )
-    object: str = Field(
-        default="contact",
-        description="The object type",
-        example="contact",
-        title="Object Type",
-    )
-    deleted: bool = Field(
-        default=True,
-        description="Whether the contact has been deleted",
-        example=True,
-        title="Deleted",
-    )
-
-
-class ContactGetRequest:
-    """A contact get request body."""
-
-    pass
-
-
-class ContactGetResponse(Contact):
-    """A contact get response body."""
-
-    pass
-
-
-class ContactListRequest:
-    """A contact list request body."""
-
-    def __init__(
-        self,
-        page_num: int = QueryParam(
-            default=1,
-            description="The page number to return",
-            example=1,
-            title="Page Number",
-        ),
-        page_size: int = QueryParam(
-            default=20,
-            description="The number of contacts to return",
-            example=20,
-            title="Page Size",
-        ),
-        owner: Union[str, None] = QueryParam(
-            default=None,
-            description="The ID of the user who owns the contact",
-            title="Owner ID",
-        ),
-        status: ContactStatus = QueryParam(
-            default=ContactStatus.ACTIVE,
-            description="The status of the contact",
-            example=ContactStatus.ACTIVE,
-            title="Status",
-        ),
-    ):
-        self.page_num = page_num
-        self.page_size = page_size
-        self.owner = owner
-        self.status = status
-
-
-class ContactListResponse(Base):
-    """A contact list response body."""
-
-    object: str = Field(
-        default="list",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of contacts returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Contact] = Field(
-        default=[],
-        description="The list of contacts that match the filters and pagination parameters.",
-        title="Contacts",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more contacts to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/contacts",
-        description="The URL of the list request",
-        example="/v1/contacts",
-        title="URL",
-    )
-
-
-class ContactSearchRequest(Base):
-    """A contact search request body."""
-
-    query: Query = Field(
-        ...,
-        description="The query to search for",
-        title="Query",
-    )
-
-
-class ContactSearchResponse(Base):
-    """A contact search response body."""
-
-    object: str = Field(
-        default="search_result",
-        description="The object type",
-        example="list",
-        title="Object Type",
-    )
-    count: int = Field(
-        default=0,
-        description="The number of contacts returned",
-        example=1,
-        title="Count",
-    )
-    data: List[Contact] = Field(
-        default=[],
-        description="The list of contacts that match the filters and pagination parameters.",
-        title="Contacts",
-    )
-    has_more: bool = Field(
-        default=False,
-        description="Whether there are more contacts to be returned",
-        example=False,
-        title="Has More",
-    )
-    url: str = Field(
-        default="/v1/contacts/search",
-        description="The URL of the search request",
-        example="/v1/contacts/search",
-        title="URL",
-    )
-
-
-class ContactUpdateRequest(Base):
+class ContactUpdate(BaseUpdate):
     """A contact update request body."""
 
     name: Union[PersonName, None] = Field(
@@ -302,9 +127,3 @@ class ContactUpdateRequest(Base):
         example="+1 555 555 5555",
         title="Phone Number",
     )
-
-
-class ContactUpdateResponse(Contact):
-    """A contact update response body."""
-
-    pass

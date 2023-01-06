@@ -1,26 +1,19 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.crud import versify
-from app.models.account import Account
-from app.models.collection import (
-    CollectionCreateRequest,
-    CollectionCreateResponse,
-    CollectionDeleteResponse,
-    CollectionGetResponse,
-    CollectionListRequest,
-    CollectionListResponse,
-    CollectionSearchRequest,
-    CollectionSearchResponse,
-    CollectionUpdateRequest,
-    CollectionUpdateResponse,
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
 )
+from app.models.collection import Collection, CollectionCreate, CollectionUpdate
+
 from app.models.enums import TeamMemberRole
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/collections", tags=["Collections"])
@@ -32,24 +25,29 @@ router = APIRouter(prefix="/collections", tags=["Collections"])
     description="List collections with optional filters and pagination parameters",
     tags=["Collections"],
     status_code=200,
-    response_model=CollectionListResponse,
+    response_model=ApiListResponse,
     response_description="The list of collections",
 )
 def list_collections(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    collection_list_request: CollectionListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.collections.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     collections = versify.collections.list(
-        page_num=collection_list_request.page_num,
-        page_size=collection_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": collections, "has_more": count > len(collections)}
 
@@ -60,20 +58,18 @@ def list_collections(
     description="Search collections with query string",
     tags=["Collections"],
     status_code=200,
-    response_model=CollectionSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of collections",
 )
 def search_collections(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    collection_search_request: CollectionSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    collection_search_request_dict = collection_search_request.dict()
-    query = collection_search_request_dict["query"]
-    collections = versify.collections.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    collections = versify.collections.search(account=identity.account.id, query=query)
     return {"count": len(collections), "data": collections}
 
 
@@ -83,19 +79,17 @@ def search_collections(
     description="Create a collection",
     tags=["Collections"],
     status_code=201,
-    response_model=CollectionCreateResponse,
+    response_model=Collection,
     response_description="The created collection",
 )
 def create_collection(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    collection_create: CollectionCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    collection_create: CollectionCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = collection_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.collections.create(body)
     return create_result
 
@@ -106,21 +100,19 @@ def create_collection(
     description="Get a collection",
     tags=["Collections"],
     status_code=200,
-    response_model=CollectionGetResponse,
+    response_model=Collection,
     response_description="The collection",
 )
 def get_collection(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     collection_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
-        raise NotFoundException()
-    if collection.account != current_account.id:
+        raise NotFoundException("Collection not found")
+    if collection.account != identity.account.id:
         raise ForbiddenException()
     return collection
 
@@ -131,25 +123,22 @@ def get_collection(
     description="Update an collection",
     tags=["Collections"],
     status_code=200,
-    response_model=CollectionUpdateResponse,
+    response_model=Collection,
     response_description="The updated collection",
 )
 def update_collection(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     collection_id: str = PathParams.CONTACT_ID,
-    collection_update: CollectionUpdateRequest = BodyParams.UPDATE_CONTACT,
+    collection_update: CollectionUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
         raise NotFoundException()
-    if collection.account != current_account.id:
+    if collection.account != identity.account.id:
         raise ForbiddenException()
-    body = collection_update.dict()
-    update_result = versify.collections.update(collection_id, body)
+    update_result = versify.collections.update(collection_id, collection_update.dict())
     return update_result
 
 
@@ -159,21 +148,19 @@ def update_collection(
     description="Delete an collection",
     tags=["Collections"],
     status_code=200,
-    response_model=CollectionDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted collection",
 )
 def delete_collection(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     collection_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     collection = versify.collections.get(collection_id)
     if not collection:
         raise NotFoundException()
-    if collection.account != current_account.id:
+    if collection.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.collections.delete(collection_id)
     return delete_result

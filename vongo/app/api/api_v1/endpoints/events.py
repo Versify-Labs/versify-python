@@ -1,26 +1,18 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
+from app.api.deps import identity_with_account
+from app.api.exceptions import ForbiddenException, NotFoundException
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
 )
 from app.crud import versify
-from app.models.account import Account
 from app.models.enums import TeamMemberRole
-from app.models.event import (
-    EventCreateRequest,
-    EventCreateResponse,
-    EventDeleteResponse,
-    EventGetResponse,
-    EventListRequest,
-    EventListResponse,
-    EventSearchRequest,
-    EventSearchResponse,
-    EventUpdateRequest,
-    EventUpdateResponse,
-)
-from app.api.exceptions import ForbiddenException, NotFoundException
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
+from app.models.event import Event, EventCreate, EventUpdate
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/events", tags=["Events"])
@@ -32,24 +24,29 @@ router = APIRouter(prefix="/events", tags=["Events"])
     description="List events with optional filters and pagination parameters",
     tags=["Events"],
     status_code=200,
-    response_model=EventListResponse,
+    response_model=ApiListResponse,
     response_description="The list of events",
 )
 def list_events(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    event_list_request: EventListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    event: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.events.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        event=event,
+        status=status,
     )
     events = versify.events.list(
-        page_num=event_list_request.page_num,
-        page_size=event_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        event=event,
+        status=status,
     )
     return {"count": count, "data": events, "has_more": count > len(events)}
 
@@ -60,20 +57,18 @@ def list_events(
     description="Search events with query string",
     tags=["Events"],
     status_code=200,
-    response_model=EventSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of events",
 )
 def search_events(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    event_search_request: EventSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    event_search_request_dict = event_search_request.dict()
-    query = event_search_request_dict["query"]
-    events = versify.events.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    events = versify.events.search(account=identity.account.id, query=query)
     return {"count": len(events), "data": events}
 
 
@@ -83,19 +78,17 @@ def search_events(
     description="Create a event",
     tags=["Events"],
     status_code=201,
-    response_model=EventCreateResponse,
+    response_model=Event,
     response_description="The created event",
 )
 def create_event(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    event_create: EventCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    event_create: EventCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = event_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.events.create(body)
     return create_result
 
@@ -106,21 +99,19 @@ def create_event(
     description="Get a event",
     tags=["Events"],
     status_code=200,
-    response_model=EventGetResponse,
+    response_model=Event,
     response_description="The event",
 )
 def get_event(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     event_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
-        raise NotFoundException()
-    if event.account != current_account.id:
+        raise NotFoundException("Event not found")
+    if event.account != identity.account.id:
         raise ForbiddenException()
     return event
 
@@ -131,25 +122,22 @@ def get_event(
     description="Update an event",
     tags=["Events"],
     status_code=200,
-    response_model=EventUpdateResponse,
+    response_model=Event,
     response_description="The updated event",
 )
 def update_event(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     event_id: str = PathParams.CONTACT_ID,
-    event_update: EventUpdateRequest = BodyParams.UPDATE_CONTACT,
+    event_update: EventUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
         raise NotFoundException()
-    if event.account != current_account.id:
+    if event.account != identity.account.id:
         raise ForbiddenException()
-    body = event_update.dict()
-    update_result = versify.events.update(event_id, body)
+    update_result = versify.events.update(event_id, event_update.dict())
     return update_result
 
 
@@ -159,21 +147,19 @@ def update_event(
     description="Delete an event",
     tags=["Events"],
     status_code=200,
-    response_model=EventDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted event",
 )
 def delete_event(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     event_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     event = versify.events.get(event_id)
     if not event:
         raise NotFoundException()
-    if event.account != current_account.id:
+    if event.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.events.delete(event_id)
     return delete_result

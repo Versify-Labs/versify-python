@@ -1,7 +1,7 @@
 from typing import Any, Union
 
 # from app.core.pywallet import create_wallet
-from app.models.base import Base
+from app.models.base import Base, BaseCreate, BaseUpdate
 from app.models.enums import WalletType
 from app.models.factory import current_timestamp, wallet_id
 from pydantic import Field

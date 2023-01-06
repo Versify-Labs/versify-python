@@ -1,26 +1,19 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
-from app.api.exceptions import ForbiddenException, NotFoundException
+from app.api.deps import identity_with_account
 from app.crud import versify
-from app.models.account import Account
-from app.models.contact import (
-    ContactCreateRequest,
-    ContactCreateResponse,
-    ContactDeleteResponse,
-    ContactGetResponse,
-    ContactListRequest,
-    ContactListResponse,
-    ContactSearchRequest,
-    ContactSearchResponse,
-    ContactUpdateRequest,
-    ContactUpdateResponse,
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
 )
+from app.models.contact import Contact, ContactCreate, ContactUpdate
+
 from app.models.enums import TeamMemberRole
-from app.models.params import BodyParams, PathParams
-from app.models.user import User
+from app.api.exceptions import ForbiddenException, NotFoundException
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
@@ -32,28 +25,29 @@ router = APIRouter(prefix="/contacts", tags=["Contacts"])
     description="List contacts with optional filters and pagination parameters",
     tags=["Contacts"],
     status_code=200,
-    response_model=ContactListResponse,
+    response_model=ApiListResponse,
     response_description="The list of contacts",
 )
 def list_contacts(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    contact_list_request: ContactListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.contacts.count(
-        account=current_account.id,
-        owner=contact_list_request.owner,
-        status=contact_list_request.status,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     contacts = versify.contacts.list(
-        page_num=contact_list_request.page_num,
-        page_size=contact_list_request.page_size,
-        account=current_account.id,
-        owner=contact_list_request.owner,
-        status=contact_list_request.status,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": contacts, "has_more": count > len(contacts)}
 
@@ -64,20 +58,18 @@ def list_contacts(
     description="Search contacts with query string",
     tags=["Contacts"],
     status_code=200,
-    response_model=ContactSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of contacts",
 )
 def search_contacts(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    contact_search_request: ContactSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    contact_search_request_dict = contact_search_request.dict()
-    query = contact_search_request_dict["query"]
-    contacts = versify.contacts.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    contacts = versify.contacts.search(account=identity.account.id, query=query)
     return {"count": len(contacts), "data": contacts}
 
 
@@ -87,19 +79,17 @@ def search_contacts(
     description="Create a contact",
     tags=["Contacts"],
     status_code=201,
-    response_model=ContactCreateResponse,
+    response_model=Contact,
     response_description="The created contact",
 )
 def create_contact(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    contact_create: ContactCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    contact_create: ContactCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = contact_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.contacts.create(body)
     return create_result
 
@@ -110,21 +100,19 @@ def create_contact(
     description="Get a contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=ContactGetResponse,
+    response_model=Contact,
     response_description="The contact",
 )
 def get_contact(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     contact_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
-        raise NotFoundException()
-    if contact.account != current_account.id:
+        raise NotFoundException("Contact not found")
+    if contact.account != identity.account.id:
         raise ForbiddenException()
     return contact
 
@@ -135,25 +123,22 @@ def get_contact(
     description="Update an contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=ContactUpdateResponse,
+    response_model=Contact,
     response_description="The updated contact",
 )
 def update_contact(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     contact_id: str = PathParams.CONTACT_ID,
-    contact_update: ContactUpdateRequest = BodyParams.UPDATE_CONTACT,
+    contact_update: ContactUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
         raise NotFoundException()
-    if contact.account != current_account.id:
+    if contact.account != identity.account.id:
         raise ForbiddenException()
-    body = contact_update.dict()
-    update_result = versify.contacts.update(contact_id, body)
+    update_result = versify.contacts.update(contact_id, contact_update.dict())
     return update_result
 
 
@@ -163,21 +148,19 @@ def update_contact(
     description="Delete an contact",
     tags=["Contacts"],
     status_code=200,
-    response_model=ContactDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted contact",
 )
 def delete_contact(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     contact_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     contact = versify.contacts.get(contact_id)
     if not contact:
         raise NotFoundException()
-    if contact.account != current_account.id:
+    if contact.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.contacts.delete(contact_id)
     return delete_result

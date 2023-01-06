@@ -1,26 +1,19 @@
-from app.api.deps import (
-    current_active_account,
-    current_active_user,
-    current_user_account_role,
-)
+from app.api.deps import identity_with_account
 from app.crud import versify
-from app.models.account import Account
+from app.api.models import (
+    ApiDeleteResponse,
+    ApiListResponse,
+    ApiSearchResponse,
+    BodyParams,
+    Identity,
+    PathParams,
+    QueryParams,
+    SearchQuery,
+)
+from app.models.tag import Tag, TagCreate, TagUpdate
+
 from app.models.enums import TeamMemberRole
 from app.api.exceptions import ForbiddenException, NotFoundException
-from app.models.params import BodyParams, PathParams
-from app.models.tag import (
-    TagCreateRequest,
-    TagCreateResponse,
-    TagDeleteResponse,
-    TagGetResponse,
-    TagListRequest,
-    TagListResponse,
-    TagSearchRequest,
-    TagSearchResponse,
-    TagUpdateRequest,
-    TagUpdateResponse,
-)
-from app.models.user import User
 from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/tags", tags=["Tags"])
@@ -32,24 +25,29 @@ router = APIRouter(prefix="/tags", tags=["Tags"])
     description="List tags with optional filters and pagination parameters",
     tags=["Tags"],
     status_code=200,
-    response_model=TagListResponse,
+    response_model=ApiListResponse,
     response_description="The list of tags",
 )
 def list_tags(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    tag_list_request: TagListRequest = Depends(),
+    identity: Identity = Depends(identity_with_account),
+    page_num: int = QueryParams.PAGE_NUM,
+    page_size: int = QueryParams.PAGE_SIZE,
+    collection: str = QueryParams.COLLECTION_ID,
+    status: str = QueryParams.COLLECTION_STATUS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     count = versify.tags.count(
-        account=current_account.id,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     tags = versify.tags.list(
-        page_num=tag_list_request.page_num,
-        page_size=tag_list_request.page_size,
-        account=current_account.id,
+        page_num=page_num,
+        page_size=page_size,
+        account=identity.account.id,  # type: ignore
+        collection=collection,
+        status=status,
     )
     return {"count": count, "data": tags, "has_more": count > len(tags)}
 
@@ -60,20 +58,18 @@ def list_tags(
     description="Search tags with query string",
     tags=["Tags"],
     status_code=200,
-    response_model=TagSearchResponse,
+    response_model=ApiSearchResponse,
     response_description="The list of tags",
 )
 def search_tags(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    tag_search_request: TagSearchRequest = BodyParams.SEARCH_CONTACTS,
+    identity: Identity = Depends(identity_with_account),
+    search: SearchQuery = BodyParams.SEARCH_CONTACTS,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
-    tag_search_request_dict = tag_search_request.dict()
-    query = tag_search_request_dict["query"]
-    tags = versify.tags.search(account=current_account.id, query=query)
+    search_dict = search.dict()
+    query = search_dict["query"]
+    tags = versify.tags.search(account=identity.account.id, query=query)
     return {"count": len(tags), "data": tags}
 
 
@@ -83,19 +79,17 @@ def search_tags(
     description="Create a tag",
     tags=["Tags"],
     status_code=201,
-    response_model=TagCreateResponse,
+    response_model=Tag,
     response_description="The created tag",
 )
 def create_tag(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
-    tag_create: TagCreateRequest = BodyParams.CREATE_CONTACT,
+    identity: Identity = Depends(identity_with_account),
+    tag_create: TagCreate = BodyParams.CREATE_ASSET,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     body = tag_create.dict()
-    body["account"] = current_account.id
+    body["account"] = identity.account.id
     create_result = versify.tags.create(body)
     return create_result
 
@@ -106,21 +100,19 @@ def create_tag(
     description="Get a tag",
     tags=["Tags"],
     status_code=200,
-    response_model=TagGetResponse,
+    response_model=Tag,
     response_description="The tag",
 )
 def get_tag(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     tag_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     tag = versify.tags.get(tag_id)
     if not tag:
-        raise NotFoundException()
-    if tag.account != current_account.id:
+        raise NotFoundException("Tag not found")
+    if tag.account != identity.account.id:
         raise ForbiddenException()
     return tag
 
@@ -131,25 +123,22 @@ def get_tag(
     description="Update an tag",
     tags=["Tags"],
     status_code=200,
-    response_model=TagUpdateResponse,
+    response_model=Tag,
     response_description="The updated tag",
 )
 def update_tag(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     tag_id: str = PathParams.CONTACT_ID,
-    tag_update: TagUpdateRequest = BodyParams.UPDATE_CONTACT,
+    tag_update: TagUpdate = BodyParams.UPDATE_CONTACT,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     tag = versify.tags.get(tag_id)
     if not tag:
         raise NotFoundException()
-    if tag.account != current_account.id:
+    if tag.account != identity.account.id:
         raise ForbiddenException()
-    body = tag_update.dict()
-    update_result = versify.tags.update(tag_id, body)
+    update_result = versify.tags.update(tag_id, tag_update.dict())
     return update_result
 
 
@@ -159,21 +148,19 @@ def update_tag(
     description="Delete an tag",
     tags=["Tags"],
     status_code=200,
-    response_model=TagDeleteResponse,
+    response_model=ApiDeleteResponse,
     response_description="The deleted tag",
 )
 def delete_tag(
-    current_account: Account = Depends(current_active_account),
-    current_user: User = Depends(current_active_user),
-    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    identity: Identity = Depends(identity_with_account),
     tag_id: str = PathParams.CONTACT_ID,
 ):
-    if current_user_account_role == TeamMemberRole.GUEST:
+    if not identity.account or identity.account_user_role == TeamMemberRole.GUEST:
         raise ForbiddenException()
     tag = versify.tags.get(tag_id)
     if not tag:
         raise NotFoundException()
-    if tag.account != current_account.id:
+    if tag.account != identity.account.id:
         raise ForbiddenException()
     delete_result = versify.tags.delete(tag_id)
     return delete_result

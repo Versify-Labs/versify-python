@@ -16,6 +16,7 @@ python-jose = "*"
 requests = "*"
 stripe = "*"
 pymongo = {extras = ["aws"], version = "*"}
+stytch = "*"
 
 [dev-packages]
 uvicorn = "*"
