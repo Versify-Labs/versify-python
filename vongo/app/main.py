@@ -1,12 +1,13 @@
 from pathlib import Path
 
-from app.api.api_v1.api import api_router
-from app.core.config import settings
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
+
+from .api.api_v1.api import api_router
+from .core.config import settings
 
 BASE_PATH = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
