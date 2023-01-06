@@ -8,10 +8,16 @@ from versify import Versify
 from versify.decorators import account_required, cors_headers
 
 from ...api.errors import BadRequestError
-from ..rest import (AccountRequest, CreateResponse, DeleteResponse,
-                    GetResponse, ListResponse, UpdateResponse)
+from ..rest import (
+    AccountRequest,
+    CreateResponse,
+    DeleteResponse,
+    GetResponse,
+    ListResponse,
+    UpdateResponse,
+)
 
-app = APIGatewayRestResolver(strip_prefixes=['/v1'])
+app = APIGatewayRestResolver(strip_prefixes=["/v1"])
 logger = Logger()
 tracer = Tracer()
 versify = Versify()
@@ -22,7 +28,7 @@ versify = Versify()
 ############
 
 
-@app.get('/accounts/<id>')
+@app.get("/accounts/<id>")
 @tracer.capture_method
 def get_account(id):
     req = AccountRequest(app, id)
@@ -30,7 +36,7 @@ def get_account(id):
     return GetResponse(req, account).json
 
 
-@app.put('/accounts/<id>')
+@app.put("/accounts/<id>")
 @tracer.capture_method
 def update_account(id):
     req = AccountRequest(app, id)
@@ -38,7 +44,7 @@ def update_account(id):
     return UpdateResponse(req, account).json
 
 
-@app.post('/accounts/<id>/billing')
+@app.post("/accounts/<id>/billing")
 @tracer.capture_method
 def create_account_billing_session(id):
     req = AccountRequest(app, id)
@@ -46,7 +52,7 @@ def create_account_billing_session(id):
     return CreateResponse(req, checkout).json
 
 
-@app.get('/accounts/<id>/billing/summary')
+@app.get("/accounts/<id>/billing/summary")
 @tracer.capture_method
 def get_account_billing_summary(id):
     req = AccountRequest(app, id)
@@ -54,7 +60,7 @@ def get_account_billing_summary(id):
     return GetResponse(req, summary).json
 
 
-@app.post('/accounts/<id>/checkout')
+@app.post("/accounts/<id>/checkout")
 @tracer.capture_method
 def create_account_checkout_session(id):
     req = AccountRequest(app, id)
@@ -62,7 +68,7 @@ def create_account_checkout_session(id):
     return CreateResponse(req, checkout).json
 
 
-@app.get('/accounts/<id>/invoices')
+@app.get("/accounts/<id>/invoices")
 @tracer.capture_method
 def list_account_invoices(id):
     req = AccountRequest(app, id)
@@ -71,17 +77,17 @@ def list_account_invoices(id):
     return GetResponse(req, invoices).json
 
 
-@app.post('/accounts/<id>/members')
+@app.post("/accounts/<id>/members")
 @tracer.capture_method
 def create_account_member(id):
     req = AccountRequest(app, id)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     member = versify.account_service.create_member(id, body)
     return CreateResponse(req, member).json
 
 
-@app.get('/accounts/<id>/members')
+@app.get("/accounts/<id>/members")
 @tracer.capture_method
 def list_account_members(id):
     req = AccountRequest(app, id)
@@ -90,16 +96,16 @@ def list_account_members(id):
     return GetResponse(req, members).json
 
 
-@app.get('/accounts/<id>/metrics')
+@app.get("/accounts/<id>/metrics")
 @tracer.capture_method
 def list_account_metrics(id):
     req = AccountRequest(app, id)
-    objects = req.filter.get('objects', '')
+    objects = req.filter.get("objects", "")
     account = versify.account_service.list_metrics(id, objects)
     return GetResponse(req, account).json
 
 
-@app.get('/accounts/<id>/subscriptions')
+@app.get("/accounts/<id>/subscriptions")
 @tracer.capture_method
 def list_account_subscriptions(id):
     req = AccountRequest(app, id)
@@ -108,7 +114,7 @@ def list_account_subscriptions(id):
     return GetResponse(req, subscriptions).json
 
 
-@app.post('/accounts/<id>/tokens')
+@app.post("/accounts/<id>/tokens")
 @tracer.capture_method
 def create_account_token(id):
     req = AccountRequest(app, id)
@@ -122,17 +128,17 @@ def create_account_token(id):
 ############
 
 
-@app.post('/airdrops')
+@app.post("/airdrops")
 @tracer.capture_method
 def create_airdrop():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     airdrop = versify.airdrop_service.create(body)
     return CreateResponse(req, airdrop).json
 
 
-@app.get('/airdrops')
+@app.get("/airdrops")
 @tracer.capture_method
 def list_airdrops():
     req = AccountRequest(app)
@@ -142,11 +148,11 @@ def list_airdrops():
     count = versify.airdrop_service.count(req.filter)
     airdrops = versify.airdrop_service.list(filter, limit, skip)
     airdrops = versify.airdrop_service.expand(airdrops, req.expand_list)
-    airdrops = airdrops.get('data', [])  # type: ignore
+    airdrops = airdrops.get("data", [])  # type: ignore
     return ListResponse(req, airdrops, count).json
 
 
-@app.get('/airdrops/<id>')
+@app.get("/airdrops/<id>")
 @tracer.capture_method
 def get_airdrop(id):
     req = AccountRequest(app, id)
@@ -155,7 +161,7 @@ def get_airdrop(id):
     return GetResponse(req, airdrop).json
 
 
-@app.put('/airdrops/<id>')
+@app.put("/airdrops/<id>")
 @tracer.capture_method
 def update_airdrop(id):
     req = AccountRequest(app, id)
@@ -163,7 +169,7 @@ def update_airdrop(id):
     return UpdateResponse(req, airdrop).json
 
 
-@app.put('/airdrops/<id>/send')
+@app.put("/airdrops/<id>/send")
 @tracer.capture_method
 def send_airdrop(id):
     req = AccountRequest(app, id)
@@ -176,7 +182,7 @@ def send_airdrop(id):
 ##########
 
 
-@app.post('/claims')
+@app.post("/claims")
 @tracer.capture_method
 def create_claim():
     req = AccountRequest(app)
@@ -185,7 +191,7 @@ def create_claim():
     return CreateResponse(req, claim).json
 
 
-@app.get('/claims')
+@app.get("/claims")
 @tracer.capture_method
 def list_claims():
     req = AccountRequest(app)
@@ -195,11 +201,11 @@ def list_claims():
     count = versify.claim_service.count(req.filter)
     claims = versify.claim_service.list(filter, limit, skip)
     claims = versify.claim_service.expand(claims, req.expand_list)
-    claims = claims.get('data', [])  # type: ignore
+    claims = claims.get("data", [])  # type: ignore
     return ListResponse(req, claims, count).json
 
 
-@app.get('/claims/<id>')
+@app.get("/claims/<id>")
 @tracer.capture_method
 def get_claim(id):
     req = AccountRequest(app, id)
@@ -213,17 +219,17 @@ def get_claim(id):
 ###############
 
 
-@app.post('/collections')
+@app.post("/collections")
 @tracer.capture_method
 def create_collection():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     collection = versify.collection_service.create(body)
     return CreateResponse(req, collection).json
 
 
-@app.get('/collections')
+@app.get("/collections")
 @tracer.capture_method
 def list_collections():
     req = AccountRequest(app)
@@ -232,13 +238,12 @@ def list_collections():
     skip = req.skip
     count = versify.collection_service.count(req.filter)
     collections = versify.collection_service.list(filter, limit, skip)
-    collections = versify.collection_service.expand(
-        collections, req.expand_list)
-    collections = collections.get('data', [])  # type: ignore
+    collections = versify.collection_service.expand(collections, req.expand_list)
+    collections = collections.get("data", [])  # type: ignore
     return ListResponse(req, collections, count).json
 
 
-@app.get('/collections/<id>')
+@app.get("/collections/<id>")
 @tracer.capture_method
 def get_collection(id):
     req = AccountRequest(app, id)
@@ -247,7 +252,7 @@ def get_collection(id):
     return GetResponse(req, collection).json
 
 
-@app.put('/collections/<id>')
+@app.put("/collections/<id>")
 @tracer.capture_method
 def update_collection(id):
     req = AccountRequest(app, id)
@@ -260,17 +265,17 @@ def update_collection(id):
 ############
 
 
-@app.post('/contacts')
+@app.post("/contacts")
 @tracer.capture_method
 def create_contact():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     contact = versify.contact_service.create(body)
     return CreateResponse(req, contact).json
 
 
-@app.get('/contacts')
+@app.get("/contacts")
 @tracer.capture_method
 def list_contacts():
     req = AccountRequest(app)
@@ -280,21 +285,21 @@ def list_contacts():
     count = versify.contact_service.count(req.filter)
     contacts = versify.contact_service.list(filter, limit, skip)
     contacts = versify.contact_service.expand(contacts, req.expand_list)
-    contacts = contacts.get('data', [])  # type: ignore
+    contacts = contacts.get("data", [])  # type: ignore
     return ListResponse(req, contacts, count).json
 
 
-@app.put('/contacts')
+@app.put("/contacts")
 @tracer.capture_method
 def update_contacts():
     req = AccountRequest(app)
-    ids = req.body.get('ids', [])
-    update_body = req.body.get('body', {})
+    ids = req.body.get("ids", [])
+    update_body = req.body.get("body", {})
     modified = versify.contact_service.bulk_update(ids, update_body)
-    return {'modified': modified}
+    return {"modified": modified}
 
 
-@app.get('/contacts/<id>')
+@app.get("/contacts/<id>")
 @tracer.capture_method
 def get_contact(id):
     req = AccountRequest(app, id)
@@ -303,7 +308,7 @@ def get_contact(id):
     return GetResponse(req, contact).json  # type: ignore
 
 
-@app.put('/contacts/<id>')
+@app.put("/contacts/<id>")
 @tracer.capture_method
 def update_contact(id):
     req = AccountRequest(app, id)
@@ -311,21 +316,18 @@ def update_contact(id):
     return UpdateResponse(req, contact).json
 
 
-@app.post('/contacts/<id>/notes')
+@app.post("/contacts/<id>/notes")
 @tracer.capture_method
 def create_contact_note(id):
     req = AccountRequest(app, id)
     body = req.body
-    if body.get('user') is None:
-        body['user'] = {
-            'id': req.user or 'system',
-            'email': req.email
-        }
+    if body.get("user") is None:
+        body["user"] = {"id": req.user or "system", "email": req.email}
     note = versify.contact_service.create_note(id, body)
     return CreateResponse(req, note).json  # type: ignore
 
 
-@app.delete('/contacts/<id>/notes/<note_id>')
+@app.delete("/contacts/<id>/notes/<note_id>")
 @tracer.capture_method
 def delete_contact_note(id, note_id):
     req = AccountRequest(app, id)
@@ -338,17 +340,17 @@ def delete_contact_note(id, note_id):
 ##########
 
 
-@app.post('/events')
+@app.post("/events")
 @tracer.capture_method
 def create_event():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     event = versify.event_service.create(body)
     return CreateResponse(req, event).json
 
 
-@app.get('/events')
+@app.get("/events")
 @tracer.capture_method
 def list_events():
     req = AccountRequest(app)
@@ -358,11 +360,11 @@ def list_events():
     count = versify.event_service.count(req.filter)
     events = versify.event_service.list(filter, limit, skip)
     events = versify.event_service.expand(events, req.expand_list)
-    events = events.get('data', [])  # type: ignore
+    events = events.get("data", [])  # type: ignore
     return ListResponse(req, events, count).json
 
 
-@app.get('/events/<id>')
+@app.get("/events/<id>")
 @tracer.capture_method
 def get_event(id):
     req = AccountRequest(app, id)
@@ -376,17 +378,17 @@ def get_event(id):
 ############
 
 
-@app.post('/journeys')
+@app.post("/journeys")
 @tracer.capture_method
 def create_journey():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     journey = versify.journey_service.create(body)
     return CreateResponse(req, journey).json
 
 
-@app.get('/journeys')
+@app.get("/journeys")
 @tracer.capture_method
 def list_journeys():
     req = AccountRequest(app)
@@ -396,11 +398,11 @@ def list_journeys():
     count = versify.journey_service.count(req.filter)
     journeys = versify.journey_service.list(filter, limit, skip)
     journeys = versify.journey_service.expand(journeys, req.expand_list)
-    journeys = journeys.get('data', [])  # type: ignore
+    journeys = journeys.get("data", [])  # type: ignore
     return ListResponse(req, journeys, count).json
 
 
-@app.get('/journeys/<id>')
+@app.get("/journeys/<id>")
 @tracer.capture_method
 def get_journey(id):
     req = AccountRequest(app, id)
@@ -409,7 +411,7 @@ def get_journey(id):
     return GetResponse(req, journey).json
 
 
-@app.put('/journeys/<id>')
+@app.put("/journeys/<id>")
 @tracer.capture_method
 def update_journey(id):
     req = AccountRequest(app, id)
@@ -417,7 +419,7 @@ def update_journey(id):
     return UpdateResponse(req, journey).json
 
 
-@app.put('/journeys/<id>/duplicate')
+@app.put("/journeys/<id>/duplicate")
 @tracer.capture_method
 def duplicate_journey(id):
     req = AccountRequest(app, id)
@@ -425,7 +427,7 @@ def duplicate_journey(id):
     return UpdateResponse(req, journey).json
 
 
-@app.delete('/journeys/<id>')
+@app.delete("/journeys/<id>")
 @tracer.capture_method
 def delete_journey(id):
     req = AccountRequest(app, id)
@@ -433,18 +435,18 @@ def delete_journey(id):
     return DeleteResponse(req).json
 
 
-@app.get('/journeys/<id>/runs')
+@app.get("/journeys/<id>/runs")
 @tracer.capture_method
 def list_journey_runs(id):
     req = AccountRequest(app)
     filter = req.filter
-    filter['journey'] = id
+    filter["journey"] = id
     limit = req.limit
     skip = req.skip
     count = versify.journey_run_service.count(req.filter)
     runs = versify.journey_run_service.list(filter, limit, skip)
     runs = versify.journey_run_service.expand(runs, req.expand_list)
-    runs = runs.get('data', [])  # type: ignore
+    runs = runs.get("data", [])  # type: ignore
     return ListResponse(req, runs, count).json
 
 
@@ -453,17 +455,17 @@ def list_journey_runs(id):
 ############
 
 
-@app.post('/messages')
+@app.post("/messages")
 @tracer.capture_method
 def create_message():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     message = versify.message_service.create(body)
     return CreateResponse(req, message).json
 
 
-@app.get('/messages')
+@app.get("/messages")
 @tracer.capture_method
 def list_messages():
     req = AccountRequest(app)
@@ -473,11 +475,11 @@ def list_messages():
     count = versify.message_service.count(req.filter)
     messages = versify.message_service.list(filter, limit, skip)
     messages = versify.message_service.expand(messages, req.expand_list)
-    messages = messages.get('data', [])  # type: ignore
+    messages = messages.get("data", [])  # type: ignore
     return ListResponse(req, messages, count).json
 
 
-@app.get('/messages/<id>')
+@app.get("/messages/<id>")
 @tracer.capture_method
 def get_message(id):
     req = AccountRequest(app, id)
@@ -491,17 +493,17 @@ def get_message(id):
 ##############
 
 
-@app.post('/mint_links')
+@app.post("/mint_links")
 @tracer.capture_method
 def create_mint_link():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     mint_link = versify.mint_link_service.create(body)
     return CreateResponse(req, mint_link).json
 
 
-@app.get('/mint_links')
+@app.get("/mint_links")
 @tracer.capture_method
 def list_mint_links():
     req = AccountRequest(app)
@@ -511,11 +513,11 @@ def list_mint_links():
     count = versify.mint_link_service.count(req.filter)
     mint_links = versify.mint_link_service.list(filter, limit, skip)
     mint_links = versify.mint_link_service.expand(mint_links, req.expand_list)
-    mint_links = mint_links.get('data', [])  # type: ignore
+    mint_links = mint_links.get("data", [])  # type: ignore
     return ListResponse(req, mint_links, count).json
 
 
-@app.get('/mint_links/<id>')
+@app.get("/mint_links/<id>")
 @tracer.capture_method
 def get_mint_link(id):
     req = AccountRequest(app, id)
@@ -524,7 +526,7 @@ def get_mint_link(id):
     return GetResponse(req, mint_link).json
 
 
-@app.put('/mint_links/<id>')
+@app.put("/mint_links/<id>")
 @tracer.capture_method
 def update_mint_link(id):
     req = AccountRequest(app, id)
@@ -532,7 +534,7 @@ def update_mint_link(id):
     return UpdateResponse(req, mint_link).json
 
 
-@app.put('/mint_links/<id>/archive')
+@app.put("/mint_links/<id>/archive")
 @tracer.capture_method
 def archive_mint_link(id):
     req = AccountRequest(app, id)
@@ -545,7 +547,7 @@ def archive_mint_link(id):
 #########
 
 
-@app.post('/mints')
+@app.post("/mints")
 @tracer.capture_method
 def create_mint():
     req = AccountRequest(app)
@@ -554,7 +556,7 @@ def create_mint():
     return CreateResponse(req, mint).json
 
 
-@app.get('/mints')
+@app.get("/mints")
 @tracer.capture_method
 def list_mints():
     req = AccountRequest(app)
@@ -564,11 +566,11 @@ def list_mints():
     count = versify.mint_service.count(req.filter)
     mints = versify.mint_service.list(filter, limit, skip)
     mints = versify.mint_service.expand(mints, req.expand_list)
-    mints = mints.get('data', [])  # type: ignore
+    mints = mints.get("data", [])  # type: ignore
     return ListResponse(req, mints, count).json
 
 
-@app.get('/mints/<id>')
+@app.get("/mints/<id>")
 @tracer.capture_method
 def get_mint(id):
     req = AccountRequest(app, id)
@@ -582,17 +584,17 @@ def get_mint(id):
 ############
 
 
-@app.post('/products')
+@app.post("/products")
 @tracer.capture_method
 def create_product():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     product = versify.product_service.create(body)
     return CreateResponse(req, product).json
 
 
-@app.get('/products')
+@app.get("/products")
 @tracer.capture_method
 def list_products():
     req = AccountRequest(app)
@@ -602,11 +604,11 @@ def list_products():
     count = versify.product_service.count(req.filter)
     products = versify.product_service.list(filter, limit, skip)
     products = versify.product_service.expand(products, req.expand_list)
-    products = products.get('data', [])  # type: ignore
+    products = products.get("data", [])  # type: ignore
     return ListResponse(req, products, count).json
 
 
-@app.get('/products/<id>')
+@app.get("/products/<id>")
 @tracer.capture_method
 def get_product(id):
     req = AccountRequest(app, id)
@@ -615,7 +617,7 @@ def get_product(id):
     return GetResponse(req, product).json
 
 
-@app.put('/products/<id>')
+@app.put("/products/<id>")
 @tracer.capture_method
 def update_product(id):
     req = AccountRequest(app, id)
@@ -628,17 +630,17 @@ def update_product(id):
 ###########
 
 
-@app.post('/rewards')
+@app.post("/rewards")
 @tracer.capture_method
 def create_reward():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     reward = versify.reward_service.create(body)
     return CreateResponse(req, reward).json
 
 
-@app.get('/rewards')
+@app.get("/rewards")
 @tracer.capture_method
 def list_rewards():
     req = AccountRequest(app)
@@ -648,11 +650,11 @@ def list_rewards():
     count = versify.reward_service.count(req.filter)
     rewards = versify.reward_service.list(filter, limit, skip)
     rewards = versify.reward_service.expand(rewards, req.expand_list)
-    rewards = rewards.get('data', [])  # type: ignore
+    rewards = rewards.get("data", [])  # type: ignore
     return ListResponse(req, rewards, count).json
 
 
-@app.get('/rewards/<id>')
+@app.get("/rewards/<id>")
 @tracer.capture_method
 def get_reward(id):
     req = AccountRequest(app, id)
@@ -661,7 +663,7 @@ def get_reward(id):
     return GetResponse(req, reward).json
 
 
-@app.put('/rewards/<id>')
+@app.put("/rewards/<id>")
 @tracer.capture_method
 def update_reward(id):
     req = AccountRequest(app, id)
@@ -669,28 +671,28 @@ def update_reward(id):
     return UpdateResponse(req, reward).json
 
 
-@app.post('/rewards/<id>/redemptions')
+@app.post("/rewards/<id>/redemptions")
 @tracer.capture_method
 def create_reward_redemption(id):
     req = AccountRequest(app, id)
     body = req.body
-    body['reward'] = id
+    body["reward"] = id
     redemption = versify.redemption_service.create(body)
     return CreateResponse(req, redemption).json
 
 
-@app.get('/rewards/<id>/redemptions')
+@app.get("/rewards/<id>/redemptions")
 @tracer.capture_method
 def list_reward_redemptions(id):
     req = AccountRequest(app)
     filter = req.filter
-    filter['reward'] = id
+    filter["reward"] = id
     limit = req.limit
     skip = req.skip
     count = versify.redemption_service.count(req.filter)
     runs = versify.redemption_service.list(filter, limit, skip)
     runs = versify.redemption_service.expand(runs, req.expand_list)
-    runs = runs.get('data', [])  # type: ignore
+    runs = runs.get("data", [])  # type: ignore
     return ListResponse(req, runs, count).json
 
 
@@ -705,23 +707,23 @@ class SearchType(Enum):
     AggregateTags = "aggregate_tags"
     CountSegmentContacts = "count_segment_contacts"
     ListSegmentContacts = "list_segment_contacts"
-    MintReport = 'mint_report'
+    MintReport = "mint_report"
     SearchAirdrops = "search_airdrops"
     SearchContacts = "search_contacts"
     SearchProducts = "search_products"
-    UsageStats = 'usage_stats'
+    UsageStats = "usage_stats"
 
 
-@app.get('/search')
+@app.get("/search")
 @tracer.capture_method
 def search():
     query_params = app.current_event.query_string_parameters or {}
 
     # Parse request for params
-    account = app.current_event.get_header_value('Versify-Account')
-    search_type = query_params.get('search_type')
-    query = query_params.get('query', '')
-    vql = query_params.get('vql', '')
+    account = app.current_event.get_header_value("Versify-Account")
+    search_type = query_params.get("search_type")
+    query = query_params.get("query", "")
+    vql = query_params.get("vql", "")
     url = app.current_event.path
 
     data = None
@@ -743,12 +745,7 @@ def search():
         e = f"'{search_type}' is not a valid Search Type"
         raise BadRequestError(e)
 
-    return {
-        'object': 'search',
-        'url': url,
-        'has_more': False,
-        'data': data
-    }
+    return {"object": "search", "url": url, "has_more": False, "data": data}
 
 
 ############
@@ -756,17 +753,17 @@ def search():
 ############
 
 
-@app.post('/webhooks')
+@app.post("/webhooks")
 @tracer.capture_method
 def create_webhook():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     webhook = versify.webhook_service.create(body)
     return CreateResponse(req, webhook).json
 
 
-@app.get('/webhooks')
+@app.get("/webhooks")
 @tracer.capture_method
 def list_webhooks():
     req = AccountRequest(app)
@@ -775,12 +772,12 @@ def list_webhooks():
     skip = req.skip
     webhooks = versify.webhook_service.list(filter, limit, skip)
     webhooks = versify.webhook_service.expand(webhooks, req.expand_list)
-    webhooks = webhooks.get('data', [])  # type: ignore
+    webhooks = webhooks.get("data", [])  # type: ignore
     count = versify.webhook_service.count(req.filter)
     return ListResponse(req, webhooks, count).json
 
 
-@app.get('/webhooks/<id>')
+@app.get("/webhooks/<id>")
 @tracer.capture_method
 def get_webhook(id):
     req = AccountRequest(app, id)
@@ -789,7 +786,7 @@ def get_webhook(id):
     return GetResponse(req, webhook).json
 
 
-@app.put('/webhooks/<id>')
+@app.put("/webhooks/<id>")
 @tracer.capture_method
 def update_webhook(id):
     req = AccountRequest(app, id)
@@ -797,7 +794,7 @@ def update_webhook(id):
     return UpdateResponse(req, webhook).json
 
 
-@app.delete('/webhooks/<id>')
+@app.delete("/webhooks/<id>")
 @tracer.capture_method
 def delete_webhook(id):
     req = AccountRequest(app, id)
@@ -810,17 +807,17 @@ def delete_webhook(id):
 ##################
 
 
-@app.post('/webhook_events')
+@app.post("/webhook_events")
 @tracer.capture_method
 def create_webhook_event():
     req = AccountRequest(app)
     body = req.body
-    body['account'] = req.account
+    body["account"] = req.account
     event = versify.webhook_event_service.create(body)
     return CreateResponse(req, event).json
 
 
-@app.get('/webhook_events')
+@app.get("/webhook_events")
 @tracer.capture_method
 def list_webhook_events():
     req = AccountRequest(app)
@@ -830,11 +827,11 @@ def list_webhook_events():
     count = versify.webhook_event_service.count(filter)
     events = versify.webhook_event_service.list(filter, limit, skip)
     events = versify.webhook_event_service.expand(events, req.expand_list)
-    events = events.get('data', [])  # type: ignore
+    events = events.get("data", [])  # type: ignore
     return ListResponse(req, events, count).json
 
 
-@app.get('/webhook_events/<id>')
+@app.get("/webhook_events/<id>")
 @tracer.capture_method
 def get_webhook_event(id):
     req = AccountRequest(app, id)
@@ -845,7 +842,9 @@ def get_webhook_event(id):
 
 @account_required
 @cors_headers
-@logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST, log_event=True)
+@logger.inject_lambda_context(
+    correlation_id_path=correlation_paths.API_GATEWAY_REST, log_event=True
+)
 @tracer.capture_lambda_handler
 def handler(event, context):
     return app.resolve(event, context)

@@ -7,9 +7,10 @@ from pymongo.database import Database
 class SessionLocal:
     def __init__(self) -> None:
 
-        if settings.MONGO_DB_URL != "false":
+        if settings.MONGO_DB_URL:
             # Create connection string for MongoDB Atlas using AWS IAM
-            connection_str = settings.MONGO_DB_URL
+            url = settings.MONGO_DB_URL
+            connection_str = f"mongodb+srv://{url}/?authSource=$external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority"
         else:
             # Create connection string for MongoDB Atlas using username and password
             mongo_domain = settings.MONGO_DOMAIN

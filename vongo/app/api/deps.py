@@ -1,10 +1,15 @@
+from app.api.exceptions import (
+    ForbiddenException,
+    NotFoundException,
+    UnauthorizedException,
+)
 from app.core.stytch import load_stytch
 from app.crud import versify
 from app.models.account import Account
 from app.models.enums import AccountStatus, TeamMemberRole
 from app.models.params import HeaderParams
 from app.models.user import User
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from jose import JWTError, jwt
 
 stytch = load_stytch()
@@ -53,9 +58,7 @@ def get_user_body_from_stytch_claims(claims):
     session = claims.get("https://stytch.com/session")
     stytch_user_id = claims.get("sub")
     if not session or not stytch_user_id:
-        raise HTTPException(
-            status_code=400, detail="Invalid Token. Missing Stytch User ID or Session"
-        )
+        raise UnauthorizedException("Invalid Token")
 
     user_body = {}
     for factor in session.get("authentication_factors", []):
@@ -67,38 +70,32 @@ def get_user_body_from_stytch_claims(claims):
             email = email_factor.get("email_address")
             user_body["email"] = email
         else:
-            raise HTTPException(status_code=400, detail="Invalid Authentication Factor")
+            raise UnauthorizedException("Invalid Token")
         break
 
     return user_body
 
 
-def current_user(
-    authorization: str = HeaderParams.AUTHORIZATION,
-):
+def current_user(authorization: str = HeaderParams.AUTHORIZATION):
 
-    # Verify the authorization header is present and valid
     if not authorization:
-        raise HTTPException(status_code=400, detail="Missing Header: Authorization")
+        raise UnauthorizedException("Missing Authorization Header")
     auth_type, token = authorization.split(" ")
     if not auth_type or not token:
-        raise HTTPException(status_code=400, detail="Malformed Header: Authorization")
+        raise UnauthorizedException("Invalid Authorization Header")
     if auth_type.lower() != "bearer":
-        raise HTTPException(status_code=400, detail="Authorization Type Not Supported")
+        raise UnauthorizedException("Invalid Authorization Header")
 
-    # Verify the token is valid
     try:
         claims = jwt.get_unverified_claims(token)
     except JWTError:
-        raise HTTPException(status_code=400, detail="Invalid Token")
+        raise UnauthorizedException("Invalid Token")
     if not claims:
-        raise HTTPException(status_code=400, detail="Invalid Token")
+        raise UnauthorizedException("Invalid Token")
 
     user_body = get_user_body_from_stytch_claims(claims)
     if not user_body.get("email"):
-        raise HTTPException(
-            status_code=400, detail="Could not identify user email address"
-        )
+        raise UnauthorizedException("Invalid Token")
 
     user = versify.users.get_by_email(user_body["email"])
     if not user:
@@ -107,40 +104,28 @@ def current_user(
     return user
 
 
-def current_active_user(
-    user: User = Depends(current_user),
-):
+def current_active_user(user: User = Depends(current_user)):
     if not user.active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise ForbiddenException("User Inactive")
     return user
 
 
 def current_account(account_id: str = HeaderParams.VERSIFY_ACCOUNT):
-
-    # Verify the Versify-Account header is present and valid
     if not account_id:
-        raise HTTPException(status_code=400, detail="Missing Header: Versify-Account")
-
-    # Verify the account exists
+        raise NotFoundException("Account Not Found")
     account = versify.accounts.get_by_id(account_id)
     if not account:
-        raise HTTPException(status_code=404, detail="Account Not Found")
-
+        raise NotFoundException("Account Not Found")
     return account
 
 
-def current_active_account(
-    account: Account = Depends(current_account),
-):
+def current_active_account(account: Account = Depends(current_account)):
     if not account.status == AccountStatus.ACTIVE:
-        raise HTTPException(status_code=400, detail="Account Inactive")
+        raise ForbiddenException("Account Inactive")
     return account
 
 
-def get_current_user_account_role(
-    account: Account,
-    user: User,
-):
+def get_current_user_account_role(account: Account, user: User):
     for account_user in account.team:
         if account_user.email == user.email:
             return account_user.role

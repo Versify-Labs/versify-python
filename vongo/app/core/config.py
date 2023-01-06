@@ -5,7 +5,7 @@ import pathlib
 from typing import List, Union
 
 from aws_lambda_powertools.utilities import parameters
-from pydantic import AnyHttpUrl, BaseSettings, validator
+from pydantic import BaseSettings, validator
 
 # Project Directories
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -37,12 +37,17 @@ class Settings(BaseSettings):
 
     # FastAPI Settings
     API_NAME: str = "Versify API"
-    API_VERSION: str = '1.0.0'
-    API_V1_STR: str = "/v1"
+    API_VERSION: str = "1.0.0"
+    API_V1_STR: str = "/v2"
     BACKEND_CORS_ORIGINS: List[str] = [
+        "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
+        "http://localhost:3000",
         "http://localhost:8000",
-        "https://btox1olm2k.execute-api.us-east-1.amazonaws.com",
+        "https://api.versifylabs.com",
+        "https://api-dev.versifylabs.com",
+        "https://dashboard.versifylabs.com",
+        "https://dashboard-dev.versifylabs.com",
     ]
 
     # AWS Lambda Variables
@@ -50,10 +55,10 @@ class Settings(BaseSettings):
     AWS_REGION: str = os.environ.get("AWS_REGION", "us-east-1")
 
     # AWS Secrets Manager
+    MONGO_DB_URL: Union[str, None] = get_var("MONGO_DB_URL")
     MONGO_DOMAIN: Union[str, None] = get_var("MONGO_DOMAIN")
     MONGO_UN: Union[str, None] = get_var("MONGO_UN")
     MONGO_PW: Union[str, None] = get_var("MONGO_PW")
-    MONGO_DB_URL: Union[str, None] = get_var("MONGO_DB_URL")
     STYTCH_ENV: Union[str, None] = get_var("STYTCH_ENV", "test")
     STYTCH_PROJECT_ID: Union[str, None] = get_var("STYTCH_PROJECT_ID")
     STYTCH_SECRET: Union[str, None] = get_var("STYTCH_SECRET")

@@ -3,10 +3,10 @@ from app.api.deps import (
     current_active_user,
     current_user_account_role,
 )
+from app.api.exceptions import ForbiddenException, NotFoundException
 from app.crud import versify
 from app.models.account import Account
 from app.models.enums import TeamMemberRole
-from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.journey import (
     JourneyCreateRequest,
     JourneyCreateResponse,
@@ -18,6 +18,8 @@ from app.models.journey import (
     JourneySearchResponse,
     JourneyUpdateRequest,
     JourneyUpdateResponse,
+    RunListRequest,
+    RunListResponse,
 )
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
@@ -177,3 +179,37 @@ def delete_journey(
         raise ForbiddenException()
     delete_result = versify.journeys.delete(journey_id)
     return delete_result
+
+
+@router.get(
+    path="/{journey_id}/runs",
+    summary="List journey runs",
+    description="List journey runs",
+    tags=["Journeys"],
+    status_code=200,
+    response_model=RunListResponse,
+    response_description="The list of journey runs",
+)
+def list_runs(
+    current_account: Account = Depends(current_active_account),
+    current_user: User = Depends(current_active_user),
+    current_user_account_role: TeamMemberRole = Depends(current_user_account_role),
+    journey_id: str = PathParams.CONTACT_ID,
+    run_list_request: RunListRequest = Depends(),
+):
+    if current_user_account_role == TeamMemberRole.GUEST:
+        raise ForbiddenException()
+    journey = versify.journeys.get(journey_id)
+    if not journey:
+        raise NotFoundException()
+    if journey.account != current_account.id:
+        raise ForbiddenException()
+    count = versify.runs.count(
+        journey=journey_id,
+    )
+    runs = versify.runs.list(
+        page_num=run_list_request.page_num,
+        page_size=run_list_request.page_size,
+        journey=journey_id,
+    )
+    return {"count": count, "data": runs, "has_more": count > len(runs)}

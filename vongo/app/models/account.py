@@ -2,7 +2,7 @@ from typing import List, Union
 
 from app.models.base import Base
 from app.models.enums import AccountStatus
-from app.models.factory import account_id, current_timestamp
+from app.models.factory import account_id, current_timestamp, generate_avatar
 from app.models.globals import Billing, Brand, Query, TeamMember
 from fastapi import Query as QueryParam
 from pydantic import Field, root_validator
@@ -77,6 +77,9 @@ class Account(Base):
 
     @root_validator(pre=True)
     def create_default_fields(cls, values):
+        name = values.get("name", "Versify")
+        if not values.get("brand"):
+            values["brand"] = Brand(logo=generate_avatar(name))
         if not values.get("domain"):
             team = values.get("team", [])
             for member in team:
@@ -149,6 +152,29 @@ class AccountGetResponse(Account):
     """A account get response body."""
 
     pass
+
+
+class AccountGetResponsePublic:
+    """A account get response body for the public"""
+
+    id: str = Field(
+        alias="_id",
+        default_factory=account_id,
+        description="Unique identifier for the account",
+        example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
+        title="Account ID",
+    )
+    object: str = Field(
+        default="account",
+        description="The object type",
+        example="account",
+        title="Object Type",
+    )
+    brand: Brand = Field(
+        default=Brand(),
+        description="The branding settings of the account",
+        title="Branding Settings",
+    )
 
 
 class AccountListRequest:
@@ -273,7 +299,10 @@ class AccountUpdateRequest(Base):
         title="Account Domain",
     )
     metadata: Union[dict, None] = Field(
-        default=None, description="Arbitrary metadata for the account", title="Metadata"
+        default=None,
+        description="Arbitrary metadata associated with the account",
+        example={"key": "value"},
+        title="Metadata",
     )
     name: Union[str, None] = Field(
         default=None,

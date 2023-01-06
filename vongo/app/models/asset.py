@@ -3,7 +3,7 @@ from typing import List, Union
 from app.models.base import Base
 from app.models.enums import AssetStatus, BlockchainType
 from app.models.factory import asset_id, current_timestamp
-from app.models.globals import Note, Query
+from app.models.globals import Query
 from fastapi import Query as QueryParam
 from pydantic import Field, HttpUrl, validator
 
@@ -78,11 +78,6 @@ class Asset(Base):
         example="Asset Name",
         title="Name",
     )
-    notes: list[Note] = Field(
-        default=[],
-        description="The notes associated with the asset",
-        title="Notes",
-    )
     properties: List[dict] = Field(
         default=[],
         description="The properties of the asset. Displayed on third party apps.",
@@ -93,12 +88,6 @@ class Asset(Base):
         description="The status of the asset",
         example=AssetStatus.ACTIVE,
         title="Status",
-    )
-    tags: list[str] = Field(
-        default=[],
-        description="The tags associated with the asset",
-        example=["tag1", "tag2"],
-        title="Tags",
     )
     token_id: str = Field(
         ...,
@@ -112,10 +101,6 @@ class Asset(Base):
         example=1601059200,
         title="Updated Timestamp",
     )
-
-    @validator("tags")
-    def tags_must_be_unique(cls, v):
-        return list(set(v))
 
 
 class AssetCreateRequest(Base):
@@ -143,12 +128,6 @@ class AssetCreateRequest(Base):
         default=[],
         description="The properties of the asset. Displayed on third party apps.",
         title="Properties",
-    )
-    tags: list[str] = Field(
-        default=[],
-        description="The tags associated with the asset",
-        example=["tag1", "tag2"],
-        title="Tags",
     )
 
 
@@ -226,19 +205,12 @@ class AssetListRequest:
             description="The status of the asset",
             example=AssetStatus.ACTIVE,
             title="Status",
-        ),
-        tags: Union[List[str], None] = QueryParam(
-            default=None,
-            description="The tags associated with the asset",
-            example=["tag1", "tag2"],
-            title="Tags",
-        ),
+        )
     ):
         self.page_num = page_num
         self.page_size = page_size
         self.collection = collection
         self.status = status
-        self.tags = tags
 
 
 class AssetListResponse(Base):
@@ -350,12 +322,6 @@ class AssetUpdateRequest(Base):
         default=None,
         description="The properties of the asset. Displayed on third party apps.",
         title="Properties",
-    )
-    tags: Union[List[str], None] = Field(
-        default=None,
-        description="The tags associated with the asset",
-        example=["tag1", "tag2"],
-        title="Tags",
     )
 
 

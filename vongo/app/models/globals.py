@@ -10,13 +10,14 @@ from app.models.enums import (
     SubscriptionStatus,
     TeamMemberRole,
     TriggerType,
+    WalletPosition,
 )
 from app.models.factory import (
     api_public_key,
     api_secret_key,
     generate_stripe_customer_id,
 )
-from pydantic import EmailStr, Field, HttpUrl, validator
+from pydantic import AnyHttpUrl, EmailStr, Field, validator
 
 
 class Query(Base):
@@ -34,7 +35,7 @@ class Query(Base):
         example=Operator.EQUALS,
         title="Query Operator",
     )
-    value: Union[str, int, float, bool, EmailStr, HttpUrl, List[Dict]] = Field(
+    value: Union[str, int, float, bool, EmailStr, AnyHttpUrl, List[Dict]] = Field(
         ...,
         description="The value to query by",
         example="gmail.com",
@@ -97,8 +98,8 @@ class ActionConfig(Base):
     tags: Union[list[str], None] = Field(
         default=None,
         description="The tags to add to the contact",
-        example=["tag"],
-        title="Tag Contact Tags",
+        example=["Customer"],
+        title="Tags",
     )
 
     # MATCH_ALL/MATCH_ANY
@@ -215,41 +216,77 @@ class Billing(Base):
 class Brand(Base):
     """A brand used to customize the look and feel of an account."""
 
-    logo: Union[HttpUrl, None] = Field(
+    logo: Union[AnyHttpUrl, None] = Field(
         default=None,
         description="The URL of the brand's logo",
         example="https://example.com/logo.png",
         title="Logo URL",
     )
     action_color: Union[str, None] = Field(
-        default=None,
+        default="#000000",
         description="The action color of the brand",
         example="#000000",
         title="Action Color",
     )
     background_color: Union[str, None] = Field(
-        default=None,
+        default="#000000",
         description="The background color of the brand",
         example="#000000",
         title="Background Color",
     )
     primary_color: Union[str, None] = Field(
-        default=None,
+        default="#000000",
         description="The primary color of the brand",
         example="#000000",
         title="Primary Color",
     )
     secondary_color: Union[str, None] = Field(
-        default=None,
+        default="#000000",
         description="The secondary color of the brand",
         example="#000000",
         title="Secondary Color",
     )
     tertiary_color: Union[str, None] = Field(
-        default=None,
+        default="#000000",
         description="The tertiary color of the brand",
         example="#000000",
         title="Tertiary Color",
+    )
+    wallet_action_color: Union[str, None] = Field(
+        default="#000000",
+        description="The wallet action color of the brand",
+        example="#000000",
+        title="Wallet Action Color",
+    )
+    wallet_background_color: Union[str, None] = Field(
+        default="#000000",
+        description="The wallet background color of the brand",
+        example="#000000",
+        title="Wallet Background Color",
+    )
+    wallet_display_filters: List[Query] = Field(
+        default=[],
+        description="The wallet display filters of the brand",
+        example=[
+            Query(
+                field="url",
+                operator=Operator.CONTAINS,
+                value="example.com/rewards",
+            )
+        ],
+        title="Wallet Display Filters",
+    )
+    wallet_position: WalletPosition = Field(
+        default=WalletPosition.BOTTOM_LEFT,
+        description="The wallet position of the brand",
+        example=WalletPosition.BOTTOM_LEFT,
+        title="Wallet Position",
+    )
+    wallet_welcome_message: Union[str, None] = Field(
+        default="Welcome",
+        description="The wallet welcome message of the brand",
+        example="Welcome to Acme",
+        title="Wallet Welcome Message",
     )
 
 
@@ -290,34 +327,6 @@ class Location(Base):
         description="The region of the location",
         example="CA",
         title="Region",
-    )
-
-
-class Note(Base):
-    """A note for a resource."""
-
-    id: str = Field(
-        ...,
-        description="The ID of the note",
-        example="not_12312312312312",
-        title="Note ID",
-    )
-    author: Author = Field(
-        ...,
-        description="The creator of the note. Contains user ID, name, etc.",
-        title="Note Author",
-    )
-    created: int = Field(
-        ...,
-        description="The timestamp of when the note was created",
-        example=1629023389,
-        title="Created Timestamp",
-    )
-    content: str = Field(
-        default="",
-        description="The content of the note",
-        example="This is a note",
-        title="Note Content",
     )
 
 
@@ -441,7 +450,7 @@ class SocialProfile(Base):
         example="Facebook",
         title="Social Network Name",
     )
-    url: HttpUrl = Field(
+    url: AnyHttpUrl = Field(
         ...,
         description="The URL of the social profile",
         example="https://www.facebook.com/jane.doe",

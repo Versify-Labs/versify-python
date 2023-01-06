@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from app.crud.base import BaseResource
 from app.db.session import SessionLocal
-from app.models.journey import Journey
+from app.models.journey import Journey, Run
 
 
 class JourneyResource(BaseResource):
@@ -37,3 +37,37 @@ class JourneyResource(BaseResource):
     def update(self, id: str, body: Dict[str, Any]) -> Optional[Journey]:
         journey = self._update(id, body)
         return Journey(**journey) if journey else None
+
+
+class RunResource(BaseResource):
+    def __init__(self, db_session: SessionLocal):
+        db_name = "Dev"
+        db_collection = "Runs"
+        self.collection = db_session.get_collection(db_name, db_collection)
+
+    def count(self, **kwargs) -> int:
+        return self._count(**kwargs)
+
+    def create(self, body: Dict[str, Any] = {}) -> Run:
+        run_body = Run(**body)
+        self._create(run_body.bson())
+        return run_body
+
+    def delete(self, id: str) -> bool:
+        return self._delete(**{"_id": id})
+
+    def get(self, id: str) -> Optional[Run]:
+        run = self._get(**{"_id": id})
+        return Run(**run) if run else None
+
+    def list(self, **kwargs) -> List[Run]:
+        runs = self._list(**kwargs)
+        return [Run(**run) for run in runs]
+
+    def search(self, query: Dict[str, Any], **kwargs) -> List[Run]:
+        runs = self._search(query=query, **kwargs)
+        return [Run(**run) for run in runs]
+
+    def update(self, id: str, body: Dict[str, Any]) -> Optional[Run]:
+        run = self._update(id, body)
+        return Run(**run) if run else None

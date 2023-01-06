@@ -5,13 +5,17 @@ name = "pypi"
 
 [packages]
 aws-lambda-powertools = {extras = ["all"], version = "*"}
+dnspython = "*"
 fastapi = "*"
 jinja2 = "*"
+ksuid = "*"
+mailchimp-transactional = "*"
 mangum = "*"
 pydantic = {extras = ["email"], version = "*"}
-pymongo = "*"
 python-jose = "*"
 requests = "*"
+stripe = "*"
+pymongo = {extras = ["aws"], version = "*"}
 
 [dev-packages]
 uvicorn = "*"

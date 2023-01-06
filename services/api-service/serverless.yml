@@ -6,11 +6,6 @@ frameworkVersion: ">=2.24.0"
 
 plugins:
   - serverless-python-requirements
-  - serverless-wsgi
-
-custom:
-  wsgi:
-    app: src/app.app
 
 provider:
   name: aws
@@ -40,9 +35,9 @@ provider:
             - "arn:aws:events:${aws:region}:*:rule/*"
         - Effect: Allow
           Action:
-            - "scheduler:*"
+            - "iam:PassRole"
           Resource:
-            - "arn:aws:scheduler:${aws:region}:*:schedule/*"
+            - "*"
         - Effect: Allow
           Action:
             - "s3:*"
@@ -53,21 +48,25 @@ provider:
             - "arn:aws:s3:::cdn-dev.versifylabs.com/*"
         - Effect: Allow
           Action:
+            - "scheduler:*"
+          Resource:
+            - "arn:aws:scheduler:${aws:region}:*:schedule/*"
+        - Effect: Allow
+          Action:
             - secretsmanager:GetSecretValue
           Resource:
             - "arn:aws:secretsmanager:${aws:region}:*:secret:/versify/platform/secret*"
         - Effect: Allow
           Action:
+            - ssm:GetParameter
+          Resource:
+            - "arn:aws:ssm:${aws:region}:*:parameter/*"
+        - Effect: Allow
+          Action:
             - "states:*"
           Resource:
             - "*"
-        - Effect: Allow
-          Action:
-            - "iam:PassRole"
-          Resource:
-            - "*"
   layers:
-    - arn:aws:lambda:${aws:region}:017000801446:layer:AWSLambdaPowertoolsPython:26
     - ${ssm:/versify/services/integration/shared/layer/arn}
   runtime: python3.9
   timeout: 30
@@ -1573,10 +1572,14 @@ functions:
       - http:
           method: post
           path: /webhook/tatum
-  ApiService-App:
-    handler: wsgi_handler.handler
-    name: ApiService-App
+  ApiService-Api:
+    handler: app.main.handler
+    name: ApiService-Api
     description: API endpoints handler
     events:
-      - http: ANY /
-      - http: ANY /{proxy+}
+      - http:
+          method: get
+          path: /
+      - http:
+          method: any
+          path: /{proxy+}

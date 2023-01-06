@@ -8,115 +8,118 @@ from versify.decorators import cors_headers
 
 from ..rest import CreateResponse, GetResponse, ListResponse, PublicRequest
 
-app = APIGatewayRestResolver(strip_prefixes=['/public'])
+app = APIGatewayRestResolver(strip_prefixes=["/public"])
 logger = Logger()
 tracer = Tracer()
 versify = Versify()
 
 
-@app.get('/accounts/<id>/assets')
+@app.get("/accounts/<id>/assets")
 @tracer.capture_method
 def list_account_assets(id):
     req = PublicRequest(app)
     filter = req.filter
-    filter['account'] = id
+    filter["account"] = id
     limit = req.limit
     skip = req.skip
     count = versify.product_service.count(req.filter)
     assets = versify.product_service.list(filter, limit, skip)
     assets = versify.product_service.expand(assets, req.expand_list)
-    assets = assets.get('data', [])  # type: ignore
+    assets = assets.get("data", [])  # type: ignore
     return ListResponse(req, assets, count).json
 
 
-@app.post('/accounts/<id>/events')
+@app.post("/accounts/<id>/events")
 @tracer.capture_method
 def create_account_event(id):
     req = PublicRequest(app)
     body = req.body
-    body['account'] = id
+    body["account"] = id
     event = versify.event_service.create(body)
     return CreateResponse(req, event).json
 
 
-@app.get('/accounts/<id>/journeys')
+@app.get("/accounts/<id>/journeys")
 @tracer.capture_method
 def list_account_journeys(id):
     req = PublicRequest(app)
     filter = req.filter
-    filter['account'] = id
+    filter["account"] = id
     limit = req.limit
     skip = req.skip
     count = versify.journey_service.count(req.filter)
     journeys = versify.journey_service.list(filter, limit, skip)
     journeys = versify.journey_service.expand(journeys, req.expand_list)
-    journeys = journeys.get('data', [])  # type: ignore
+    journeys = journeys.get("data", [])  # type: ignore
     return ListResponse(req, journeys, count).json
 
 
-@app.get('/accounts/<id>/rewards')
+@app.get("/accounts/<id>/rewards")
 @tracer.capture_method
 def list_account_rewards(id):
     req = PublicRequest(app)
     filter = req.filter
-    filter['account'] = id
+    filter["account"] = id
     limit = req.limit
     skip = req.skip
     count = versify.reward_service.count(req.filter)
     rewards = versify.reward_service.list(filter, limit, skip)
     rewards = versify.reward_service.expand(rewards, req.expand_list)
-    rewards = rewards.get('data', [])  # type: ignore
+    rewards = rewards.get("data", [])  # type: ignore
     return ListResponse(req, rewards, count).json
 
 
-@app.get('/mint_links/<id>')
+@app.get("/mint_links/<id>")
 @tracer.capture_method
 def get_mint_link(id):
     req = PublicRequest(app, id)
     link = versify.mint_link_service.retrieve_by_id(id)
     link = versify.mint_link_service.expand(link, req.expand_list)
     if not link:
-        raise NotFoundError('Mint link not found')
+        raise NotFoundError("Mint link not found")
     return GetResponse(req, link).json
 
 
-@app.get('/signatures/<id>')
+@app.get("/signatures/<id>")
 @tracer.capture_method
 def get_signature(id):
     exists = versify.signature_service.exists(id)
     if not exists:
-        raise NotFoundError('Signature not found')
+        raise NotFoundError("Signature not found")
     return True
+
 
 ###### Deprecated ######
 
 
-@app.get('/accounts/<id>')
+@app.get("/accounts/<id>")
 @tracer.capture_method
 def get_account(id):
     req = PublicRequest(app)
     account = versify.account_service.retrieve_by_id(id)
     if not account:
-        raise NotFoundError('Account not found')
-    branding = account.get('branding', {})
-    branding['object'] = 'account'
+        raise NotFoundError("Account not found")
+    branding = account.get("branding", {})
+    branding["object"] = "account"
     return GetResponse(req, branding).json
 
 
-@app.get('/accounts/<id>/branding')
+@app.get("/accounts/<id>/branding")
 @tracer.capture_method
 def list_account_branding(id):
     req = PublicRequest(app)
     account = versify.account_service.retrieve_by_id(id)
     if not account:
-        raise NotFoundError('Account not found')
-    branding = account.get('branding', {})
-    branding['object'] = 'account.branding'
+        raise NotFoundError("Account not found")
+    branding = account.get("branding", {})
+    branding["object"] = "account.branding"
     return GetResponse(req, branding).json
 
 
 @cors_headers
-@logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST, log_event=True)
+@logger.inject_lambda_context(
+    correlation_id_path=correlation_paths.API_GATEWAY_REST, log_event=True
+)
 @tracer.capture_lambda_handler
 def handler(event, context):
     return app.resolve(event, context)

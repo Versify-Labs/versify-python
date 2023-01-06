@@ -1,6 +1,6 @@
 from app.api.deps import current_active_user
 from app.crud import versify
-from app.models.exceptions import ForbiddenException
+from app.api.exceptions import ForbiddenException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User, UserDeleted, UserUpdate
 from fastapi import APIRouter, Depends, HTTPException

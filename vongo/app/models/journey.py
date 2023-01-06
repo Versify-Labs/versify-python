@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Union
 
 from app.models.base import Base
-from app.models.factory import current_timestamp, journey_id
-from app.models.globals import Action, Query, Trigger
+from app.models.enums import RunStatus
+from app.models.factory import current_timestamp, journey_id, run_id
+from app.models.globals import Action, Query, RunStateResult, Trigger
 from fastapi import Query as QueryParam
 from pydantic import Field
 
@@ -99,76 +100,6 @@ class Journey(Base):
         example=1600000000,
         title="Updated",
     )
-
-
-# class JourneyRun(Base):
-#     id: str = Field(
-#         alias="_id",
-#         default_factory=journey_run_id,
-#         description="Unique identifier for the journey_run",
-#         example="journey_run_5f9f1c5b0b9b4b0b9c1c5b0b",
-#         title="Event ID",
-#     )
-#     object: str = Field(
-#         default="journey_run",
-#         description='The object type. Always "journey_run"',
-#         example="journey_run",
-#         title="Object Type",
-#     )
-#     account: str = Field(
-#         ...,
-#         description="The account the journey belongs to",
-#         example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
-#         title="Account ID",
-#     )
-#     created: int = Field(
-#         default_factory=current_timestamp,
-#         description="The timestamp when the journey_run was created",
-#         example=1601059200,
-#         title="Created Timestamp",
-#     )
-#     metadata: Dict[str, Any] = Field(
-#         default={},
-#         description="Arbitrary metadata associated with the journey_run",
-#         example={"key": "value"},
-#         title="Metadata",
-#     )
-#     updated: int = Field(
-#         default_factory=current_timestamp,
-#         description="The timestamp when the journey_run was last updated",
-#         example=1601059200,
-#         title="Updated Timestamp",
-#     )
-#     results: dict[str, RunStateResult] = Field(
-#         default={},
-#         description="The results of the journey_run",
-#         example={"key": "value"},
-#         title="Results",
-#     )
-#     status: RunStatus = Field(
-#         default=RunStatus.RUNNING,
-#         description="The status of the journey_run",
-#         example=RunStatus.RUNNING,
-#         title="Status",
-#     )
-#     time_started: int = Field(
-#         default_factory=current_timestamp,
-#         description="The timestamp when the journey_run was started",
-#         example=1601059200,
-#         title="Started Timestamp",
-#     )
-#     time_ended: Union[int, None] = Field(
-#         default=None,
-#         description="The timestamp when the journey_run was ended",
-#         example=1601059200,
-#         title="Ended Timestamp",
-#     )
-#     trigger_event: dict = Field(
-#         default={},
-#         description="The event that triggered the journey_run",
-#         example={"key": "value"},
-#         title="Trigger Event",
-#     )
 
 
 class JourneyCreateRequest(Base):
@@ -343,3 +274,129 @@ class JourneyUpdateResponse(Journey):
     """A journey update response body."""
 
     pass
+
+
+class Run(Base):
+    id: str = Field(
+        alias="_id",
+        default_factory=run_id,
+        description="Unique identifier for the run",
+        example="run_5f9f1c5b0b9b4b0b9c1c5b0b",
+        title="Journey Run ID",
+    )
+    object: str = Field(
+        default="run",
+        description='The object type. Always "run"',
+        example="run",
+        title="Object Type",
+    )
+    account: str = Field(
+        ...,
+        description="The account the journey belongs to",
+        example="act_5f9f1c5b0b9b4b0b9c1c5b0b",
+        title="Account ID",
+    )
+    created: int = Field(
+        default_factory=current_timestamp,
+        description="The timestamp when the run was created",
+        example=1601059200,
+        title="Created Timestamp",
+    )
+    metadata: Dict[str, Any] = Field(
+        default={},
+        description="Arbitrary metadata associated with the run",
+        example={"key": "value"},
+        title="Metadata",
+    )
+    updated: int = Field(
+        default_factory=current_timestamp,
+        description="The timestamp when the run was last updated",
+        example=1601059200,
+        title="Updated Timestamp",
+    )
+    results: dict[str, RunStateResult] = Field(
+        default={},
+        description="The results of the run",
+        example={"key": "value"},
+        title="Results",
+    )
+    status: RunStatus = Field(
+        default=RunStatus.RUNNING,
+        description="The status of the run",
+        example=RunStatus.RUNNING,
+        title="Status",
+    )
+    time_started: int = Field(
+        default_factory=current_timestamp,
+        description="The timestamp when the run was started",
+        example=1601059200,
+        title="Started Timestamp",
+    )
+    time_ended: Union[int, None] = Field(
+        default=None,
+        description="The timestamp when the run was ended",
+        example=1601059200,
+        title="Ended Timestamp",
+    )
+    trigger_event: dict = Field(
+        default={},
+        description="The event that triggered the run",
+        example={"key": "value"},
+        title="Trigger Event",
+    )
+
+
+class RunListRequest:
+    """A journey run list request body."""
+
+    def __init__(
+        self,
+        page_num: int = QueryParam(
+            default=1,
+            description="The page number to return",
+            example=1,
+            title="Page Number",
+        ),
+        page_size: int = QueryParam(
+            default=20,
+            description="The number of runs to return",
+            example=20,
+            title="Page Size",
+        ),
+    ):
+        self.page_num = page_num
+        self.page_size = page_size
+
+
+class RunListResponse(Base):
+    """A run list response body."""
+
+    object: str = Field(
+        default="list",
+        description="The object type",
+        example="list",
+        title="Object Type",
+    )
+    count: int = Field(
+        default=0,
+        description="The number of runs returned",
+        example=1,
+        title="Count",
+    )
+    data: List[Run] = Field(
+        default=[],
+        description="The list of runs that match the filters and pagination parameters.",
+        title="Runs",
+    )
+    has_more: bool = Field(
+        default=False,
+        description="Whether there are more runs to be returned",
+        example=False,
+        title="Has More",
+    )
+    url: str = Field(
+        default="/v1/journeys/{journey_id}/runs",
+        description="The URL of the list request",
+        example="/v1/journeys/{journey_id}/runs",
+        title="URL",
+    )

@@ -29,7 +29,7 @@ app = FastAPI(
         #     "description": "Production server",
         # },
         {
-            "url": "https://btox1olm2k.execute-api.us-east-1.amazonaws.com/dev",
+            "url": "https://api-dev.versifylabs.com",
             "description": "Development server",
         },
         {
@@ -37,14 +37,9 @@ app = FastAPI(
             "description": "Local server",
         },
     ],
-    root_path="/dev",
     terms_of_service="https://versifylabs.com/legal/terms",
     version=settings.API_VERSION,
     openapi_tags=[
-        {
-            "name": "Root",
-            "description": "Operations related to the root of the API.",
-        },
         {
             "name": "Accounts",
             "description": "Operations related to creating, reading, updating and deleting accounts.",
@@ -82,12 +77,20 @@ app = FastAPI(
             "description": "Operations related to creating, reading, updating and deleting mints.",
         },
         {
+            "name": "Notes",
+            "description": "Operations related to creating, reading, updating and deleting notes.",
+        },
+        {
             "name": "Redemptions",
             "description": "Operations related to creating, reading, updating and deleting redemptions.",
         },
         {
             "name": "Rewards",
             "description": "Operations related to creating, reading, updating and deleting rewards.",
+        },
+        {
+            "name": "Tags",
+            "description": "Operations related to creating, reading, updating and deleting tags.",
         },
         {
             "name": "Webhooks",
@@ -112,7 +115,7 @@ app.add_middleware(
 root_router = APIRouter()
 
 
-@root_router.get(path="/", tags=["Root"], status_code=200)
+@root_router.get(path="/", tags=["Root"], status_code=200, include_in_schema=False)
 def root(request: Request):
     return TEMPLATES.TemplateResponse(
         name="index.html",
@@ -120,7 +123,7 @@ def root(request: Request):
     )
 
 
-@root_router.get(path="/info", tags=["Root"], status_code=200)
+@root_router.get(path="/info", tags=["Root"], status_code=200, include_in_schema=False)
 def info():
     return {
         "title": app.title,

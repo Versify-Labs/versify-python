@@ -6,7 +6,7 @@ from app.api.deps import (
 from app.crud import versify
 from app.models.account import Account
 from app.models.enums import TeamMemberRole
-from app.models.exceptions import ForbiddenException, NotFoundException
+from app.api.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
 from app.models.webhook import (

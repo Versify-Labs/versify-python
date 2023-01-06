@@ -3,6 +3,7 @@ from app.api.deps import (
     current_active_user,
     current_user_account_role,
 )
+from app.api.exceptions import ForbiddenException, NotFoundException
 from app.crud import versify
 from app.models.account import Account
 from app.models.asset import (
@@ -20,7 +21,6 @@ from app.models.asset import (
     AssetUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
-from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
 from fastapi import APIRouter, Depends
@@ -49,7 +49,6 @@ def list_assets(
         account=current_account.id,
         collection=asset_list_request.collection,
         status=asset_list_request.status,
-        tags=asset_list_request.tags,
     )
     assets = versify.assets.list(
         page_num=asset_list_request.page_num,
@@ -57,7 +56,6 @@ def list_assets(
         account=current_account.id,
         collection=asset_list_request.collection,
         status=asset_list_request.status,
-        tags=asset_list_request.tags,
     )
     return {"count": count, "data": assets, "has_more": count > len(assets)}
 

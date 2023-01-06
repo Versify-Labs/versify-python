@@ -52,7 +52,7 @@ class Mint(Base):
     journey: Union[str, None] = Field(
         default=None, description="The journey the mint is for", title="Journey ID"
     )
-    journey_run: Union[str, None] = Field(
+    run: Union[str, None] = Field(
         default=None,
         description="The journey run the mint is for",
         title="Journey Run ID",

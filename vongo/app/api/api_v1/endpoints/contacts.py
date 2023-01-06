@@ -3,6 +3,7 @@ from app.api.deps import (
     current_active_user,
     current_user_account_role,
 )
+from app.api.exceptions import ForbiddenException, NotFoundException
 from app.crud import versify
 from app.models.account import Account
 from app.models.contact import (
@@ -18,7 +19,6 @@ from app.models.contact import (
     ContactUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
-from app.models.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
 from fastapi import APIRouter, Depends
@@ -47,7 +47,6 @@ def list_contacts(
         account=current_account.id,
         owner=contact_list_request.owner,
         status=contact_list_request.status,
-        tags=contact_list_request.tags,
     )
     contacts = versify.contacts.list(
         page_num=contact_list_request.page_num,
@@ -55,7 +54,6 @@ def list_contacts(
         account=current_account.id,
         owner=contact_list_request.owner,
         status=contact_list_request.status,
-        tags=contact_list_request.tags,
     )
     return {"count": count, "data": contacts, "has_more": count > len(contacts)}
 

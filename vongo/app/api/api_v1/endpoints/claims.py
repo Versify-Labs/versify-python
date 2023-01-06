@@ -18,7 +18,7 @@ from app.models.claim import (
     ClaimUpdateResponse,
 )
 from app.models.enums import TeamMemberRole
-from app.models.exceptions import ForbiddenException, NotFoundException
+from app.api.exceptions import ForbiddenException, NotFoundException
 from app.models.params import BodyParams, PathParams
 from app.models.user import User
 from fastapi import APIRouter, Depends

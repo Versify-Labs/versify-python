@@ -7,7 +7,6 @@ from jose import jwt
 
 
 class Paragon:
-
     def __init__(self):
         pass
 
@@ -20,18 +19,18 @@ class Paragon:
         Returns:
             dict: The Paragon token.
         """
-        secret_name = os.environ['SECRET_NAME']
+        secret_name = os.environ["SECRET_NAME"]
         secret_raw = parameters.get_secret(secret_name)
         secret = json.loads(secret_raw)  # type: ignore
-        signing_key = secret['PARAGON_SIGNING_KEY']
+        signing_key = secret["PARAGON_SIGNING_KEY"]
         created = int(time.time())
         token = jwt.encode(
             {
-                'sub': account_id,
-                'iat': created,
-                'exp': created + 60 * 60,
+                "sub": account_id,
+                "iat": created,
+                "exp": created + 60 * 60,
             },
             signing_key,
-            algorithm='RS256'
+            algorithm="RS256",
         )
         return token

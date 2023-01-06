@@ -4,6 +4,7 @@ import time
 from app.core.constants import DEFAULT_LOGO
 from app.models.enums import ObjectPrefixes
 from bson.objectid import ObjectId
+from pydantic import AnyHttpUrl
 
 
 class PyObjectId(ObjectId):
@@ -97,15 +98,6 @@ def journey_id() -> str:
     return object_id(ObjectPrefixes.JOURNEY)
 
 
-def journey_run_id() -> str:
-    """Generates a new journey run ID
-
-    Returns:
-        str: The new journey run ID
-    """
-    return object_id(ObjectPrefixes.JOURNEY_RUN)
-
-
 def message_id() -> str:
     """Generates a new message ID
 
@@ -124,6 +116,15 @@ def mint_id() -> str:
     return object_id(ObjectPrefixes.MINT)
 
 
+def note_id() -> str:
+    """Generates a new note ID
+
+    Returns:
+        str: The new note ID
+    """
+    return object_id(ObjectPrefixes.NOTE)
+
+
 def redemption_id() -> str:
     """Generates a new redemption ID
 
@@ -140,6 +141,24 @@ def reward_id() -> str:
         str: The new reward ID
     """
     return object_id(ObjectPrefixes.REWARD)
+
+
+def run_id() -> str:
+    """Generates a new run ID
+
+    Returns:
+        str: The new run ID
+    """
+    return object_id(ObjectPrefixes.RUN)
+
+
+def tag_id() -> str:
+    """Generates a new tag ID
+
+    Returns:
+        str: The new tag ID
+    """
+    return object_id(ObjectPrefixes.TAG)
 
 
 def user_id() -> str:
@@ -206,11 +225,11 @@ def api_secret_key() -> str:
     return "sk_" + secrets.token_hex(32)
 
 
-def generate_avatar(name):
+def generate_avatar(name: str) -> AnyHttpUrl:
+    url = DEFAULT_LOGO
     if name:
-        return f"https://avatars.dicebear.com/api/initials/{name[0]}.svg"
-    else:
-        return DEFAULT_LOGO
+        url = f"https://avatars.dicebear.com/api/initials/{name[0]}.svg"
+    return AnyHttpUrl(url, scheme="https")
 
 
 def generate_stripe_customer_id():

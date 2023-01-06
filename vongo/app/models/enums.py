@@ -49,7 +49,7 @@ class ClaimStatus(str, Enum):
 
 class ContactStatus(str, Enum):
     ACTIVE = "active"
-    INACTIVE = "inactive"
+    ARCHIVED = "archived"
 
 
 class ContactQueryField(str, Enum):
@@ -57,7 +57,6 @@ class ContactQueryField(str, Enum):
     EMAIL = "email"
     PHONE_NUMBER = "phone_number"
     STATUS = "status"
-    TAGS = "tags"
     UPDATED = "updated"
 
 
@@ -99,11 +98,13 @@ class ObjectPrefixes(str, Enum):
     CONTACT = "con"
     EVENT = "evt"
     JOURNEY = "jny"
-    JOURNEY_RUN = "jnr"
     MESSAGE = "msg"
     MINT = "mnt"
+    NOTE = "nte"
     REDEMPTION = "rdm"
     REWARD = "rwd"
+    RUN = "run"
+    TAG = "tag"
     USER = "usr"
     WALLET = "wlt"
     WEBHOOK = "whk"

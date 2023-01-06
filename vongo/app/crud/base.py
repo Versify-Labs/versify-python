@@ -160,7 +160,7 @@ class BaseResource:
         if not updates or len(updates.keys()) < 1:
             return self.collection.find_one({"_id": id})
         updates["updated"] = current_timestamp()
-        return self.collection.find_one_andupdate(
+        return self.collection.find_one_and_update(
             filter={"_id": id},
             update={"$set": updates},
             return_document=ReturnDocument.AFTER,
