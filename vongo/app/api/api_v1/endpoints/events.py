@@ -1,8 +1,8 @@
-from app.crud import versify
-from app.models.enums import TeamMemberRole
-from app.models.event import Event, EventCreate, EventUpdate
 from fastapi import APIRouter, Depends
 
+from ....crud import versify
+from ....models.enums import TeamMemberRole
+from ....models.event import Event, EventCreate, EventUpdate
 from ...deps import identity_with_account
 from ...exceptions import ForbiddenException, NotFoundException
 from ...models import (

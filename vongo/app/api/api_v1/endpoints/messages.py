@@ -1,5 +1,10 @@
+from fastapi import APIRouter, Depends
+
+from ....crud import versify
+from ....models.enums import TeamMemberRole
+from ....models.message import Message, MessageCreate, MessageUpdate
 from ...deps import identity_with_account
-from app.crud import versify
+from ...exceptions import ForbiddenException, NotFoundException
 from ...models import (
     ApiDeleteResponse,
     ApiListResponse,
@@ -10,11 +15,6 @@ from ...models import (
     QueryParams,
     SearchQuery,
 )
-from app.models.message import Message, MessageCreate, MessageUpdate
-
-from app.models.enums import TeamMemberRole
-from ...exceptions import ForbiddenException, NotFoundException
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
 

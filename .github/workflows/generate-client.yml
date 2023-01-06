@@ -19,7 +19,7 @@ jobs:
       - name: Generate OpenAPI file
         uses: column-street/fastapi-openapi-specs-action@v1.0.0
         with:
-          installDependencies: pip install -r vongo/requirements.txt
+          installDepedencies: pip install -r vongo/requirements.txt
           moduleDir: vongo.app
           fileName: main.py
           appName: app

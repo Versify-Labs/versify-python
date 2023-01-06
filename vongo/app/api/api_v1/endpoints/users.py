@@ -1,9 +1,10 @@
+from fastapi import APIRouter, Depends
+
+from ....crud import versify
+from ....models.user import User, UserUpdate
 from ...deps import identity
 from ...exceptions import ForbiddenException
 from ...models import BodyParams, Identity
-from app.crud import versify
-from app.models.user import User, UserUpdate
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

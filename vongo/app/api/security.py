@@ -1,13 +1,14 @@
 from typing import Optional
 
-from ...exceptions import ForbiddenException
-from ...models import HTTPAuthorizationCredentials
 from fastapi.openapi.models import HTTPBase as HTTPBaseModel
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.openapi.models import SecuritySchemeType
 from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette.requests import Request
+
+from .exceptions import ForbiddenException
+from .models import HTTPAuthorizationCredentials
 
 
 class HTTPBase(SecurityBase):

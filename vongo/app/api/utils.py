@@ -1,13 +1,14 @@
-from ...exceptions import ForbiddenException, UnauthorizedException
-from app.core.config import settings
-from app.crud import versify
-from app.models.account import Account
-from app.models.enums import TeamMemberRole
-from app.models.user import User
 from stytch.client import Client as StytchClient
 from stytch.models.sessions import AuthenticateResponse as StytchAuthenticateResponse
 from stytch.models.users import GetResponse as StytchGetResponse
 from stytch.models.users import User as StytchUser
+
+from ..core.config import settings
+from ..crud import versify
+from ..models.account import Account
+from ..models.enums import TeamMemberRole
+from ..models.user import User
+from .exceptions import ForbiddenException, UnauthorizedException
 
 STYTCH_MAX_TOKEN_AGE_SECONDS = 3600000000
 

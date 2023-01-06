@@ -1,10 +1,11 @@
 from typing import List, Union
 
-from app.models.account import Account
-from app.models.globals import TeamMemberRole
-from app.models.user import User
 from fastapi import Body, Cookie, Header, Path, Query
 from pydantic import BaseModel, Field, Required
+
+from ..models.account import Account
+from ..models.globals import TeamMemberRole
+from ..models.user import User
 
 
 class HTTPAuthorizationCredentials(BaseModel):

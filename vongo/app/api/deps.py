@@ -1,12 +1,11 @@
-from typing import Union
-
-from ...exceptions import ForbiddenException
-from ...models import HTTPAuthorizationCredentials, Identity
-from ....security import HTTPBearer
-from ....utils import get_current_user_account_role, get_user_from_credentials
-from app.crud import versify
-from app.models.enums import TeamMemberRole
 from fastapi import Depends, Header
+
+from ..crud import versify
+from ..models.enums import TeamMemberRole
+from .exceptions import ForbiddenException
+from .models import HTTPAuthorizationCredentials, Identity
+from .security import HTTPBearer
+from .utils import get_current_user_account_role, get_user_from_credentials
 
 security = HTTPBearer(
     scheme_name="Access Token",

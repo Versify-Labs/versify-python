@@ -1,3 +1,8 @@
+from fastapi import APIRouter, Depends
+
+from ....crud import versify
+from ....models.enums import TeamMemberRole
+from ....models.journey import Journey, JourneyCreate, JourneyUpdate
 from ...deps import identity_with_account
 from ...exceptions import ForbiddenException, NotFoundException
 from ...models import (
@@ -10,10 +15,6 @@ from ...models import (
     QueryParams,
     SearchQuery,
 )
-from app.crud import versify
-from app.models.enums import TeamMemberRole
-from app.models.journey import Journey, JourneyCreate, JourneyUpdate
-from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/journeys", tags=["Journeys"])
 

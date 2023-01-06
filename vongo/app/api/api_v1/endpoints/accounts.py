@@ -8,14 +8,8 @@ from ....models.enums import TeamMemberRole
 from ....models.globals import AccountMetrics
 from ...deps import identity, user_required
 from ...exceptions import ForbiddenException, NotFoundException
-from ...models import (
-    ApiDeleteResponse,
-    ApiListResponse,
-    BodyParams,
-    Identity,
-    PathParams,
-    QueryParams,
-)
+from ...models import (ApiDeleteResponse, ApiListResponse, BodyParams,
+                       Identity, PathParams, QueryParams)
 from ...utils import get_current_user_account_role
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
