@@ -9,8 +9,8 @@ from .base import BaseResource
 class AccountResource(BaseResource):
     def __init__(self, db_session: SessionLocal):
         self.model = Account
-        self.db_name = Account.__db__
-        self.db_collection = Account.__collection__
+        self.db_name = self.model.__db__
+        self.db_collection = self.model.__collection__
         self.collection = db_session.get_collection(self.db_name, self.db_collection)
 
     def count(self, **kwargs) -> int:

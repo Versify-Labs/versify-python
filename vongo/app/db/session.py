@@ -19,6 +19,7 @@ class SessionLocal:
             mongo_password = settings.MONGO_PW
             connection_str = f"mongodb+srv://{mongo_user}:{mongo_password}@{mongo_domain}/?retryWrites=true&w=majority"
 
+        self._client = None
         try:
             self._client = MongoClient(connection_str)
             print("Connected to MongoDB")

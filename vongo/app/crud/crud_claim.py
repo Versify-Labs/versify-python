@@ -7,9 +7,10 @@ from .base import BaseResource
 
 class ClaimResource(BaseResource):
     def __init__(self, db_session: SessionLocal):
-        db_name = "Dev"
-        db_collection = "Claims"
-        self.collection = db_session.get_collection(db_name, db_collection)
+        self.model = Claim
+        self.db_name = self.model.__db__
+        self.db_collection = self.model.__collection__
+        self.collection = db_session.get_collection(self.db_name, self.db_collection)
 
     def count(self, **kwargs) -> int:
         return self._count(**kwargs)
