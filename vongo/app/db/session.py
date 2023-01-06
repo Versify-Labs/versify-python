@@ -18,8 +18,13 @@ class SessionLocal:
             mongo_user = settings.MONGO_UN
             mongo_password = settings.MONGO_PW
             connection_str = f"mongodb+srv://{mongo_user}:{mongo_password}@{mongo_domain}/?retryWrites=true&w=majority"
-        self.cluster = MongoClient(connection_str)  # type: ignore
-        self.current_user_id = None
+
+        try:
+            self.cluster = MongoClient(connection_str)
+            print("Connected to MongoDB")
+        except Exception as e:
+            print(e)
+            print("Could not connect to MongoDB")
 
     def get_db(self, db_name: str) -> Database:
         return self.cluster[db_name]
