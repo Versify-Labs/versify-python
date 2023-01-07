@@ -1,0 +1,65 @@
+name: Generate Client
+
+# Runs this action whenever there are any changes to the branch.
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks out the entire repo.
+      - name: Checks out repo
+        uses: actions/checkout@v1
+
+      # Generates a openapi.yaml file based on the FastAPI project.
+      - name: Generate OpenAPI file
+        uses: column-street/fastapi-openapi-specs-action@v1.0.0
+        with:
+          installDepedencies: pip install -r vongo/requirements.txt
+          moduleDir: vongo.app
+          fileName: main.py
+          appName: app
+
+      # Uses an external tool, openapitools-generator-action, to generate the client code.
+      # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
+      # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
+      # 'javascript-client' with the relevant client code.
+      - name: Generate Javascript Client
+        uses: triaxtec/openapitools-generator-action@v1.0.0
+        with:
+          generator: javascript
+          openapi-file: openapi.yaml
+          config-file: openapirc.yaml
+
+      # Deletes every file in the folder, except '.git' and the new generated 'javascript-client' folder.
+      # Moves all content of the 'javascript-client' folder to the root directory.
+      - name: Cleans the branch up.
+        run: |
+          # Removes all files except the .git and javascript-client folder.
+          shopt -s extglob
+          sudo rm -rf !(.|..|.git|javascript-client)
+          # Moves all of the content of the javascript-client folder out, 
+          # and deletes the folder.
+          mv javascript-client/* .
+          rm -rf javascript-client
+
+      # Commits the new changes into a new branch called 'client'.
+      - name: Commit changes.
+        run: |
+          git checkout -b versify-javascript 
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Generated client." -a || true
+
+      # Pushes all of these changes into the GitHub repository.
+      - name: Push changes to versify-javascript branch
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: versify-javascript
+          force: True

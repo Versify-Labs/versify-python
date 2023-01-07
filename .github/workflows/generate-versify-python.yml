@@ -23,7 +23,7 @@ jobs:
           moduleDir: vongo.app
           fileName: main.py
           appName: app
-          
+
       # Uses an external tool, openapitools-generator-action, to generate the client code.
       # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
       # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
@@ -50,16 +50,16 @@ jobs:
       # Commits the new changes into a new branch called 'client'.
       - name: Commit changes.
         run: |
-          git checkout -b client 
+          git checkout -b versify-python 
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
           git commit -m "Generated client." -a || true
 
       # Pushes all of these changes into the GitHub repository.
-      - name: Push changes to client branch
+      - name: Push changes to versify-python branch
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: client
+          branch: versify-python
           force: True
