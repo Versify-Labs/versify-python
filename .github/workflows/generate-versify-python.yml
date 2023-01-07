@@ -35,17 +35,20 @@ jobs:
       #     openapi-file: openapi.yaml
       #     config-file: openapirc.yaml
 
-      # # Deletes every file in the folder, except '.git' and the new generated 'python-client' folder.
-      # # Moves all content of the 'python-client' folder to the root directory.
-      # - name: Clean Branch
-      #   run: |
-      #     # Removes all files except the .git and python-client folder.
-      #     shopt -s extglob
-      #     sudo rm -rf !(.|..|.git|python-client)
-      #     # Moves all of the content of the python-client folder out, 
-      #     # and deletes the folder.
-      #     mv python-client/* .
-      #     rm -rf python-client
+      # Deletes every file in the folder, except '.git' and the new generated 'python-client' folder.
+      # Moves all content of the 'python-client' folder to the root directory.
+      - name: Clean Branch
+        run: |
+          # Removed the extraheader from the git config.
+          git config --unset-all http.https://github.com/.extraheader
+
+          # Removes all files except the .git and python-client folder.
+          # shopt -s extglob
+          # sudo rm -rf !(.|..|.git|python-client)
+          # # Moves all of the content of the python-client folder out, 
+          # # and deletes the folder.
+          # mv python-client/* .
+          # rm -rf python-client
 
       # Pushes the new changes into another repository.
       - name: Push to Repository
