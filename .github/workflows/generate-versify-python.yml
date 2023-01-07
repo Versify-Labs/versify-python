@@ -58,4 +58,4 @@ jobs:
           destination-repository-name: "versify-python"
           target-branch: dev
           commit-message: See ORIGIN_COMMIT from $GITHUB_REF
-          user-email: "actions.github.com"
+          user-email: "troy@versifylabs.com"

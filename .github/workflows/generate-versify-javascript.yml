@@ -1,16 +1,16 @@
-name: Generate Javascript Client
+# name: Generate Javascript Client
 
 # Runs this action whenever there are any changes to the branch.
-on:
-  push:
-    branches:
-      - dev
+# on:
+#   push:
+#     branches:
+#       - dev
 
-jobs:
-  client:
-    runs-on: ubuntu-latest
+# jobs:
+#   client:
+#     runs-on: ubuntu-latest
 
-    steps:
+    # steps:
       # # Checks out the entire repo.
       # - name: Checks out repo
       #   uses: actions/checkout@v1
