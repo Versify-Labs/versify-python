@@ -54,7 +54,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.PERSONAL_ACCESS_TOKEN_TROY }}
         with:
           source-directory: "."
-          destination-github-username: "Versify-Labs/troywsmith"
+          destination-github-username: "Versify-Labs"
           destination-repository-name: "versify-python"
           target-branch: dev
           commit-message: See ORIGIN_COMMIT from $GITHUB_REF
