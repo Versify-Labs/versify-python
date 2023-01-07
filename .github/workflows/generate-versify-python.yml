@@ -47,6 +47,11 @@ jobs:
           # mv python-client/* .
           # rm -rf python-client
 
+      # Configures git to use the personal access token.
+      - name: Configure Git
+        run: |
+          git config --unset-all http.https://github.com/.extraheader
+
       # Pushes the new changes into another repository.
       - name: Push to Repository
         uses: cpina/github-action-push-to-another-repository@main
