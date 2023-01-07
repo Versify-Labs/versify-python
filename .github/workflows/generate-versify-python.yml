@@ -61,5 +61,5 @@ jobs:
           source-directory: "."
           destination-github-username: "Versify-Labs"
           destination-repository-name: "versify-python"
-          target-branch: dev
+          target-branch: main
           user-email: "troy@versifylabs.com"
