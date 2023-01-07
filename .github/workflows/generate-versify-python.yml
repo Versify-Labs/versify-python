@@ -54,8 +54,8 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
         with:
           source-directory: "."
-          destination-github-username: "GitHub Action"
+          destination-github-username: "Versify-Labs"
           destination-repository-name: "versify-python"
-          user-email: "actions.github.com"
           target-branch: dev
           commit-message: See ORIGIN_COMMIT from $GITHUB_REF
+          user-email: "actions.github.com"
