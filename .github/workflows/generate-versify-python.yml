@@ -40,12 +40,12 @@ jobs:
       - name: Clean Branch
         run: |
           # Removes all files except the .git and python-client folder.
-          # shopt -s extglob
-          # sudo rm -rf !(.|..|.git|python-client)
-          # # Moves all of the content of the python-client folder out,
-          # # and deletes the folder.
-          # mv python-client/* .
-          # rm -rf python-client
+          shopt -s extglob
+          sudo rm -rf !(.|..|.git|python-client)
+          # Moves all of the content of the python-client folder out,
+          # and deletes the folder.
+          mv python-client/* .
+          rm -rf python-client
 
       # Configures git to use the personal access token.
       - name: Configure Git
