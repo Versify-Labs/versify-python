@@ -1,4 +1,4 @@
-name: Generate Client
+name: Generate Javascript Client
 
 # Runs this action whenever there are any changes to the branch.
 on:

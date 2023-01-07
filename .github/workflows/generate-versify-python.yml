@@ -1,4 +1,4 @@
-name: Generate Client
+name: Generate Python Client
 
 # Runs this action whenever there are any changes to the branch.
 on:
@@ -12,8 +12,8 @@ jobs:
 
     steps:
       # Checks out the entire repo.
-      - name: Checks out repo
-        uses: actions/checkout@v1
+      - name: Checkout Repo
+        uses: actions/checkout@v2
 
       # Generates a openapi.yaml file based on the FastAPI project.
       - name: Generate OpenAPI file
@@ -37,7 +37,7 @@ jobs:
 
       # Deletes every file in the folder, except '.git' and the new generated 'python-client' folder.
       # Moves all content of the 'python-client' folder to the root directory.
-      - name: Cleans the branch up.
+      - name: Clean Branch
         run: |
           # Removes all files except the .git and python-client folder.
           shopt -s extglob
@@ -47,19 +47,15 @@ jobs:
           mv python-client/* .
           rm -rf python-client
 
-      # Commits the new changes into a new branch called 'client'.
-      - name: Commit changes.
-        run: |
-          git checkout -b versify-python 
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "Generated client." -a || true
-
-      # Pushes all of these changes into the GitHub repository.
-      - name: Push changes to versify-python branch
-        uses: ad-m/github-push-action@master
+      # Pushes the new changes into another repository.
+      - name: Push to Repository
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: versify-python
-          force: True
+          source-directory: "."
+          destination-github-username: "GitHub Action"
+          destination-repository-name: "versify-python"
+          user-email: "actions.github.com"
+          target-branch: dev
+          commit-message: See ORIGIN_COMMIT from $GITHUB_REF
