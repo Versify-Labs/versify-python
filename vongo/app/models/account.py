@@ -5,7 +5,7 @@ from pydantic import Field, root_validator
 from .base import BaseCreate, BaseDoc, BaseUpdate
 from .enums import AccountStatus
 from .factory import account_id, generate_avatar
-from .globals import Billing, Brand, TeamMember
+from .globals import App, Billing, Brand, TeamMember
 
 
 class Account(BaseDoc):
@@ -26,6 +26,11 @@ class Account(BaseDoc):
         description="The object type",
         example="account",
         title="Object Type",
+    )
+    apps: List[App] = Field(
+        default=[],
+        description="The apps associated with the account",
+        title="Apps",
     )
     billing: Billing = Field(
         default=Billing(),

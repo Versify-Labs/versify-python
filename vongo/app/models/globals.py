@@ -193,6 +193,53 @@ class Action(Base):
     )
 
 
+class App(Base):
+    """Settings used to configure external integrations."""
+
+    id: Union[str, None] = Field(
+        default=None,
+        description="The ID of the app",
+        example="app_123",
+        title="App ID",
+    )
+    access_scope: Union[str, None] = Field(
+        default=None,
+        description="An application-specific list of permissions associated with the app",
+        example="contacts:read contacts:write",
+        title="App Scope",
+    )
+    access_token: Union[str, None] = Field(
+        default=None,
+        description="The access token of the app",
+        example="at_123",
+        title="App Access Token",
+    )
+    refresh_token: Union[str, None] = Field(
+        default=None,
+        description="The refresh token of the app",
+        example="rt_123",
+        title="App Refresh Token",
+    )
+    name: Union[str, None] = Field(
+        default=None,
+        description="The name of the app",
+        example="Example App",
+        title="App Name",
+    )
+    url: Union[str, None] = Field(
+        default=None,
+        description="The URL of the app",
+        example="https://app.example.com",
+        title="App URL",
+    )
+    webhook_url: Union[str, None] = Field(
+        default=None,
+        description="The webhook URL of the app",
+        example="https://app.example.com/webhook",
+        title="App Webhook URL",
+    )
+
+
 class Authentication(Base):
     """Settings used to configure how this account can be accessed."""
 

@@ -23,7 +23,7 @@ jobs:
           moduleDir: vongo.app
           fileName: main.py
           appName: app
-
+          
       # Uses an external tool, openapitools-generator-action, to generate the client code.
       # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
       # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
