@@ -66,6 +66,7 @@ jobs:
         run: |
           ls -al
 
+          API_TOKEN_GITHUB=${{ secrets.API_TOKEN_GITHUB }}
           GIT_SERVER=github.com
           USER_EMAIL=troy@versifylabs.com
           USER_NAME=troywsmith
