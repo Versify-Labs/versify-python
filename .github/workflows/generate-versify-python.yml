@@ -69,23 +69,15 @@ jobs:
           USER_NAME: "troywsmith"
           DESTINATION_REPO: "Versify-Labs/versify-python"
           DESTINATION_BRANCH: "main"
-        run: |
-          ls -al
-
-          GIT_SERVER=github.com
-          USER_EMAIL=troy@versifylabs.com
-          USER_NAME=troywsmith
-          DESTINATION_REPO=Versify-Labs/versify-python
-          DESTINATION_BRANCH=main
+        run: |          
           DESTINATION_DIR=$(mktemp -d)
-
           echo $GIT_SERVER
           echo $USER_EMAIL
           echo $USER_NAME
           echo $DESTINATION_REPO
           echo $DESTINATION_BRANCH
           echo $DESTINATION_DIR
-          echo "https://x-access-token:$API_TOKEN_GITHUB@$GIT_SERVER/$DESTINATION_REPO.git"
+          echo $API_TOKEN_GITHUB
 
           echo "Cloning destination git repository"
           git config --unset-all http.https://github.com/.extraheader
