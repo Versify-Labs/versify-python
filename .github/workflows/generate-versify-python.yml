@@ -42,17 +42,15 @@ jobs:
           # Removes all files except the .git and python-client folder.
           shopt -s extglob
           sudo rm -rf !(.|..|.git|python-client)
-          # Moves all of the content of the python-client folder out,
-          # and deletes the folder.
-          mv python-client/* .
-          rm -rf python-client
-          rm -rf .DS_Store
+          
+          # Moves all of the content of the python-client folder out and deletes the folder.
+          # mv python-client/* .
+          # rm -rf python-client
 
       # Configures git to use the personal access token.
       - name: Configure Git
         run: |
           git config --unset-all http.https://github.com/.extraheader
-          pwd
           ls -al
 
       # # Pushes the new changes into another repository.
