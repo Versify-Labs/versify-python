@@ -65,6 +65,10 @@ jobs:
       - name: Push to Repo
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          USER_EMAIL: "troy@versifylabs.com"
+          USER_NAME: "troywsmith"
+          DESTINATION_REPO: "Versify-Labs/versify-python"
+          DESTINATION_BRANCH: "main"
         run: |
           ls -al
 
@@ -74,7 +78,7 @@ jobs:
           DESTINATION_REPO=Versify-Labs/versify-python
           DESTINATION_BRANCH=main
           DESTINATION_DIR=$(mktemp -d)
-          
+
           echo $GIT_SERVER
           echo $USER_EMAIL
           echo $USER_NAME
@@ -94,8 +98,8 @@ jobs:
 
           echo "Adding git commit"
           cd "$DESTINATION_DIR"
+          ls .
           git add .
-
           if git status | grep -q "Changes to be committed"
           then
             git commit --message "Update from https://$GIT_SERVER/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
