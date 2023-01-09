@@ -15,37 +15,37 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      # Generates a openapi.yaml file based on the FastAPI project.
-      - name: Generate OpenAPI file
-        uses: column-street/fastapi-openapi-specs-action@v1.0.0
-        with:
-          installDepedencies: pip install -r vongo/requirements.txt
-          moduleDir: vongo.app
-          fileName: main.py
-          appName: app
+      # # Generates a openapi.yaml file based on the FastAPI project.
+      # - name: Generate OpenAPI file
+      #   uses: column-street/fastapi-openapi-specs-action@v1.0.0
+      #   with:
+      #     installDepedencies: pip install -r vongo/requirements.txt
+      #     moduleDir: vongo.app
+      #     fileName: main.py
+      #     appName: app
 
-      # Uses an external tool, openapitools-generator-action, to generate the client code.
-      # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
-      # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
-      # 'python-client' with the relevant client code.
-      - name: Generate Python Client
-        uses: triaxtec/openapitools-generator-action@v1.0.0
-        with:
-          generator: python
-          openapi-file: openapi.yaml
-          config-file: openapirc.yaml
+      # # Uses an external tool, openapitools-generator-action, to generate the client code.
+      # # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
+      # # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
+      # # 'python-client' with the relevant client code.
+      # - name: Generate Python Client
+      #   uses: triaxtec/openapitools-generator-action@v1.0.0
+      #   with:
+      #     generator: python
+      #     openapi-file: openapi.yaml
+      #     config-file: openapirc.yaml
 
-      # Deletes every file in the folder, except '.git' and the new generated 'python-client' folder.
-      # Moves all content of the 'python-client' folder to the root directory.
-      - name: Clean Branch
-        run: |
-          # Removes all files except the .git and python-client folder.
-          shopt -s extglob
-          sudo rm -rf !(.|..|.git|python-client)
+      # # Deletes every file in the folder, except '.git' and the new generated 'python-client' folder.
+      # # Moves all content of the 'python-client' folder to the root directory.
+      # - name: Clean Branch
+      #   run: |
+      #     # Removes all files except the .git and python-client folder.
+      #     shopt -s extglob
+      #     sudo rm -rf !(.|..|.git|python-client)
 
-          # Moves all of the content of the python-client folder out and deletes the folder.
-          mv python-client/* .
-          rm -rf python-client
+      #     # Moves all of the content of the python-client folder out and deletes the folder.
+      #     mv python-client/* .
+      #     rm -rf python-client
 
       # Pushes the new changes into another repository.
       # - name: Push to Repo
@@ -69,7 +69,8 @@ jobs:
           USER_NAME: "troywsmith"
           DESTINATION_REPO: "Versify-Labs/versify-python"
           DESTINATION_BRANCH: "main"
-        run: |          
+          GIT_SERVER: "github.com"
+        run: |
           DESTINATION_DIR=$(mktemp -d)
           echo $GIT_SERVER
           echo $USER_EMAIL
