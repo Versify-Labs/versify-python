@@ -51,6 +51,39 @@ Guards (run for specific routes)
 """
 
 
+def public_identity(identity: Identity = Depends(identity)):
+    """Allow all requests."""
+    return identity
+
+
+def user_identity(identity: Identity = Depends(identity)):
+    """Allow requests from users only."""
+    if not identity.user:
+        raise ForbiddenException("User Required")
+    return identity
+
+
+def account_admin_identity(identity: Identity = Depends(identity_with_account)):
+    """Allow requests from account admins only."""
+    if identity.account_user_role != TeamMemberRole.ADMIN:
+        raise ForbiddenException("Admin Required")
+    return identity
+
+
+def account_member_identity(identity: Identity = Depends(identity_with_account)):
+    """Allow requests from account members only."""
+    if identity.account_user_role != TeamMemberRole.MEMBER:
+        raise ForbiddenException("Member Required")
+    return identity
+
+
+def account_guest_identity(identity: Identity = Depends(identity_with_account)):
+    """Allow requests from account guests only."""
+    if identity.account_user_role != TeamMemberRole.GUEST:
+        raise ForbiddenException("Guest Required")
+    return identity
+
+
 def account_required(identity: Identity = Depends(identity)):
     """Require an account to be present in the identity."""
     if not identity.account:

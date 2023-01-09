@@ -13,7 +13,7 @@ jobs:
     steps:
       # Checks out the entire repo.
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Generates a openapi.yaml file based on the FastAPI project.
       - name: Generate OpenAPI file
@@ -45,7 +45,8 @@ jobs:
           # Moves all of the content of the python-client folder out,
           # and deletes the folder.
           mv python-client/* .
-          rm -rf python-client
+          rm -rf python-client 
+          rm -rf .DS_Store
 
       # Configures git to use the personal access token.
       - name: Configure Git
