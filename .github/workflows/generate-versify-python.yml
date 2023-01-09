@@ -81,7 +81,6 @@ jobs:
           echo $API_TOKEN_GITHUB
 
           echo "Cloning destination git repository"
-          git config --unset-all http.https://github.com/.extraheader
           git config --global user.email "$USER_EMAIL"
           git config --global user.name "$USER_NAME"
           git clone --single-branch --branch $DESTINATION_BRANCH "https://x-access-token:$API_TOKEN_GITHUB@$GIT_SERVER/$DESTINATION_REPO.git" "$DESTINATION_DIR"
