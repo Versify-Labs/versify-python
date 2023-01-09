@@ -44,25 +44,60 @@ jobs:
           sudo rm -rf !(.|..|.git|python-client)
 
           # Moves all of the content of the python-client folder out and deletes the folder.
-          # mv python-client/* .
-          # rm -rf python-client
-
-      # Configures git to use the personal access token.
-      - name: Configure Git
-        run: |
-          git config --unset-all http.https://github.com/.extraheader
-          ls -al
+          mv python-client/* .
+          rm -rf python-client
 
       # Pushes the new changes into another repository.
+      # - name: Push to Repo
+      #   uses: dmnemec/copy_file_to_another_repo_action@main
+      #   env:
+      #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      #   with:
+      #     source_file: "python-client"
+      #     destination_repo: "Versify-Labs/versify-python"
+      #     destination_branch: "main"
+      #     destination_folder: "."
+      #     user_email: "troy@versifylabs.com"
+      #     user_name: "troywsmith"
+      #     commit_message: "Update Versify API P"
+
+      # Pushes the new changes into the same repository.
       - name: Push to Repo
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: "."
-          destination_repo: "Versify-Labs/versify-python"
-          destination_branch: "main"
-          destination_folder: "."
-          user_email: "troy@versifylabs.com"
-          user_name: "troywsmith"
-          commit_message: "Update Versify API Clients"
+        run: |
+          ls -al
+
+          if [ -z "$API_TOKEN_GITHUB" ]
+          then
+            echo "API_TOKEN_GITHUB must be defined"
+            return 1
+          fi
+
+          GIT_SERVER=github.com
+          USER_EMAIL=troy@versifylabs.com
+          USER_NAME=troywsmith
+
+          DESTINATION_REPO=Versify-Labs/versify-python
+          DESTINATION_BRANCH=main
+          DESTINATION_DIR=$(mktemp -d)
+
+          echo "Cloning destination git repository"
+          git config --unset-all http.https://github.com/.extraheader
+          git config --global user.email "$USER_EMAIL"
+          git config --global user.name "$USER_NAME"
+          git clone --single-branch --branch $DESTINATION_BRANCH "https://x-access-token:$API_TOKEN_GITHUB@$GIT_SERVER/$DESTINATION_REPO.git" "$DESTINATION_DIR"
+
+          echo "Syncing $pwd to $DESTINATION_DIR"
+          rsync -avrh . "$DESTINATION_DIR"
+
+          echo "Adding git commit"
+          cd "$DESTINATION_DIR"
+          git add .
+
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit --message "Update from https://$GIT_SERVER/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
+            echo "Pushing git commit"
+            git push -u origin HEAD:"$DESTINATION_BRANCH"
+          else
+            echo "No changes detected"
+          fi
