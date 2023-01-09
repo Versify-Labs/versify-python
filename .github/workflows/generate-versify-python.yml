@@ -45,13 +45,15 @@ jobs:
           # Moves all of the content of the python-client folder out,
           # and deletes the folder.
           mv python-client/* .
-          rm -rf python-client 
+          rm -rf python-client
           rm -rf .DS_Store
 
       # Configures git to use the personal access token.
       - name: Configure Git
         run: |
           git config --unset-all http.https://github.com/.extraheader
+          pwd
+          ls -al
 
       # # Pushes the new changes into another repository.
       # - name: Push to Repository
@@ -66,7 +68,7 @@ jobs:
       #     user-email: "troy@versifylabs.com"
 
       # Pushes the new changes into another repository.
-      - name: Pushes test file
+      - name: Push to Repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
