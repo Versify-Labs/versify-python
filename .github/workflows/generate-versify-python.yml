@@ -72,7 +72,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
           source_file: "python-client"
-          destination_repo: "versify-python"
+          destination_repo: "Versify-Labs/versify-python"
           destination_folder: "."
           user_email: "troy@versifylabs.com"
           user_name: "troywsmith"

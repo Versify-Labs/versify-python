@@ -14,52 +14,52 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      # Generates a openapi.yaml file based on the FastAPI project.
-      - name: Generate OpenAPI file
-        uses: column-street/fastapi-openapi-specs-action@v1.0.0
-        with:
-          installDepedencies: pip install -r vongo/requirements.txt
-          moduleDir: vongo.app
-          fileName: main.py
-          appName: app
+      # # Generates a openapi.yaml file based on the FastAPI project.
+      # - name: Generate OpenAPI file
+      #   uses: column-street/fastapi-openapi-specs-action@v1.0.0
+      #   with:
+      #     installDepedencies: pip install -r vongo/requirements.txt
+      #     moduleDir: vongo.app
+      #     fileName: main.py
+      #     appName: app
 
-      # Uses an external tool, openapitools-generator-action, to generate the client code.
-      # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
-      # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
-      # 'javascript-client' with the relevant client code.
-      - name: Generate Javascript Client
-        uses: triaxtec/openapitools-generator-action@v1.0.0
-        with:
-          generator: javascript
-          openapi-file: openapi.yaml
-          config-file: openapirc.yaml
+      # # Uses an external tool, openapitools-generator-action, to generate the client code.
+      # # The 'openapirc.json' file is the following: { "packageName": "fast", "projectName": "fast" }
+      # # and it lives inside the master branch of the repository. Comamnd outputs a new folder called
+      # # 'javascript-client' with the relevant client code.
+      # - name: Generate Javascript Client
+      #   uses: triaxtec/openapitools-generator-action@v1.0.0
+      #   with:
+      #     generator: javascript
+      #     openapi-file: openapi.yaml
+      #     config-file: openapirc.yaml
 
-      # Deletes every file in the folder, except '.git' and the new generated 'javascript-client' folder.
-      # Moves all content of the 'javascript-client' folder to the root directory.
-      - name: Clean Branch
-        run: |
-          # Removes all files except the .git and javascript-client folder.
-          shopt -s extglob
-          sudo rm -rf !(.|..|.git|javascript-client)
-          # Moves all of the content of the javascript-client folder out,
-          # and deletes the folder.
-          mv javascript-client/* .
-          rm -rf javascript-client
-          rm -rf .DS_Store
+      # # Deletes every file in the folder, except '.git' and the new generated 'javascript-client' folder.
+      # # Moves all content of the 'javascript-client' folder to the root directory.
+      # - name: Clean Branch
+      #   run: |
+      #     # Removes all files except the .git and javascript-client folder.
+      #     shopt -s extglob
+      #     sudo rm -rf !(.|..|.git|javascript-client)
+      #     # Moves all of the content of the javascript-client folder out,
+      #     # and deletes the folder.
+      #     mv javascript-client/* .
+      #     rm -rf javascript-client
+      #     rm -rf .DS_Store
 
-      # Configures git to use the personal access token.
-      - name: Configure Git
-        run: |
-          git config --unset-all http.https://github.com/.extraheader
+      # # Configures git to use the personal access token.
+      # - name: Configure Git
+      #   run: |
+      #     git config --unset-all http.https://github.com/.extraheader
 
-      # Pushes the new changes into another repository.
-      - name: Push to Repository
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source-directory: "."
-          destination-github-username: "Versify-Labs"
-          destination-repository-name: "versify-javascript"
-          target-branch: main
-          user-email: "troy@versifylabs.com"
+      # # Pushes the new changes into another repository.
+      # - name: Push to Repository
+      #   uses: cpina/github-action-push-to-another-repository@main
+      #   env:
+      #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      #   with:
+      #     source-directory: "."
+      #     destination-github-username: "Versify-Labs"
+      #     destination-repository-name: "versify-javascript"
+      #     target-branch: main
+      #     user-email: "troy@versifylabs.com"
