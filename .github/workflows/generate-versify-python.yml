@@ -72,13 +72,6 @@ jobs:
           GIT_SERVER: "github.com"
         run: |
           DESTINATION_DIR=$(mktemp -d)
-          echo $GIT_SERVER
-          echo $USER_EMAIL
-          echo $USER_NAME
-          echo $DESTINATION_REPO
-          echo $DESTINATION_BRANCH
-          echo $DESTINATION_DIR
-          echo $API_TOKEN_GITHUB
 
           echo "Cloning destination git repository"
           git config --global user.email "$USER_EMAIL"
@@ -96,7 +89,7 @@ jobs:
           then
             git commit --message "Update from https://$GIT_SERVER/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}"
             echo "Pushing git commit"
-            git push -u origin HEAD:"$DESTINATION_BRANCH"
+            git push -u origin HEAD:"$DESTINATION_BRANCH" --force
           else
             echo "No changes detected"
           fi
