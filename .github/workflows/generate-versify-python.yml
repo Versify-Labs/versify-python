@@ -59,18 +59,12 @@ jobs:
       #     destination_folder: "."
       #     user_email: "troy@versifylabs.com"
       #     user_name: "troywsmith"
-      #     commit_message: "Update Versify API P"
+      #     commit_message: "Update Versify API"
 
       # Pushes the new changes into the same repository.
       - name: Push to Repo
         run: |
           ls -al
-
-          if [ -z "$API_TOKEN_GITHUB" ]
-          then
-            echo "API_TOKEN_GITHUB must be defined"
-            return 1
-          fi
 
           GIT_SERVER=github.com
           USER_EMAIL=troy@versifylabs.com
