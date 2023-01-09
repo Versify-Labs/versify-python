@@ -42,7 +42,7 @@ jobs:
           # Removes all files except the .git and python-client folder.
           shopt -s extglob
           sudo rm -rf !(.|..|.git|python-client)
-          
+
           # Moves all of the content of the python-client folder out and deletes the folder.
           # mv python-client/* .
           # rm -rf python-client
@@ -53,27 +53,16 @@ jobs:
           git config --unset-all http.https://github.com/.extraheader
           ls -al
 
-      # # Pushes the new changes into another repository.
-      # - name: Push to Repository
-      #   uses: cpina/github-action-push-to-another-repository@main
-      #   env:
-      #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-      #   with:
-      #     source-directory: "."
-      #     destination-github-username: "Versify-Labs"
-      #     destination-repository-name: "versify-python"
-      #     target-branch: main
-      #     user-email: "troy@versifylabs.com"
-
       # Pushes the new changes into another repository.
       - name: Push to Repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: "python-client"
+          source_file: "."
           destination_repo: "Versify-Labs/versify-python"
+          destination_branch: "main"
           destination_folder: "."
           user_email: "troy@versifylabs.com"
           user_name: "troywsmith"
-          commit_message: "Generated Python Client"
+          commit_message: "Update Versify API Clients"
