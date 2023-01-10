@@ -37,16 +37,13 @@ class Reward(
 
     class MetaOapg:
         required = {
-            "asset",
             "account",
         }
         
         class properties:
             account = schemas.StrSchema
-            asset = schemas.StrSchema
             _id = schemas.StrSchema
             active = schemas.BoolSchema
-            asset_quantity = schemas.IntSchema
             created = schemas.IntSchema
             description = schemas.StrSchema
             image = schemas.StrSchema
@@ -92,10 +89,8 @@ class Reward(
             updated = schemas.IntSchema
             __annotations__ = {
                 "account": account,
-                "asset": asset,
                 "_id": _id,
                 "active": active,
-                "asset_quantity": asset_quantity,
                 "created": created,
                 "description": description,
                 "image": image,
@@ -106,23 +101,16 @@ class Reward(
                 "updated": updated,
             }
     
-    asset: MetaOapg.properties.asset
     account: MetaOapg.properties.account
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["account"]) -> MetaOapg.properties.account: ...
     
     @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["asset"]) -> MetaOapg.properties.asset: ...
-    
-    @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["_id"]) -> MetaOapg.properties._id: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["active"]) -> MetaOapg.properties.active: ...
-    
-    @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["asset_quantity"]) -> MetaOapg.properties.asset_quantity: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["created"]) -> MetaOapg.properties.created: ...
@@ -151,7 +139,7 @@ class Reward(
     @typing.overload
     def __getitem__(self, name: str) -> schemas.UnsetAnyTypeSchema: ...
     
-    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "asset", "_id", "active", "asset_quantity", "created", "description", "image", "metadata", "name", "object", "reward_type", "updated", ], str]):
+    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "_id", "active", "created", "description", "image", "metadata", "name", "object", "reward_type", "updated", ], str]):
         # dict_instance[name] accessor
         return super().__getitem__(name)
     
@@ -160,16 +148,10 @@ class Reward(
     def get_item_oapg(self, name: typing_extensions.Literal["account"]) -> MetaOapg.properties.account: ...
     
     @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["asset"]) -> MetaOapg.properties.asset: ...
-    
-    @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["_id"]) -> typing.Union[MetaOapg.properties._id, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["active"]) -> typing.Union[MetaOapg.properties.active, schemas.Unset]: ...
-    
-    @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["asset_quantity"]) -> typing.Union[MetaOapg.properties.asset_quantity, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["created"]) -> typing.Union[MetaOapg.properties.created, schemas.Unset]: ...
@@ -198,18 +180,16 @@ class Reward(
     @typing.overload
     def get_item_oapg(self, name: str) -> typing.Union[schemas.UnsetAnyTypeSchema, schemas.Unset]: ...
     
-    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "asset", "_id", "active", "asset_quantity", "created", "description", "image", "metadata", "name", "object", "reward_type", "updated", ], str]):
+    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "_id", "active", "created", "description", "image", "metadata", "name", "object", "reward_type", "updated", ], str]):
         return super().get_item_oapg(name)
     
 
     def __new__(
         cls,
         *_args: typing.Union[dict, frozendict.frozendict, ],
-        asset: typing.Union[MetaOapg.properties.asset, str, ],
         account: typing.Union[MetaOapg.properties.account, str, ],
         _id: typing.Union[MetaOapg.properties._id, str, schemas.Unset] = schemas.unset,
         active: typing.Union[MetaOapg.properties.active, bool, schemas.Unset] = schemas.unset,
-        asset_quantity: typing.Union[MetaOapg.properties.asset_quantity, decimal.Decimal, int, schemas.Unset] = schemas.unset,
         created: typing.Union[MetaOapg.properties.created, decimal.Decimal, int, schemas.Unset] = schemas.unset,
         description: typing.Union[MetaOapg.properties.description, str, schemas.Unset] = schemas.unset,
         image: typing.Union[MetaOapg.properties.image, str, schemas.Unset] = schemas.unset,
@@ -224,11 +204,9 @@ class Reward(
         return super().__new__(
             cls,
             *_args,
-            asset=asset,
             account=account,
             _id=_id,
             active=active,
-            asset_quantity=asset_quantity,
             created=created,
             description=description,
             image=image,

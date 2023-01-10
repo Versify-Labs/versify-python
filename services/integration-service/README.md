@@ -1,1 +1,0 @@
-# Versify Integration Service

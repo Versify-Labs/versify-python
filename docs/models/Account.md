@@ -14,10 +14,9 @@ Key | Input Type | Accessed Type | Description | Notes
 **name** | str,  | str,  | The name of the account | 
 **_id** | str,  | str,  | Unique identifier for the account | [optional] 
 **[apps](#apps)** | list, tuple,  | tuple,  | The apps associated with the account | [optional] 
-**[billing](#billing)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The billing settings of the account | [optional] if omitted the server will use the default value of {"stripe_customer_id":"cus_472322ef963c22f55c68bdd8c8d953b0","subscription_plan":"trial","subscription_status":"active"}
+**[billing](#billing)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The billing settings of the account | [optional] if omitted the server will use the default value of {"stripe_customer_id":"cus_657e6e192223326858ce455f3decd9a1","subscription_plan":"trial","subscription_status":"active"}
 **[brand](#brand)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The branding settings of the account | [optional] if omitted the server will use the default value of {"action_color":"#000000","background_color":"#000000","primary_color":"#000000","secondary_color":"#000000","tertiary_color":"#000000","wallet_action_color":"#000000","wallet_background_color":"#000000","wallet_display_filters":[],"wallet_position":"bottom-left","wallet_welcome_message":"Welcome"}
 **created** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the event was created | [optional] 
-**[features](#features)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The features enabled for the account | [optional] if omitted the server will use the default value of {"journeys":true,"mints":true,"rewards":true}
 **[metadata](#metadata)** | dict, frozendict.frozendict,  | frozendict.frozendict,  | Arbitrary metadata associated with the object | [optional] if omitted the server will use the default value of {}
 **object** | str,  | str,  | The object type | [optional] if omitted the server will use the default value of "account"
 **[status](#status)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The status of the account | [optional] if omitted the server will use the default value of active
@@ -46,7 +45,7 @@ The billing settings of the account
 ## Model Type Info
 Input Type | Accessed Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The billing settings of the account | if omitted the server will use the default value of {"stripe_customer_id":"cus_472322ef963c22f55c68bdd8c8d953b0","subscription_plan":"trial","subscription_status":"active"}
+dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The billing settings of the account | if omitted the server will use the default value of {"stripe_customer_id":"cus_657e6e192223326858ce455f3decd9a1","subscription_plan":"trial","subscription_status":"active"}
 
 ### Composed Schemas (allOf/anyOf/oneOf/not)
 #### allOf
@@ -68,21 +67,6 @@ dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal
 Class Name | Input Type | Accessed Type | Description | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 [Brand](Brand.md) | [**Brand**](Brand.md) | [**Brand**](Brand.md) |  | 
-
-# features
-
-The features enabled for the account
-
-## Model Type Info
-Input Type | Accessed Type | Description | Notes
------------- | ------------- | ------------- | -------------
-dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The features enabled for the account | if omitted the server will use the default value of {"journeys":true,"mints":true,"rewards":true}
-
-### Composed Schemas (allOf/anyOf/oneOf/not)
-#### allOf
-Class Name | Input Type | Accessed Type | Description | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-[AccountFeatures](AccountFeatures.md) | [**AccountFeatures**](AccountFeatures.md) | [**AccountFeatures**](AccountFeatures.md) |  | 
 
 # metadata
 

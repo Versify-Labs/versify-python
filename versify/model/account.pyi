@@ -144,42 +144,6 @@ class Account(
                         **kwargs,
                     )
             created = schemas.IntSchema
-            
-            
-            class features(
-                schemas.ComposedSchema,
-            ):
-            
-            
-                class MetaOapg:
-                    
-                    @classmethod
-                    @functools.lru_cache()
-                    def all_of(cls):
-                        # we need this here to make our import statements work
-                        # we must store _composed_schemas in here so the code is only run
-                        # when we invoke this method. If we kept this at the class
-                        # level we would get an error because the class level
-                        # code would be run when this module is imported, and these composed
-                        # classes don't exist yet because their module has not finished
-                        # loading
-                        return [
-                            AccountFeatures,
-                        ]
-            
-            
-                def __new__(
-                    cls,
-                    *_args: typing.Union[dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
-                    _configuration: typing.Optional[schemas.Configuration] = None,
-                    **kwargs: typing.Union[schemas.AnyTypeSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, None, list, tuple, bytes],
-                ) -> 'features':
-                    return super().__new__(
-                        cls,
-                        *_args,
-                        _configuration=_configuration,
-                        **kwargs,
-                    )
             metadata = schemas.DictSchema
             object = schemas.StrSchema
             
@@ -253,7 +217,6 @@ class Account(
                 "billing": billing,
                 "brand": brand,
                 "created": created,
-                "features": features,
                 "metadata": metadata,
                 "object": object,
                 "status": status,
@@ -286,9 +249,6 @@ class Account(
     def __getitem__(self, name: typing_extensions.Literal["created"]) -> MetaOapg.properties.created: ...
     
     @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["features"]) -> MetaOapg.properties.features: ...
-    
-    @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["metadata"]) -> MetaOapg.properties.metadata: ...
     
     @typing.overload
@@ -306,7 +266,7 @@ class Account(
     @typing.overload
     def __getitem__(self, name: str) -> schemas.UnsetAnyTypeSchema: ...
     
-    def __getitem__(self, name: typing.Union[typing_extensions.Literal["domain", "name", "_id", "apps", "billing", "brand", "created", "features", "metadata", "object", "status", "team", "updated", ], str]):
+    def __getitem__(self, name: typing.Union[typing_extensions.Literal["domain", "name", "_id", "apps", "billing", "brand", "created", "metadata", "object", "status", "team", "updated", ], str]):
         # dict_instance[name] accessor
         return super().__getitem__(name)
     
@@ -333,9 +293,6 @@ class Account(
     def get_item_oapg(self, name: typing_extensions.Literal["created"]) -> typing.Union[MetaOapg.properties.created, schemas.Unset]: ...
     
     @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["features"]) -> typing.Union[MetaOapg.properties.features, schemas.Unset]: ...
-    
-    @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["metadata"]) -> typing.Union[MetaOapg.properties.metadata, schemas.Unset]: ...
     
     @typing.overload
@@ -353,7 +310,7 @@ class Account(
     @typing.overload
     def get_item_oapg(self, name: str) -> typing.Union[schemas.UnsetAnyTypeSchema, schemas.Unset]: ...
     
-    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["domain", "name", "_id", "apps", "billing", "brand", "created", "features", "metadata", "object", "status", "team", "updated", ], str]):
+    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["domain", "name", "_id", "apps", "billing", "brand", "created", "metadata", "object", "status", "team", "updated", ], str]):
         return super().get_item_oapg(name)
     
 
@@ -367,7 +324,6 @@ class Account(
         billing: typing.Union[MetaOapg.properties.billing, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         brand: typing.Union[MetaOapg.properties.brand, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         created: typing.Union[MetaOapg.properties.created, decimal.Decimal, int, schemas.Unset] = schemas.unset,
-        features: typing.Union[MetaOapg.properties.features, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         metadata: typing.Union[MetaOapg.properties.metadata, dict, frozendict.frozendict, schemas.Unset] = schemas.unset,
         object: typing.Union[MetaOapg.properties.object, str, schemas.Unset] = schemas.unset,
         status: typing.Union[MetaOapg.properties.status, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
@@ -386,7 +342,6 @@ class Account(
             billing=billing,
             brand=brand,
             created=created,
-            features=features,
             metadata=metadata,
             object=object,
             status=status,
@@ -396,7 +351,6 @@ class Account(
             **kwargs,
         )
 
-from versify.model.account_features import AccountFeatures
 from versify.model.account_status import AccountStatus
 from versify.model.app import App
 from versify.model.billing import Billing
