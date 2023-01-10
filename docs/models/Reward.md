@@ -10,14 +10,16 @@ dict, frozendict.frozendict,  | frozendict.frozendict,  | A reward document in t
 ### Dictionary Keys
 Key | Input Type | Accessed Type | Description | Notes
 ------------ | ------------- | ------------- | ------------- | -------------
+**asset** | str,  | str,  | The asset the reward is for | 
 **account** | str,  | str,  | The account the reward belongs to | 
 **_id** | str,  | str,  | Unique identifier for the reward | [optional] 
 **active** | bool,  | BoolClass,  | Whether the reward is active | [optional] if omitted the server will use the default value of True
+**asset_quantity** | decimal.Decimal, int,  | decimal.Decimal,  | The quantity of the asset needed to redeem the reward | [optional] if omitted the server will use the default value of 1
 **created** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the event was created | [optional] 
 **description** | str,  | str,  | The description of the reward | [optional] if omitted the server will use the default value of ""
 **image** | str,  | str,  | The image of the reward | [optional] 
 **[metadata](#metadata)** | dict, frozendict.frozendict,  | frozendict.frozendict,  | Arbitrary metadata associated with the object | [optional] if omitted the server will use the default value of {}
-**name** | str,  | str,  | The name of the reward | [optional] if omitted the server will use the default value of ""
+**name** | str,  | str,  | The name of the reward. This is displayable to the customer. | [optional] if omitted the server will use the default value of "Reward"
 **object** | str,  | str,  | The object type. Always \&quot;reward\&quot; | [optional] if omitted the server will use the default value of "reward"
 **[reward_type](#reward_type)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The type of the reward | [optional] if omitted the server will use the default value of coupon
 **updated** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the event was last updated | [optional] 
