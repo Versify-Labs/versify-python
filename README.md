@@ -353,6 +353,7 @@ Class | Method | HTTP request | Description
 
  - [Account](docs/models/Account.md)
  - [AccountCreate](docs/models/AccountCreate.md)
+ - [AccountFeatures](docs/models/AccountFeatures.md)
  - [AccountMetrics](docs/models/AccountMetrics.md)
  - [AccountStatus](docs/models/AccountStatus.md)
  - [AccountUpdate](docs/models/AccountUpdate.md)
