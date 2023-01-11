@@ -12,12 +12,12 @@
 import unittest
 
 import versify
-from versify.model.location import Location
+from versify.model.address import Address
 from versify import configuration
 
 
-class TestLocation(unittest.TestCase):
-    """Location unit test stubs"""
+class TestAddress(unittest.TestCase):
+    """Address unit test stubs"""
     _configuration = configuration.Configuration()
 
 

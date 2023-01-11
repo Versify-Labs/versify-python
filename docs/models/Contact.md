@@ -13,11 +13,11 @@ Key | Input Type | Accessed Type | Description | Notes
 **account** | str,  | str,  | The account the contact belongs to | 
 **email** | str,  | str,  | The email address of the contact | 
 **_id** | str,  | str,  | Unique identifier for the contact | [optional] 
+**[address](#address)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The address of the contact | [optional] 
 **avatar** | str,  | str,  | The URL of the contact&#x27;s avatar | [optional] 
 **browser** | str,  | str,  | The browser used by the contact | [optional] 
 **created** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the event was created | [optional] 
 **last_seen** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the contact was last seen | [optional] 
-**[location](#location)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The location of the contact | [optional] 
 **[metadata](#metadata)** | dict, frozendict.frozendict,  | frozendict.frozendict,  | Arbitrary metadata associated with the object | [optional] if omitted the server will use the default value of {}
 **[name](#name)** | dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The name of the contact. Includes first, middle and last name. | [optional] 
 **object** | str,  | str,  | The object type. Always &#x27;contact&#x27; | [optional] if omitted the server will use the default value of "contact"
@@ -28,20 +28,20 @@ Key | Input Type | Accessed Type | Description | Notes
 **updated** | decimal.Decimal, int,  | decimal.Decimal,  | The timestamp when the event was last updated | [optional] 
 **any_string_name** | dict, frozendict.frozendict, str, date, datetime, int, float, bool, decimal.Decimal, None, list, tuple, bytes, io.FileIO, io.BufferedReader | frozendict.frozendict, str, BoolClass, decimal.Decimal, NoneClass, tuple, bytes, FileIO | any string name can be used but the value must be the correct type | [optional]
 
-# location
+# address
 
-The location of the contact
+The address of the contact
 
 ## Model Type Info
 Input Type | Accessed Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The location of the contact | 
+dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | The address of the contact | 
 
 ### Composed Schemas (allOf/anyOf/oneOf/not)
 #### allOf
 Class Name | Input Type | Accessed Type | Description | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-[Location](Location.md) | [**Location**](Location.md) | [**Location**](Location.md) |  | 
+[Address](Address.md) | [**Address**](Address.md) | [**Address**](Address.md) |  | 
 
 # metadata
 

@@ -19,6 +19,7 @@ from versify.model.account_update import AccountUpdate
 from versify.model.action import Action
 from versify.model.action_config import ActionConfig
 from versify.model.action_type import ActionType
+from versify.model.address import Address
 from versify.model.api_delete_response import ApiDeleteResponse
 from versify.model.api_list_response import ApiListResponse
 from versify.model.api_search_response import ApiSearchResponse
@@ -48,7 +49,6 @@ from versify.model.identity_provider import IdentityProvider
 from versify.model.journey import Journey
 from versify.model.journey_create import JourneyCreate
 from versify.model.journey_update import JourneyUpdate
-from versify.model.location import Location
 from versify.model.message import Message
 from versify.model.message_create import MessageCreate
 from versify.model.message_type import MessageType

@@ -47,16 +47,7 @@ class Contact(
             _id = schemas.StrSchema
             
             
-            class avatar(
-                schemas.StrSchema
-            ):
-                pass
-            browser = schemas.StrSchema
-            created = schemas.IntSchema
-            last_seen = schemas.IntSchema
-            
-            
-            class location(
+            class address(
                 schemas.ComposedSchema,
             ):
             
@@ -74,7 +65,7 @@ class Contact(
                         # classes don't exist yet because their module has not finished
                         # loading
                         return [
-                            Location,
+                            Address,
                         ]
             
             
@@ -83,13 +74,22 @@ class Contact(
                     *_args: typing.Union[dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
                     _configuration: typing.Optional[schemas.Configuration] = None,
                     **kwargs: typing.Union[schemas.AnyTypeSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, None, list, tuple, bytes],
-                ) -> 'location':
+                ) -> 'address':
                     return super().__new__(
                         cls,
                         *_args,
                         _configuration=_configuration,
                         **kwargs,
                     )
+            
+            
+            class avatar(
+                schemas.StrSchema
+            ):
+                pass
+            browser = schemas.StrSchema
+            created = schemas.IntSchema
+            last_seen = schemas.IntSchema
             metadata = schemas.DictSchema
             
             
@@ -197,11 +197,11 @@ class Contact(
                 "account": account,
                 "email": email,
                 "_id": _id,
+                "address": address,
                 "avatar": avatar,
                 "browser": browser,
                 "created": created,
                 "last_seen": last_seen,
-                "location": location,
                 "metadata": metadata,
                 "name": name,
                 "object": object,
@@ -225,6 +225,9 @@ class Contact(
     def __getitem__(self, name: typing_extensions.Literal["_id"]) -> MetaOapg.properties._id: ...
     
     @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["address"]) -> MetaOapg.properties.address: ...
+    
+    @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["avatar"]) -> MetaOapg.properties.avatar: ...
     
     @typing.overload
@@ -235,9 +238,6 @@ class Contact(
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["last_seen"]) -> MetaOapg.properties.last_seen: ...
-    
-    @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["location"]) -> MetaOapg.properties.location: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["metadata"]) -> MetaOapg.properties.metadata: ...
@@ -266,7 +266,7 @@ class Contact(
     @typing.overload
     def __getitem__(self, name: str) -> schemas.UnsetAnyTypeSchema: ...
     
-    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "email", "_id", "avatar", "browser", "created", "last_seen", "location", "metadata", "name", "object", "owner", "phone_number", "social_profiles", "status", "updated", ], str]):
+    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "email", "_id", "address", "avatar", "browser", "created", "last_seen", "metadata", "name", "object", "owner", "phone_number", "social_profiles", "status", "updated", ], str]):
         # dict_instance[name] accessor
         return super().__getitem__(name)
     
@@ -281,6 +281,9 @@ class Contact(
     def get_item_oapg(self, name: typing_extensions.Literal["_id"]) -> typing.Union[MetaOapg.properties._id, schemas.Unset]: ...
     
     @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["address"]) -> typing.Union[MetaOapg.properties.address, schemas.Unset]: ...
+    
+    @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["avatar"]) -> typing.Union[MetaOapg.properties.avatar, schemas.Unset]: ...
     
     @typing.overload
@@ -291,9 +294,6 @@ class Contact(
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["last_seen"]) -> typing.Union[MetaOapg.properties.last_seen, schemas.Unset]: ...
-    
-    @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["location"]) -> typing.Union[MetaOapg.properties.location, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["metadata"]) -> typing.Union[MetaOapg.properties.metadata, schemas.Unset]: ...
@@ -322,7 +322,7 @@ class Contact(
     @typing.overload
     def get_item_oapg(self, name: str) -> typing.Union[schemas.UnsetAnyTypeSchema, schemas.Unset]: ...
     
-    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "email", "_id", "avatar", "browser", "created", "last_seen", "location", "metadata", "name", "object", "owner", "phone_number", "social_profiles", "status", "updated", ], str]):
+    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "email", "_id", "address", "avatar", "browser", "created", "last_seen", "metadata", "name", "object", "owner", "phone_number", "social_profiles", "status", "updated", ], str]):
         return super().get_item_oapg(name)
     
 
@@ -332,11 +332,11 @@ class Contact(
         account: typing.Union[MetaOapg.properties.account, str, ],
         email: typing.Union[MetaOapg.properties.email, str, ],
         _id: typing.Union[MetaOapg.properties._id, str, schemas.Unset] = schemas.unset,
+        address: typing.Union[MetaOapg.properties.address, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         avatar: typing.Union[MetaOapg.properties.avatar, str, schemas.Unset] = schemas.unset,
         browser: typing.Union[MetaOapg.properties.browser, str, schemas.Unset] = schemas.unset,
         created: typing.Union[MetaOapg.properties.created, decimal.Decimal, int, schemas.Unset] = schemas.unset,
         last_seen: typing.Union[MetaOapg.properties.last_seen, decimal.Decimal, int, schemas.Unset] = schemas.unset,
-        location: typing.Union[MetaOapg.properties.location, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         metadata: typing.Union[MetaOapg.properties.metadata, dict, frozendict.frozendict, schemas.Unset] = schemas.unset,
         name: typing.Union[MetaOapg.properties.name, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         object: typing.Union[MetaOapg.properties.object, str, schemas.Unset] = schemas.unset,
@@ -354,11 +354,11 @@ class Contact(
             account=account,
             email=email,
             _id=_id,
+            address=address,
             avatar=avatar,
             browser=browser,
             created=created,
             last_seen=last_seen,
-            location=location,
             metadata=metadata,
             name=name,
             object=object,
@@ -371,7 +371,7 @@ class Contact(
             **kwargs,
         )
 
+from versify.model.address import Address
 from versify.model.contact_status import ContactStatus
-from versify.model.location import Location
 from versify.model.person_name import PersonName
 from versify.model.social_profile import SocialProfile

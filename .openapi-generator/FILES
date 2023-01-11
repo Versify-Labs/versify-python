@@ -26,6 +26,7 @@ docs/models/AccountUpdate.md
 docs/models/Action.md
 docs/models/ActionConfig.md
 docs/models/ActionType.md
+docs/models/Address.md
 docs/models/ApiDeleteResponse.md
 docs/models/ApiListResponse.md
 docs/models/ApiSearchResponse.md
@@ -55,7 +56,6 @@ docs/models/IdentityProvider.md
 docs/models/Journey.md
 docs/models/JourneyCreate.md
 docs/models/JourneyUpdate.md
-docs/models/Location.md
 docs/models/Message.md
 docs/models/MessageCreate.md
 docs/models/MessageType.md
@@ -112,6 +112,7 @@ test/test_models/test_account_update.py
 test/test_models/test_action.py
 test/test_models/test_action_config.py
 test/test_models/test_action_type.py
+test/test_models/test_address.py
 test/test_models/test_api_delete_response.py
 test/test_models/test_api_list_response.py
 test/test_models/test_api_search_response.py
@@ -141,7 +142,6 @@ test/test_models/test_identity_provider.py
 test/test_models/test_journey.py
 test/test_models/test_journey_create.py
 test/test_models/test_journey_update.py
-test/test_models/test_location.py
 test/test_models/test_message.py
 test/test_models/test_message_create.py
 test/test_models/test_message_type.py
@@ -221,6 +221,8 @@ versify/model/action_config.py
 versify/model/action_config.pyi
 versify/model/action_type.py
 versify/model/action_type.pyi
+versify/model/address.py
+versify/model/address.pyi
 versify/model/api_delete_response.py
 versify/model/api_delete_response.pyi
 versify/model/api_list_response.py
@@ -279,8 +281,6 @@ versify/model/journey_create.py
 versify/model/journey_create.pyi
 versify/model/journey_update.py
 versify/model/journey_update.pyi
-versify/model/location.py
-versify/model/location.pyi
 versify/model/message.py
 versify/model/message.pyi
 versify/model/message_create.py

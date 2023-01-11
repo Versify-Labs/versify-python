@@ -1,4 +1,4 @@
-# versify.model.location.Location
+# versify.model.address.Address
 
 A location for a person.
 
