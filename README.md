@@ -202,6 +202,10 @@ Class | Method | HTTP request | Description
 *AssetsApi* | [**search_assets_v2_assets_search_post_0**](docs/apis/tags/AssetsApi.md#search_assets_v2_assets_search_post_0) | **post** /v2/assets/search | Search assets
 *AssetsApi* | [**update_asset_v2_assets_asset_id_put**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put) | **put** /v2/assets/{asset_id} | Update asset
 *AssetsApi* | [**update_asset_v2_assets_asset_id_put_0**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put_0) | **put** /v2/assets/{asset_id} | Update asset
+*AuthApi* | [**access_token_v2_oauth_access_token_post**](docs/apis/tags/AuthApi.md#access_token_v2_oauth_access_token_post) | **post** /v2/oauth/access_token | Access Token
+*AuthApi* | [**access_token_v2_oauth_access_token_post_0**](docs/apis/tags/AuthApi.md#access_token_v2_oauth_access_token_post_0) | **post** /v2/oauth/access_token | Access Token
+*AuthApi* | [**authorize_v2_oauth_authorize_get**](docs/apis/tags/AuthApi.md#authorize_v2_oauth_authorize_get) | **get** /v2/oauth/authorize | Authorize
+*AuthApi* | [**authorize_v2_oauth_authorize_get_0**](docs/apis/tags/AuthApi.md#authorize_v2_oauth_authorize_get_0) | **get** /v2/oauth/authorize | Authorize
 *ClaimsApi* | [**create_claim_v2_claims_post**](docs/apis/tags/ClaimsApi.md#create_claim_v2_claims_post) | **post** /v2/claims | Create claim
 *ClaimsApi* | [**create_claim_v2_claims_post_0**](docs/apis/tags/ClaimsApi.md#create_claim_v2_claims_post_0) | **post** /v2/claims | Create claim
 *ClaimsApi* | [**delete_claim_v2_claims_claim_id_delete**](docs/apis/tags/ClaimsApi.md#delete_claim_v2_claims_claim_id_delete) | **delete** /v2/claims/{claim_id} | Delete claim
@@ -370,6 +374,7 @@ Class | Method | HTTP request | Description
  - [AssetUpdate](docs/models/AssetUpdate.md)
  - [Billing](docs/models/Billing.md)
  - [BlockchainType](docs/models/BlockchainType.md)
+ - [BodyAccessTokenV2OauthAccessTokenPost](docs/models/BodyAccessTokenV2OauthAccessTokenPost.md)
  - [Brand](docs/models/Brand.md)
  - [Claim](docs/models/Claim.md)
  - [ClaimCreate](docs/models/ClaimCreate.md)
@@ -440,6 +445,7 @@ Class | Method | HTTP request | Description
 
 
 ## Author
+
 
 
 

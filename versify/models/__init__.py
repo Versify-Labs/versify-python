@@ -30,6 +30,7 @@ from versify.model.asset_status import AssetStatus
 from versify.model.asset_update import AssetUpdate
 from versify.model.billing import Billing
 from versify.model.blockchain_type import BlockchainType
+from versify.model.body_access_token_v2_oauth_access_token_post import BodyAccessTokenV2OauthAccessTokenPost
 from versify.model.brand import Brand
 from versify.model.claim import Claim
 from versify.model.claim_create import ClaimCreate

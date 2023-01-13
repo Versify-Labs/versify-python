@@ -36,6 +36,8 @@ class PathValues(str, enum.Enum):
     V2_NOTES = "/v2/notes"
     V2_NOTES_SEARCH = "/v2/notes/search"
     V2_NOTES_NOTE_ID = "/v2/notes/{note_id}"
+    V2_OAUTH_ACCESS_TOKEN = "/v2/oauth/access_token"
+    V2_OAUTH_AUTHORIZE = "/v2/oauth/authorize"
     V2_REDEMPTIONS = "/v2/redemptions"
     V2_REDEMPTIONS_SEARCH = "/v2/redemptions/search"
     V2_REDEMPTIONS_REDEMPTION_ID = "/v2/redemptions/{redemption_id}"

@@ -5,6 +5,7 @@
 README.md
 docs/apis/tags/AccountsApi.md
 docs/apis/tags/AssetsApi.md
+docs/apis/tags/AuthApi.md
 docs/apis/tags/ClaimsApi.md
 docs/apis/tags/CollectionsApi.md
 docs/apis/tags/ContactsApi.md
@@ -37,6 +38,7 @@ docs/models/AssetStatus.md
 docs/models/AssetUpdate.md
 docs/models/Billing.md
 docs/models/BlockchainType.md
+docs/models/BodyAccessTokenV2OauthAccessTokenPost.md
 docs/models/Brand.md
 docs/models/Claim.md
 docs/models/ClaimCreate.md
@@ -123,6 +125,7 @@ test/test_models/test_asset_status.py
 test/test_models/test_asset_update.py
 test/test_models/test_billing.py
 test/test_models/test_blockchain_type.py
+test/test_models/test_body_access_token_v2_oauth_access_token_post.py
 test/test_models/test_brand.py
 test/test_models/test_claim.py
 test/test_models/test_claim_create.py
@@ -189,6 +192,7 @@ versify/api_client.py
 versify/apis/__init__.py
 versify/apis/tags/accounts_api.py
 versify/apis/tags/assets_api.py
+versify/apis/tags/auth_api.py
 versify/apis/tags/claims_api.py
 versify/apis/tags/collections_api.py
 versify/apis/tags/contacts_api.py
@@ -243,6 +247,8 @@ versify/model/billing.py
 versify/model/billing.pyi
 versify/model/blockchain_type.py
 versify/model/blockchain_type.pyi
+versify/model/body_access_token_v2_oauth_access_token_post.py
+versify/model/body_access_token_v2_oauth_access_token_post.pyi
 versify/model/brand.py
 versify/model/brand.pyi
 versify/model/claim.py

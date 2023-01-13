@@ -3,6 +3,7 @@ import typing_extensions
 from versify.apis.tags import TagValues
 from versify.apis.tags.accounts_api import AccountsApi
 from versify.apis.tags.assets_api import AssetsApi
+from versify.apis.tags.auth_api import AuthApi
 from versify.apis.tags.claims_api import ClaimsApi
 from versify.apis.tags.collections_api import CollectionsApi
 from versify.apis.tags.contacts_api import ContactsApi
@@ -22,6 +23,7 @@ TagToApi = typing_extensions.TypedDict(
     {
         TagValues.ACCOUNTS: AccountsApi,
         TagValues.ASSETS: AssetsApi,
+        TagValues.AUTH: AuthApi,
         TagValues.CLAIMS: ClaimsApi,
         TagValues.COLLECTIONS: CollectionsApi,
         TagValues.CONTACTS: ContactsApi,
@@ -42,6 +44,7 @@ tag_to_api = TagToApi(
     {
         TagValues.ACCOUNTS: AccountsApi,
         TagValues.ASSETS: AssetsApi,
+        TagValues.AUTH: AuthApi,
         TagValues.CLAIMS: ClaimsApi,
         TagValues.COLLECTIONS: CollectionsApi,
         TagValues.CONTACTS: ContactsApi,

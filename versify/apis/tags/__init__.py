@@ -8,6 +8,7 @@ import enum
 class TagValues(str, enum.Enum):
     ACCOUNTS = "Accounts"
     ASSETS = "Assets"
+    AUTH = "Auth"
     CLAIMS = "Claims"
     COLLECTIONS = "Collections"
     CONTACTS = "Contacts"

@@ -31,6 +31,8 @@ from versify.apis.paths.v2_mints_mint_id import V2MintsMintId
 from versify.apis.paths.v2_notes import V2Notes
 from versify.apis.paths.v2_notes_search import V2NotesSearch
 from versify.apis.paths.v2_notes_note_id import V2NotesNoteId
+from versify.apis.paths.v2_oauth_access_token import V2OauthAccessToken
+from versify.apis.paths.v2_oauth_authorize import V2OauthAuthorize
 from versify.apis.paths.v2_redemptions import V2Redemptions
 from versify.apis.paths.v2_redemptions_search import V2RedemptionsSearch
 from versify.apis.paths.v2_redemptions_redemption_id import V2RedemptionsRedemptionId
@@ -78,6 +80,8 @@ PathToApi = typing_extensions.TypedDict(
         PathValues.V2_NOTES: V2Notes,
         PathValues.V2_NOTES_SEARCH: V2NotesSearch,
         PathValues.V2_NOTES_NOTE_ID: V2NotesNoteId,
+        PathValues.V2_OAUTH_ACCESS_TOKEN: V2OauthAccessToken,
+        PathValues.V2_OAUTH_AUTHORIZE: V2OauthAuthorize,
         PathValues.V2_REDEMPTIONS: V2Redemptions,
         PathValues.V2_REDEMPTIONS_SEARCH: V2RedemptionsSearch,
         PathValues.V2_REDEMPTIONS_REDEMPTION_ID: V2RedemptionsRedemptionId,
@@ -126,6 +130,8 @@ path_to_api = PathToApi(
         PathValues.V2_NOTES: V2Notes,
         PathValues.V2_NOTES_SEARCH: V2NotesSearch,
         PathValues.V2_NOTES_NOTE_ID: V2NotesNoteId,
+        PathValues.V2_OAUTH_ACCESS_TOKEN: V2OauthAccessToken,
+        PathValues.V2_OAUTH_AUTHORIZE: V2OauthAuthorize,
         PathValues.V2_REDEMPTIONS: V2Redemptions,
         PathValues.V2_REDEMPTIONS_SEARCH: V2RedemptionsSearch,
         PathValues.V2_REDEMPTIONS_REDEMPTION_ID: V2RedemptionsRedemptionId,
