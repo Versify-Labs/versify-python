@@ -27,7 +27,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(python -c 'import stytch; print(stytch.__version__)')
+          VERSION=$(python -c 'import versify; print(versify.__version__)')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release_tag=v$VERSION" >> $GITHUB_OUTPUT
 
@@ -40,7 +40,7 @@ jobs:
         run: |
           FOUND=0
           for changed_file in ${{ steps.files.outputs.all }}; do
-            if [[ $changed_file == "stytch/version.py" ]]; then
+            if [[ $changed_file == "versify/version.py" ]]; then
               FOUND=1
             fi
           done

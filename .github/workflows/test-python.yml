@@ -1,4 +1,4 @@
-name: Test Versify Python SDK
+name: Test Versify PyPI Package
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test-stytch:
+  test-versify:
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,8 +27,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      
       - name: Check types
-        run: mypy stytch codegen test
+        run: mypy versify codegen test
 
       - name: Run unit tests
         run: python -m unittest
