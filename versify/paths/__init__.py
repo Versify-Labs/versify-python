@@ -6,6 +6,6 @@ import enum
 
 
 class PathValues(str, enum.Enum):
-    V2_ACCOUNTS = "/v2/accounts"
-    V2_ACCOUNTS_ACCOUNT_ID = "/v2/accounts/{account_id}"
-    V2_ACCOUNTS_ACCOUNT_ID_METRICS = "/v2/accounts/{account_id}/metrics"
+    V2_ASSETS = "/v2/assets"
+    V2_ASSETS_SEARCH = "/v2/assets/search"
+    V2_ASSETS_ASSET_ID = "/v2/assets/{asset_id}"

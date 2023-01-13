@@ -1,23 +1,23 @@
 import typing_extensions
 
 from versify.paths import PathValues
-from versify.apis.paths.v2_accounts import V2Accounts
-from versify.apis.paths.v2_accounts_account_id import V2AccountsAccountId
-from versify.apis.paths.v2_accounts_account_id_metrics import V2AccountsAccountIdMetrics
+from versify.apis.paths.v2_assets import V2Assets
+from versify.apis.paths.v2_assets_search import V2AssetsSearch
+from versify.apis.paths.v2_assets_asset_id import V2AssetsAssetId
 
 PathToApi = typing_extensions.TypedDict(
     'PathToApi',
     {
-        PathValues.V2_ACCOUNTS: V2Accounts,
-        PathValues.V2_ACCOUNTS_ACCOUNT_ID: V2AccountsAccountId,
-        PathValues.V2_ACCOUNTS_ACCOUNT_ID_METRICS: V2AccountsAccountIdMetrics,
+        PathValues.V2_ASSETS: V2Assets,
+        PathValues.V2_ASSETS_SEARCH: V2AssetsSearch,
+        PathValues.V2_ASSETS_ASSET_ID: V2AssetsAssetId,
     }
 )
 
 path_to_api = PathToApi(
     {
-        PathValues.V2_ACCOUNTS: V2Accounts,
-        PathValues.V2_ACCOUNTS_ACCOUNT_ID: V2AccountsAccountId,
-        PathValues.V2_ACCOUNTS_ACCOUNT_ID_METRICS: V2AccountsAccountIdMetrics,
+        PathValues.V2_ASSETS: V2Assets,
+        PathValues.V2_ASSETS_SEARCH: V2AssetsSearch,
+        PathValues.V2_ASSETS_ASSET_ID: V2AssetsAssetId,
     }
 )

@@ -1,9 +1,7 @@
 # do not import all endpoints into this module because that uses a lot of memory and stack frames
 # if you need the ability to import all endpoints from this module, import them with
-# from versify.apis.tag_to_api import tag_to_api
+# from versify.paths.v2_assets import Api
 
-import enum
+from versify.paths import PathValues
 
-
-class TagValues(str, enum.Enum):
-    ASSETS = "Assets"
+path = PathValues.V2_ASSETS

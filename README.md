@@ -140,14 +140,15 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import time
 import versify
 from pprint import pprint
-from versify.apis.tags import accounts_api
-from versify.model.account import Account
-from versify.model.account_create import AccountCreate
-from versify.model.account_metrics import AccountMetrics
-from versify.model.account_update import AccountUpdate
+from versify.apis.tags import assets_api
 from versify.model.api_delete_response import ApiDeleteResponse
 from versify.model.api_list_response import ApiListResponse
+from versify.model.api_search_response import ApiSearchResponse
+from versify.model.asset import Asset
+from versify.model.asset_create import AssetCreate
+from versify.model.asset_update import AssetUpdate
 from versify.model.http_validation_error import HTTPValidationError
+from versify.model.search_query import SearchQuery
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
 configuration = versify.Configuration(
@@ -167,15 +168,16 @@ configuration = versify.Configuration(
 # Enter a context with an instance of the API client
 with versify.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = accounts_api.AccountsApi(api_client)
+    api_instance = assets_api.AssetsApi(api_client)
     any_type = None # anyType | 
+versify_account = "act_123123123131231231" # str | Versify Account ID (optional)
 
     try:
-        # Create an account
-        api_response = api_instance.create_account_v2_accounts_post(any_type)
+        # Create asset
+        api_response = api_instance.create_asset_v2_assets_post(any_typeversify_account=versify_account)
         pprint(api_response)
     except versify.ApiException as e:
-        print("Exception when calling AccountsApi->create_account_v2_accounts_post: %s\n" % e)
+        print("Exception when calling AssetsApi->create_asset_v2_assets_post: %s\n" % e)
 ```
 
 ## Documentation for API Endpoints
@@ -184,28 +186,38 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*AccountsApi* | [**create_account_v2_accounts_post**](docs/apis/tags/AccountsApi.md#create_account_v2_accounts_post) | **post** /v2/accounts | Create an account
-*AccountsApi* | [**delete_account_v2_accounts_account_id_delete**](docs/apis/tags/AccountsApi.md#delete_account_v2_accounts_account_id_delete) | **delete** /v2/accounts/{account_id} | Delete an account
-*AccountsApi* | [**get_account_metrics_v2_accounts_account_id_metrics_get**](docs/apis/tags/AccountsApi.md#get_account_metrics_v2_accounts_account_id_metrics_get) | **get** /v2/accounts/{account_id}/metrics | Get account metrics
-*AccountsApi* | [**get_account_v2_accounts_account_id_get**](docs/apis/tags/AccountsApi.md#get_account_v2_accounts_account_id_get) | **get** /v2/accounts/{account_id} | Get an account
-*AccountsApi* | [**list_accounts_v2_accounts_get**](docs/apis/tags/AccountsApi.md#list_accounts_v2_accounts_get) | **get** /v2/accounts | List accounts
-*AccountsApi* | [**update_account_v2_accounts_account_id_put**](docs/apis/tags/AccountsApi.md#update_account_v2_accounts_account_id_put) | **put** /v2/accounts/{account_id} | Update an account
+*AssetsApi* | [**create_asset_v2_assets_post**](docs/apis/tags/AssetsApi.md#create_asset_v2_assets_post) | **post** /v2/assets | Create asset
+*AssetsApi* | [**create_asset_v2_assets_post_0**](docs/apis/tags/AssetsApi.md#create_asset_v2_assets_post_0) | **post** /v2/assets | Create asset
+*AssetsApi* | [**delete_asset_v2_assets_asset_id_delete**](docs/apis/tags/AssetsApi.md#delete_asset_v2_assets_asset_id_delete) | **delete** /v2/assets/{asset_id} | Delete asset
+*AssetsApi* | [**delete_asset_v2_assets_asset_id_delete_0**](docs/apis/tags/AssetsApi.md#delete_asset_v2_assets_asset_id_delete_0) | **delete** /v2/assets/{asset_id} | Delete asset
+*AssetsApi* | [**get_asset_v2_assets_asset_id_get**](docs/apis/tags/AssetsApi.md#get_asset_v2_assets_asset_id_get) | **get** /v2/assets/{asset_id} | Get asset
+*AssetsApi* | [**get_asset_v2_assets_asset_id_get_0**](docs/apis/tags/AssetsApi.md#get_asset_v2_assets_asset_id_get_0) | **get** /v2/assets/{asset_id} | Get asset
+*AssetsApi* | [**list_assets_v2_assets_get**](docs/apis/tags/AssetsApi.md#list_assets_v2_assets_get) | **get** /v2/assets | List assets
+*AssetsApi* | [**list_assets_v2_assets_get_0**](docs/apis/tags/AssetsApi.md#list_assets_v2_assets_get_0) | **get** /v2/assets | List assets
+*AssetsApi* | [**search_assets_v2_assets_search_post**](docs/apis/tags/AssetsApi.md#search_assets_v2_assets_search_post) | **post** /v2/assets/search | Search assets
+*AssetsApi* | [**search_assets_v2_assets_search_post_0**](docs/apis/tags/AssetsApi.md#search_assets_v2_assets_search_post_0) | **post** /v2/assets/search | Search assets
+*AssetsApi* | [**update_asset_v2_assets_asset_id_put**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put) | **put** /v2/assets/{asset_id} | Update asset
+*AssetsApi* | [**update_asset_v2_assets_asset_id_put_0**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put_0) | **put** /v2/assets/{asset_id} | Update asset
 
 ## Documentation For Models
 
  - [Account](docs/models/Account.md)
- - [AccountCreate](docs/models/AccountCreate.md)
- - [AccountMetrics](docs/models/AccountMetrics.md)
  - [AccountStatus](docs/models/AccountStatus.md)
- - [AccountUpdate](docs/models/AccountUpdate.md)
  - [ApiDeleteResponse](docs/models/ApiDeleteResponse.md)
  - [ApiListResponse](docs/models/ApiListResponse.md)
+ - [ApiSearchResponse](docs/models/ApiSearchResponse.md)
  - [App](docs/models/App.md)
+ - [Asset](docs/models/Asset.md)
+ - [AssetCreate](docs/models/AssetCreate.md)
+ - [AssetStatus](docs/models/AssetStatus.md)
+ - [AssetUpdate](docs/models/AssetUpdate.md)
  - [Billing](docs/models/Billing.md)
+ - [BlockchainType](docs/models/BlockchainType.md)
  - [Brand](docs/models/Brand.md)
  - [HTTPValidationError](docs/models/HTTPValidationError.md)
  - [Operator](docs/models/Operator.md)
  - [Query](docs/models/Query.md)
+ - [SearchQuery](docs/models/SearchQuery.md)
  - [SubscriptionPlan](docs/models/SubscriptionPlan.md)
  - [SubscriptionStatus](docs/models/SubscriptionStatus.md)
  - [TeamMember](docs/models/TeamMember.md)
