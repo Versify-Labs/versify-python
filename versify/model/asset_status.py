@@ -38,14 +38,24 @@ class AssetStatus(
 
     class MetaOapg:
         enum_value_to_name = {
-            "active": "ACTIVE",
-            "inactive": "INACTIVE",
+            "draft": "DRAFT",
+            "pending": "PENDING",
+            "minted": "MINTED",
+            "failed": "FAILED",
         }
     
     @schemas.classproperty
-    def ACTIVE(cls):
-        return cls("active")
+    def DRAFT(cls):
+        return cls("draft")
     
     @schemas.classproperty
-    def INACTIVE(cls):
-        return cls("inactive")
+    def PENDING(cls):
+        return cls("pending")
+    
+    @schemas.classproperty
+    def MINTED(cls):
+        return cls("minted")
+    
+    @schemas.classproperty
+    def FAILED(cls):
+        return cls("failed")

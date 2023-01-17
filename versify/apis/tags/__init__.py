@@ -6,4 +6,18 @@ import enum
 
 
 class TagValues(str, enum.Enum):
+    ACCOUNTS = "Accounts"
     ASSETS = "Assets"
+    AUTH = "Auth"
+    CLAIMS = "Claims"
+    COLLECTIONS = "Collections"
+    CONTACTS = "Contacts"
+    EVENTS = "Events"
+    JOURNEYS = "Journeys"
+    MESSAGES = "Messages"
+    MINTS = "Mints"
+    NOTES = "Notes"
+    REDEMPTIONS = "Redemptions"
+    REWARDS = "Rewards"
+    TAGS = "Tags"
+    WEBHOOKS = "Webhooks"

@@ -5,7 +5,7 @@ An enumeration.
 ## Model Type Info
 Input Type | Accessed Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-str,  | str,  | An enumeration. | must be one of ["active", "inactive", ] 
+str,  | str,  | An enumeration. | must be one of ["draft", "pending", "minted", "failed", ] 
 
 [[Back to Model list]](../../README.md#documentation-for-models) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to README]](../../README.md)
 

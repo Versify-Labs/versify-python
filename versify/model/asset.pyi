@@ -31,7 +31,7 @@ class Asset(
 
     Do not edit the class manually.
 
-    A asset document in the database.
+    The asset model
     """
 
 
@@ -59,10 +59,10 @@ class Asset(
                 pass
             name = schemas.StrSchema
             token_id = schemas.StrSchema
-            _id = schemas.StrSchema
+            active = schemas.BoolSchema
             
             
-            class chain(
+            class blockchain(
                 schemas.ComposedSchema,
             ):
             
@@ -89,7 +89,7 @@ class Asset(
                     *_args: typing.Union[dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
                     _configuration: typing.Optional[schemas.Configuration] = None,
                     **kwargs: typing.Union[schemas.AnyTypeSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, None, list, tuple, bytes],
-                ) -> 'chain':
+                ) -> 'blockchain':
                     return super().__new__(
                         cls,
                         *_args,
@@ -97,6 +97,8 @@ class Asset(
                         **kwargs,
                     )
             created = schemas.IntSchema
+            default = schemas.BoolSchema
+            id = schemas.StrSchema
             metadata = schemas.DictSchema
             object = schemas.StrSchema
             
@@ -167,9 +169,11 @@ class Asset(
                 "image": image,
                 "name": name,
                 "token_id": token_id,
-                "_id": _id,
-                "chain": chain,
+                "active": active,
+                "blockchain": blockchain,
                 "created": created,
+                "default": default,
+                "id": id,
                 "metadata": metadata,
                 "object": object,
                 "properties": properties,
@@ -207,13 +211,19 @@ class Asset(
     def __getitem__(self, name: typing_extensions.Literal["token_id"]) -> MetaOapg.properties.token_id: ...
     
     @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["_id"]) -> MetaOapg.properties._id: ...
+    def __getitem__(self, name: typing_extensions.Literal["active"]) -> MetaOapg.properties.active: ...
     
     @typing.overload
-    def __getitem__(self, name: typing_extensions.Literal["chain"]) -> MetaOapg.properties.chain: ...
+    def __getitem__(self, name: typing_extensions.Literal["blockchain"]) -> MetaOapg.properties.blockchain: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["created"]) -> MetaOapg.properties.created: ...
+    
+    @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["default"]) -> MetaOapg.properties.default: ...
+    
+    @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["id"]) -> MetaOapg.properties.id: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["metadata"]) -> MetaOapg.properties.metadata: ...
@@ -233,7 +243,7 @@ class Asset(
     @typing.overload
     def __getitem__(self, name: str) -> schemas.UnsetAnyTypeSchema: ...
     
-    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "collection", "contract_address", "description", "image", "name", "token_id", "_id", "chain", "created", "metadata", "object", "properties", "status", "updated", ], str]):
+    def __getitem__(self, name: typing.Union[typing_extensions.Literal["account", "collection", "contract_address", "description", "image", "name", "token_id", "active", "blockchain", "created", "default", "id", "metadata", "object", "properties", "status", "updated", ], str]):
         # dict_instance[name] accessor
         return super().__getitem__(name)
     
@@ -260,13 +270,19 @@ class Asset(
     def get_item_oapg(self, name: typing_extensions.Literal["token_id"]) -> MetaOapg.properties.token_id: ...
     
     @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["_id"]) -> typing.Union[MetaOapg.properties._id, schemas.Unset]: ...
+    def get_item_oapg(self, name: typing_extensions.Literal["active"]) -> typing.Union[MetaOapg.properties.active, schemas.Unset]: ...
     
     @typing.overload
-    def get_item_oapg(self, name: typing_extensions.Literal["chain"]) -> typing.Union[MetaOapg.properties.chain, schemas.Unset]: ...
+    def get_item_oapg(self, name: typing_extensions.Literal["blockchain"]) -> typing.Union[MetaOapg.properties.blockchain, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["created"]) -> typing.Union[MetaOapg.properties.created, schemas.Unset]: ...
+    
+    @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["default"]) -> typing.Union[MetaOapg.properties.default, schemas.Unset]: ...
+    
+    @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["id"]) -> typing.Union[MetaOapg.properties.id, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["metadata"]) -> typing.Union[MetaOapg.properties.metadata, schemas.Unset]: ...
@@ -286,7 +302,7 @@ class Asset(
     @typing.overload
     def get_item_oapg(self, name: str) -> typing.Union[schemas.UnsetAnyTypeSchema, schemas.Unset]: ...
     
-    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "collection", "contract_address", "description", "image", "name", "token_id", "_id", "chain", "created", "metadata", "object", "properties", "status", "updated", ], str]):
+    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["account", "collection", "contract_address", "description", "image", "name", "token_id", "active", "blockchain", "created", "default", "id", "metadata", "object", "properties", "status", "updated", ], str]):
         return super().get_item_oapg(name)
     
 
@@ -300,9 +316,11 @@ class Asset(
         collection: typing.Union[MetaOapg.properties.collection, str, ],
         contract_address: typing.Union[MetaOapg.properties.contract_address, str, ],
         account: typing.Union[MetaOapg.properties.account, str, ],
-        _id: typing.Union[MetaOapg.properties._id, str, schemas.Unset] = schemas.unset,
-        chain: typing.Union[MetaOapg.properties.chain, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
+        active: typing.Union[MetaOapg.properties.active, bool, schemas.Unset] = schemas.unset,
+        blockchain: typing.Union[MetaOapg.properties.blockchain, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, schemas.Unset] = schemas.unset,
         created: typing.Union[MetaOapg.properties.created, decimal.Decimal, int, schemas.Unset] = schemas.unset,
+        default: typing.Union[MetaOapg.properties.default, bool, schemas.Unset] = schemas.unset,
+        id: typing.Union[MetaOapg.properties.id, str, schemas.Unset] = schemas.unset,
         metadata: typing.Union[MetaOapg.properties.metadata, dict, frozendict.frozendict, schemas.Unset] = schemas.unset,
         object: typing.Union[MetaOapg.properties.object, str, schemas.Unset] = schemas.unset,
         properties: typing.Union[MetaOapg.properties.properties, list, tuple, schemas.Unset] = schemas.unset,
@@ -321,9 +339,11 @@ class Asset(
             collection=collection,
             contract_address=contract_address,
             account=account,
-            _id=_id,
-            chain=chain,
+            active=active,
+            blockchain=blockchain,
             created=created,
+            default=default,
+            id=id,
             metadata=metadata,
             object=object,
             properties=properties,

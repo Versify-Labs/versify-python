@@ -26,7 +26,6 @@ import frozendict  # noqa: F401
 from versify import schemas  # noqa: F401
 
 from versify.model.asset_update import AssetUpdate
-from versify.model.asset import Asset
 from versify.model.http_validation_error import HTTPValidationError
 
 # Header params
@@ -126,7 +125,7 @@ request_body_any_type = api_client.RequestBody(
     },
     required=True,
 )
-SchemaFor200ResponseBodyApplicationJson = Asset
+SchemaFor200ResponseBodyApplicationJson = AssetUpdate
 
 
 @dataclass

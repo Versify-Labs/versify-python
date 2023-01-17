@@ -140,15 +140,14 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import time
 import versify
 from pprint import pprint
-from versify.apis.tags import assets_api
+from versify.apis.tags import accounts_api
+from versify.model.account import Account
+from versify.model.account_create import AccountCreate
+from versify.model.account_metrics import AccountMetrics
+from versify.model.account_update import AccountUpdate
 from versify.model.api_delete_response import ApiDeleteResponse
 from versify.model.api_list_response import ApiListResponse
-from versify.model.api_search_response import ApiSearchResponse
-from versify.model.asset import Asset
-from versify.model.asset_create import AssetCreate
-from versify.model.asset_update import AssetUpdate
 from versify.model.http_validation_error import HTTPValidationError
-from versify.model.search_query import SearchQuery
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
 configuration = versify.Configuration(
@@ -168,16 +167,15 @@ configuration = versify.Configuration(
 # Enter a context with an instance of the API client
 with versify.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = assets_api.AssetsApi(api_client)
+    api_instance = accounts_api.AccountsApi(api_client)
     any_type = None # anyType | 
-versify_account = "act_123123123131231231" # str | Versify Account ID (optional)
 
     try:
-        # Create asset
-        api_response = api_instance.create_asset_v2_assets_post(any_typeversify_account=versify_account)
+        # Create an account
+        api_response = api_instance.create_account_v2_accounts_post(any_type)
         pprint(api_response)
     except versify.ApiException as e:
-        print("Exception when calling AssetsApi->create_asset_v2_assets_post: %s\n" % e)
+        print("Exception when calling AccountsApi->create_account_v2_accounts_post: %s\n" % e)
 ```
 
 ## Documentation for API Endpoints
@@ -186,6 +184,12 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccountsApi* | [**create_account_v2_accounts_post**](docs/apis/tags/AccountsApi.md#create_account_v2_accounts_post) | **post** /v2/accounts | Create an account
+*AccountsApi* | [**delete_account_v2_accounts_account_id_delete**](docs/apis/tags/AccountsApi.md#delete_account_v2_accounts_account_id_delete) | **delete** /v2/accounts/{account_id} | Delete an account
+*AccountsApi* | [**get_account_metrics_v2_accounts_account_id_metrics_get**](docs/apis/tags/AccountsApi.md#get_account_metrics_v2_accounts_account_id_metrics_get) | **get** /v2/accounts/{account_id}/metrics | Get account metrics
+*AccountsApi* | [**get_account_v2_accounts_account_id_get**](docs/apis/tags/AccountsApi.md#get_account_v2_accounts_account_id_get) | **get** /v2/accounts/{account_id} | Get an account
+*AccountsApi* | [**list_accounts_v2_accounts_get**](docs/apis/tags/AccountsApi.md#list_accounts_v2_accounts_get) | **get** /v2/accounts | List accounts
+*AccountsApi* | [**update_account_v2_accounts_account_id_put**](docs/apis/tags/AccountsApi.md#update_account_v2_accounts_account_id_put) | **put** /v2/accounts/{account_id} | Update an account
 *AssetsApi* | [**create_asset_v2_assets_post**](docs/apis/tags/AssetsApi.md#create_asset_v2_assets_post) | **post** /v2/assets | Create asset
 *AssetsApi* | [**create_asset_v2_assets_post_0**](docs/apis/tags/AssetsApi.md#create_asset_v2_assets_post_0) | **post** /v2/assets | Create asset
 *AssetsApi* | [**delete_asset_v2_assets_asset_id_delete**](docs/apis/tags/AssetsApi.md#delete_asset_v2_assets_asset_id_delete) | **delete** /v2/assets/{asset_id} | Delete asset
@@ -198,11 +202,175 @@ Class | Method | HTTP request | Description
 *AssetsApi* | [**search_assets_v2_assets_search_post_0**](docs/apis/tags/AssetsApi.md#search_assets_v2_assets_search_post_0) | **post** /v2/assets/search | Search assets
 *AssetsApi* | [**update_asset_v2_assets_asset_id_put**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put) | **put** /v2/assets/{asset_id} | Update asset
 *AssetsApi* | [**update_asset_v2_assets_asset_id_put_0**](docs/apis/tags/AssetsApi.md#update_asset_v2_assets_asset_id_put_0) | **put** /v2/assets/{asset_id} | Update asset
+*AuthApi* | [**access_token_v2_oauth_access_token_post**](docs/apis/tags/AuthApi.md#access_token_v2_oauth_access_token_post) | **post** /v2/oauth/access_token | Access Token
+*AuthApi* | [**access_token_v2_oauth_access_token_post_0**](docs/apis/tags/AuthApi.md#access_token_v2_oauth_access_token_post_0) | **post** /v2/oauth/access_token | Access Token
+*AuthApi* | [**authenticate_v2_auth_authenticate_post**](docs/apis/tags/AuthApi.md#authenticate_v2_auth_authenticate_post) | **post** /v2/auth/authenticate | Authenticate
+*AuthApi* | [**authenticate_v2_auth_authenticate_post_0**](docs/apis/tags/AuthApi.md#authenticate_v2_auth_authenticate_post_0) | **post** /v2/auth/authenticate | Authenticate
+*AuthApi* | [**authorize_v2_oauth_authorize_get**](docs/apis/tags/AuthApi.md#authorize_v2_oauth_authorize_get) | **get** /v2/oauth/authorize | Authorize
+*AuthApi* | [**authorize_v2_oauth_authorize_get_0**](docs/apis/tags/AuthApi.md#authorize_v2_oauth_authorize_get_0) | **get** /v2/oauth/authorize | Authorize
+*AuthApi* | [**get_current_user_v2_users_me_get**](docs/apis/tags/AuthApi.md#get_current_user_v2_users_me_get) | **get** /v2/users/me | Get current user
+*AuthApi* | [**get_user_info_v2_oauth_user_info_get**](docs/apis/tags/AuthApi.md#get_user_info_v2_oauth_user_info_get) | **get** /v2/oauth/user_info | Get current user
+*AuthApi* | [**login_v2_auth_login_post**](docs/apis/tags/AuthApi.md#login_v2_auth_login_post) | **post** /v2/auth/login | Login
+*AuthApi* | [**login_v2_auth_login_post_0**](docs/apis/tags/AuthApi.md#login_v2_auth_login_post_0) | **post** /v2/auth/login | Login
+*AuthApi* | [**register_v2_auth_register_post**](docs/apis/tags/AuthApi.md#register_v2_auth_register_post) | **post** /v2/auth/register | Register
+*AuthApi* | [**register_v2_auth_register_post_0**](docs/apis/tags/AuthApi.md#register_v2_auth_register_post_0) | **post** /v2/auth/register | Register
+*AuthApi* | [**update_current_user_v2_users_me_put**](docs/apis/tags/AuthApi.md#update_current_user_v2_users_me_put) | **put** /v2/users/me | Update current user
+*ClaimsApi* | [**create_claim_v2_claims_post**](docs/apis/tags/ClaimsApi.md#create_claim_v2_claims_post) | **post** /v2/claims | Create claim
+*ClaimsApi* | [**create_claim_v2_claims_post_0**](docs/apis/tags/ClaimsApi.md#create_claim_v2_claims_post_0) | **post** /v2/claims | Create claim
+*ClaimsApi* | [**delete_claim_v2_claims_claim_id_delete**](docs/apis/tags/ClaimsApi.md#delete_claim_v2_claims_claim_id_delete) | **delete** /v2/claims/{claim_id} | Delete claim
+*ClaimsApi* | [**delete_claim_v2_claims_claim_id_delete_0**](docs/apis/tags/ClaimsApi.md#delete_claim_v2_claims_claim_id_delete_0) | **delete** /v2/claims/{claim_id} | Delete claim
+*ClaimsApi* | [**get_claim_v2_claims_claim_id_get**](docs/apis/tags/ClaimsApi.md#get_claim_v2_claims_claim_id_get) | **get** /v2/claims/{claim_id} | Get claim
+*ClaimsApi* | [**get_claim_v2_claims_claim_id_get_0**](docs/apis/tags/ClaimsApi.md#get_claim_v2_claims_claim_id_get_0) | **get** /v2/claims/{claim_id} | Get claim
+*ClaimsApi* | [**list_claims_v2_claims_get**](docs/apis/tags/ClaimsApi.md#list_claims_v2_claims_get) | **get** /v2/claims | List claims
+*ClaimsApi* | [**list_claims_v2_claims_get_0**](docs/apis/tags/ClaimsApi.md#list_claims_v2_claims_get_0) | **get** /v2/claims | List claims
+*ClaimsApi* | [**search_claims_v2_claims_search_post**](docs/apis/tags/ClaimsApi.md#search_claims_v2_claims_search_post) | **post** /v2/claims/search | Search claims
+*ClaimsApi* | [**search_claims_v2_claims_search_post_0**](docs/apis/tags/ClaimsApi.md#search_claims_v2_claims_search_post_0) | **post** /v2/claims/search | Search claims
+*ClaimsApi* | [**update_claim_v2_claims_claim_id_put**](docs/apis/tags/ClaimsApi.md#update_claim_v2_claims_claim_id_put) | **put** /v2/claims/{claim_id} | Update claim
+*ClaimsApi* | [**update_claim_v2_claims_claim_id_put_0**](docs/apis/tags/ClaimsApi.md#update_claim_v2_claims_claim_id_put_0) | **put** /v2/claims/{claim_id} | Update claim
+*CollectionsApi* | [**create_collection_v2_collections_post**](docs/apis/tags/CollectionsApi.md#create_collection_v2_collections_post) | **post** /v2/collections | Create collection
+*CollectionsApi* | [**create_collection_v2_collections_post_0**](docs/apis/tags/CollectionsApi.md#create_collection_v2_collections_post_0) | **post** /v2/collections | Create collection
+*CollectionsApi* | [**delete_collection_v2_collections_collection_id_delete**](docs/apis/tags/CollectionsApi.md#delete_collection_v2_collections_collection_id_delete) | **delete** /v2/collections/{collection_id} | Delete collection
+*CollectionsApi* | [**delete_collection_v2_collections_collection_id_delete_0**](docs/apis/tags/CollectionsApi.md#delete_collection_v2_collections_collection_id_delete_0) | **delete** /v2/collections/{collection_id} | Delete collection
+*CollectionsApi* | [**get_collection_v2_collections_collection_id_get**](docs/apis/tags/CollectionsApi.md#get_collection_v2_collections_collection_id_get) | **get** /v2/collections/{collection_id} | Get collection
+*CollectionsApi* | [**get_collection_v2_collections_collection_id_get_0**](docs/apis/tags/CollectionsApi.md#get_collection_v2_collections_collection_id_get_0) | **get** /v2/collections/{collection_id} | Get collection
+*CollectionsApi* | [**list_collections_v2_collections_get**](docs/apis/tags/CollectionsApi.md#list_collections_v2_collections_get) | **get** /v2/collections | List collections
+*CollectionsApi* | [**list_collections_v2_collections_get_0**](docs/apis/tags/CollectionsApi.md#list_collections_v2_collections_get_0) | **get** /v2/collections | List collections
+*CollectionsApi* | [**search_collections_v2_collections_search_post**](docs/apis/tags/CollectionsApi.md#search_collections_v2_collections_search_post) | **post** /v2/collections/search | Search collections
+*CollectionsApi* | [**search_collections_v2_collections_search_post_0**](docs/apis/tags/CollectionsApi.md#search_collections_v2_collections_search_post_0) | **post** /v2/collections/search | Search collections
+*CollectionsApi* | [**update_collection_v2_collections_collection_id_put**](docs/apis/tags/CollectionsApi.md#update_collection_v2_collections_collection_id_put) | **put** /v2/collections/{collection_id} | Update collection
+*CollectionsApi* | [**update_collection_v2_collections_collection_id_put_0**](docs/apis/tags/CollectionsApi.md#update_collection_v2_collections_collection_id_put_0) | **put** /v2/collections/{collection_id} | Update collection
+*ContactsApi* | [**create_contact_v2_contacts_post**](docs/apis/tags/ContactsApi.md#create_contact_v2_contacts_post) | **post** /v2/contacts | Create contact
+*ContactsApi* | [**create_contact_v2_contacts_post_0**](docs/apis/tags/ContactsApi.md#create_contact_v2_contacts_post_0) | **post** /v2/contacts | Create contact
+*ContactsApi* | [**delete_contact_v2_contacts_contact_id_delete**](docs/apis/tags/ContactsApi.md#delete_contact_v2_contacts_contact_id_delete) | **delete** /v2/contacts/{contact_id} | Delete contact
+*ContactsApi* | [**delete_contact_v2_contacts_contact_id_delete_0**](docs/apis/tags/ContactsApi.md#delete_contact_v2_contacts_contact_id_delete_0) | **delete** /v2/contacts/{contact_id} | Delete contact
+*ContactsApi* | [**get_contact_v2_contacts_contact_id_get**](docs/apis/tags/ContactsApi.md#get_contact_v2_contacts_contact_id_get) | **get** /v2/contacts/{contact_id} | Get contact
+*ContactsApi* | [**get_contact_v2_contacts_contact_id_get_0**](docs/apis/tags/ContactsApi.md#get_contact_v2_contacts_contact_id_get_0) | **get** /v2/contacts/{contact_id} | Get contact
+*ContactsApi* | [**list_contacts_v2_contacts_get**](docs/apis/tags/ContactsApi.md#list_contacts_v2_contacts_get) | **get** /v2/contacts | List contacts
+*ContactsApi* | [**list_contacts_v2_contacts_get_0**](docs/apis/tags/ContactsApi.md#list_contacts_v2_contacts_get_0) | **get** /v2/contacts | List contacts
+*ContactsApi* | [**search_contacts_v2_contacts_search_post**](docs/apis/tags/ContactsApi.md#search_contacts_v2_contacts_search_post) | **post** /v2/contacts/search | Search contacts
+*ContactsApi* | [**search_contacts_v2_contacts_search_post_0**](docs/apis/tags/ContactsApi.md#search_contacts_v2_contacts_search_post_0) | **post** /v2/contacts/search | Search contacts
+*ContactsApi* | [**update_contact_v2_contacts_contact_id_put**](docs/apis/tags/ContactsApi.md#update_contact_v2_contacts_contact_id_put) | **put** /v2/contacts/{contact_id} | Update contact
+*ContactsApi* | [**update_contact_v2_contacts_contact_id_put_0**](docs/apis/tags/ContactsApi.md#update_contact_v2_contacts_contact_id_put_0) | **put** /v2/contacts/{contact_id} | Update contact
+*EventsApi* | [**create_event_v2_events_post**](docs/apis/tags/EventsApi.md#create_event_v2_events_post) | **post** /v2/events | Create event
+*EventsApi* | [**create_event_v2_events_post_0**](docs/apis/tags/EventsApi.md#create_event_v2_events_post_0) | **post** /v2/events | Create event
+*EventsApi* | [**delete_event_v2_events_event_id_delete**](docs/apis/tags/EventsApi.md#delete_event_v2_events_event_id_delete) | **delete** /v2/events/{event_id} | Delete event
+*EventsApi* | [**delete_event_v2_events_event_id_delete_0**](docs/apis/tags/EventsApi.md#delete_event_v2_events_event_id_delete_0) | **delete** /v2/events/{event_id} | Delete event
+*EventsApi* | [**get_event_v2_events_event_id_get**](docs/apis/tags/EventsApi.md#get_event_v2_events_event_id_get) | **get** /v2/events/{event_id} | Get event
+*EventsApi* | [**get_event_v2_events_event_id_get_0**](docs/apis/tags/EventsApi.md#get_event_v2_events_event_id_get_0) | **get** /v2/events/{event_id} | Get event
+*EventsApi* | [**list_events_v2_events_get**](docs/apis/tags/EventsApi.md#list_events_v2_events_get) | **get** /v2/events | List events
+*EventsApi* | [**list_events_v2_events_get_0**](docs/apis/tags/EventsApi.md#list_events_v2_events_get_0) | **get** /v2/events | List events
+*EventsApi* | [**search_events_v2_events_search_post**](docs/apis/tags/EventsApi.md#search_events_v2_events_search_post) | **post** /v2/events/search | Search events
+*EventsApi* | [**search_events_v2_events_search_post_0**](docs/apis/tags/EventsApi.md#search_events_v2_events_search_post_0) | **post** /v2/events/search | Search events
+*EventsApi* | [**update_event_v2_events_event_id_put**](docs/apis/tags/EventsApi.md#update_event_v2_events_event_id_put) | **put** /v2/events/{event_id} | Update event
+*EventsApi* | [**update_event_v2_events_event_id_put_0**](docs/apis/tags/EventsApi.md#update_event_v2_events_event_id_put_0) | **put** /v2/events/{event_id} | Update event
+*JourneysApi* | [**create_journey_v2_journeys_post**](docs/apis/tags/JourneysApi.md#create_journey_v2_journeys_post) | **post** /v2/journeys | Create journey
+*JourneysApi* | [**create_journey_v2_journeys_post_0**](docs/apis/tags/JourneysApi.md#create_journey_v2_journeys_post_0) | **post** /v2/journeys | Create journey
+*JourneysApi* | [**delete_journey_v2_journeys_journey_id_delete**](docs/apis/tags/JourneysApi.md#delete_journey_v2_journeys_journey_id_delete) | **delete** /v2/journeys/{journey_id} | Delete journey
+*JourneysApi* | [**delete_journey_v2_journeys_journey_id_delete_0**](docs/apis/tags/JourneysApi.md#delete_journey_v2_journeys_journey_id_delete_0) | **delete** /v2/journeys/{journey_id} | Delete journey
+*JourneysApi* | [**get_journey_v2_journeys_journey_id_get**](docs/apis/tags/JourneysApi.md#get_journey_v2_journeys_journey_id_get) | **get** /v2/journeys/{journey_id} | Get journey
+*JourneysApi* | [**get_journey_v2_journeys_journey_id_get_0**](docs/apis/tags/JourneysApi.md#get_journey_v2_journeys_journey_id_get_0) | **get** /v2/journeys/{journey_id} | Get journey
+*JourneysApi* | [**list_journeys_v2_journeys_get**](docs/apis/tags/JourneysApi.md#list_journeys_v2_journeys_get) | **get** /v2/journeys | List journeys
+*JourneysApi* | [**list_journeys_v2_journeys_get_0**](docs/apis/tags/JourneysApi.md#list_journeys_v2_journeys_get_0) | **get** /v2/journeys | List journeys
+*JourneysApi* | [**search_journeys_v2_journeys_search_post**](docs/apis/tags/JourneysApi.md#search_journeys_v2_journeys_search_post) | **post** /v2/journeys/search | Search journeys
+*JourneysApi* | [**search_journeys_v2_journeys_search_post_0**](docs/apis/tags/JourneysApi.md#search_journeys_v2_journeys_search_post_0) | **post** /v2/journeys/search | Search journeys
+*JourneysApi* | [**update_journey_v2_journeys_journey_id_put**](docs/apis/tags/JourneysApi.md#update_journey_v2_journeys_journey_id_put) | **put** /v2/journeys/{journey_id} | Update journey
+*JourneysApi* | [**update_journey_v2_journeys_journey_id_put_0**](docs/apis/tags/JourneysApi.md#update_journey_v2_journeys_journey_id_put_0) | **put** /v2/journeys/{journey_id} | Update journey
+*MessagesApi* | [**create_message_v2_messages_post**](docs/apis/tags/MessagesApi.md#create_message_v2_messages_post) | **post** /v2/messages | Create message
+*MessagesApi* | [**create_message_v2_messages_post_0**](docs/apis/tags/MessagesApi.md#create_message_v2_messages_post_0) | **post** /v2/messages | Create message
+*MessagesApi* | [**delete_message_v2_messages_message_id_delete**](docs/apis/tags/MessagesApi.md#delete_message_v2_messages_message_id_delete) | **delete** /v2/messages/{message_id} | Delete message
+*MessagesApi* | [**delete_message_v2_messages_message_id_delete_0**](docs/apis/tags/MessagesApi.md#delete_message_v2_messages_message_id_delete_0) | **delete** /v2/messages/{message_id} | Delete message
+*MessagesApi* | [**get_message_v2_messages_message_id_get**](docs/apis/tags/MessagesApi.md#get_message_v2_messages_message_id_get) | **get** /v2/messages/{message_id} | Get message
+*MessagesApi* | [**get_message_v2_messages_message_id_get_0**](docs/apis/tags/MessagesApi.md#get_message_v2_messages_message_id_get_0) | **get** /v2/messages/{message_id} | Get message
+*MessagesApi* | [**list_messages_v2_messages_get**](docs/apis/tags/MessagesApi.md#list_messages_v2_messages_get) | **get** /v2/messages | List messages
+*MessagesApi* | [**list_messages_v2_messages_get_0**](docs/apis/tags/MessagesApi.md#list_messages_v2_messages_get_0) | **get** /v2/messages | List messages
+*MessagesApi* | [**search_messages_v2_messages_search_post**](docs/apis/tags/MessagesApi.md#search_messages_v2_messages_search_post) | **post** /v2/messages/search | Search messages
+*MessagesApi* | [**search_messages_v2_messages_search_post_0**](docs/apis/tags/MessagesApi.md#search_messages_v2_messages_search_post_0) | **post** /v2/messages/search | Search messages
+*MessagesApi* | [**update_message_v2_messages_message_id_put**](docs/apis/tags/MessagesApi.md#update_message_v2_messages_message_id_put) | **put** /v2/messages/{message_id} | Update message
+*MessagesApi* | [**update_message_v2_messages_message_id_put_0**](docs/apis/tags/MessagesApi.md#update_message_v2_messages_message_id_put_0) | **put** /v2/messages/{message_id} | Update message
+*MintsApi* | [**create_mint_v2_mints_post**](docs/apis/tags/MintsApi.md#create_mint_v2_mints_post) | **post** /v2/mints | Create mint
+*MintsApi* | [**create_mint_v2_mints_post_0**](docs/apis/tags/MintsApi.md#create_mint_v2_mints_post_0) | **post** /v2/mints | Create mint
+*MintsApi* | [**delete_mint_v2_mints_mint_id_delete**](docs/apis/tags/MintsApi.md#delete_mint_v2_mints_mint_id_delete) | **delete** /v2/mints/{mint_id} | Delete mint
+*MintsApi* | [**delete_mint_v2_mints_mint_id_delete_0**](docs/apis/tags/MintsApi.md#delete_mint_v2_mints_mint_id_delete_0) | **delete** /v2/mints/{mint_id} | Delete mint
+*MintsApi* | [**get_mint_v2_mints_mint_id_get**](docs/apis/tags/MintsApi.md#get_mint_v2_mints_mint_id_get) | **get** /v2/mints/{mint_id} | Get mint
+*MintsApi* | [**get_mint_v2_mints_mint_id_get_0**](docs/apis/tags/MintsApi.md#get_mint_v2_mints_mint_id_get_0) | **get** /v2/mints/{mint_id} | Get mint
+*MintsApi* | [**list_mints_v2_mints_get**](docs/apis/tags/MintsApi.md#list_mints_v2_mints_get) | **get** /v2/mints | List mints
+*MintsApi* | [**list_mints_v2_mints_get_0**](docs/apis/tags/MintsApi.md#list_mints_v2_mints_get_0) | **get** /v2/mints | List mints
+*MintsApi* | [**search_mints_v2_mints_search_post**](docs/apis/tags/MintsApi.md#search_mints_v2_mints_search_post) | **post** /v2/mints/search | Search mints
+*MintsApi* | [**search_mints_v2_mints_search_post_0**](docs/apis/tags/MintsApi.md#search_mints_v2_mints_search_post_0) | **post** /v2/mints/search | Search mints
+*MintsApi* | [**update_mint_v2_mints_mint_id_put**](docs/apis/tags/MintsApi.md#update_mint_v2_mints_mint_id_put) | **put** /v2/mints/{mint_id} | Update mint
+*MintsApi* | [**update_mint_v2_mints_mint_id_put_0**](docs/apis/tags/MintsApi.md#update_mint_v2_mints_mint_id_put_0) | **put** /v2/mints/{mint_id} | Update mint
+*NotesApi* | [**create_note_v2_notes_post**](docs/apis/tags/NotesApi.md#create_note_v2_notes_post) | **post** /v2/notes | Create note
+*NotesApi* | [**create_note_v2_notes_post_0**](docs/apis/tags/NotesApi.md#create_note_v2_notes_post_0) | **post** /v2/notes | Create note
+*NotesApi* | [**delete_note_v2_notes_note_id_delete**](docs/apis/tags/NotesApi.md#delete_note_v2_notes_note_id_delete) | **delete** /v2/notes/{note_id} | Delete note
+*NotesApi* | [**delete_note_v2_notes_note_id_delete_0**](docs/apis/tags/NotesApi.md#delete_note_v2_notes_note_id_delete_0) | **delete** /v2/notes/{note_id} | Delete note
+*NotesApi* | [**get_note_v2_notes_note_id_get**](docs/apis/tags/NotesApi.md#get_note_v2_notes_note_id_get) | **get** /v2/notes/{note_id} | Get note
+*NotesApi* | [**get_note_v2_notes_note_id_get_0**](docs/apis/tags/NotesApi.md#get_note_v2_notes_note_id_get_0) | **get** /v2/notes/{note_id} | Get note
+*NotesApi* | [**list_notes_v2_notes_get**](docs/apis/tags/NotesApi.md#list_notes_v2_notes_get) | **get** /v2/notes | List notes
+*NotesApi* | [**list_notes_v2_notes_get_0**](docs/apis/tags/NotesApi.md#list_notes_v2_notes_get_0) | **get** /v2/notes | List notes
+*NotesApi* | [**search_notes_v2_notes_search_post**](docs/apis/tags/NotesApi.md#search_notes_v2_notes_search_post) | **post** /v2/notes/search | Search notes
+*NotesApi* | [**search_notes_v2_notes_search_post_0**](docs/apis/tags/NotesApi.md#search_notes_v2_notes_search_post_0) | **post** /v2/notes/search | Search notes
+*NotesApi* | [**update_note_v2_notes_note_id_put**](docs/apis/tags/NotesApi.md#update_note_v2_notes_note_id_put) | **put** /v2/notes/{note_id} | Update note
+*NotesApi* | [**update_note_v2_notes_note_id_put_0**](docs/apis/tags/NotesApi.md#update_note_v2_notes_note_id_put_0) | **put** /v2/notes/{note_id} | Update note
+*RedemptionsApi* | [**create_redemption_v2_redemptions_post**](docs/apis/tags/RedemptionsApi.md#create_redemption_v2_redemptions_post) | **post** /v2/redemptions | Create redemption
+*RedemptionsApi* | [**create_redemption_v2_redemptions_post_0**](docs/apis/tags/RedemptionsApi.md#create_redemption_v2_redemptions_post_0) | **post** /v2/redemptions | Create redemption
+*RedemptionsApi* | [**delete_redemption_v2_redemptions_redemption_id_delete**](docs/apis/tags/RedemptionsApi.md#delete_redemption_v2_redemptions_redemption_id_delete) | **delete** /v2/redemptions/{redemption_id} | Delete redemption
+*RedemptionsApi* | [**delete_redemption_v2_redemptions_redemption_id_delete_0**](docs/apis/tags/RedemptionsApi.md#delete_redemption_v2_redemptions_redemption_id_delete_0) | **delete** /v2/redemptions/{redemption_id} | Delete redemption
+*RedemptionsApi* | [**get_redemption_v2_redemptions_redemption_id_get**](docs/apis/tags/RedemptionsApi.md#get_redemption_v2_redemptions_redemption_id_get) | **get** /v2/redemptions/{redemption_id} | Get redemption
+*RedemptionsApi* | [**get_redemption_v2_redemptions_redemption_id_get_0**](docs/apis/tags/RedemptionsApi.md#get_redemption_v2_redemptions_redemption_id_get_0) | **get** /v2/redemptions/{redemption_id} | Get redemption
+*RedemptionsApi* | [**list_redemptions_v2_redemptions_get**](docs/apis/tags/RedemptionsApi.md#list_redemptions_v2_redemptions_get) | **get** /v2/redemptions | List redemptions
+*RedemptionsApi* | [**list_redemptions_v2_redemptions_get_0**](docs/apis/tags/RedemptionsApi.md#list_redemptions_v2_redemptions_get_0) | **get** /v2/redemptions | List redemptions
+*RedemptionsApi* | [**search_redemptions_v2_redemptions_search_post**](docs/apis/tags/RedemptionsApi.md#search_redemptions_v2_redemptions_search_post) | **post** /v2/redemptions/search | Search redemptions
+*RedemptionsApi* | [**search_redemptions_v2_redemptions_search_post_0**](docs/apis/tags/RedemptionsApi.md#search_redemptions_v2_redemptions_search_post_0) | **post** /v2/redemptions/search | Search redemptions
+*RedemptionsApi* | [**update_redemption_v2_redemptions_redemption_id_put**](docs/apis/tags/RedemptionsApi.md#update_redemption_v2_redemptions_redemption_id_put) | **put** /v2/redemptions/{redemption_id} | Update redemption
+*RedemptionsApi* | [**update_redemption_v2_redemptions_redemption_id_put_0**](docs/apis/tags/RedemptionsApi.md#update_redemption_v2_redemptions_redemption_id_put_0) | **put** /v2/redemptions/{redemption_id} | Update redemption
+*RewardsApi* | [**create_reward_v2_rewards_post**](docs/apis/tags/RewardsApi.md#create_reward_v2_rewards_post) | **post** /v2/rewards | Create reward
+*RewardsApi* | [**create_reward_v2_rewards_post_0**](docs/apis/tags/RewardsApi.md#create_reward_v2_rewards_post_0) | **post** /v2/rewards | Create reward
+*RewardsApi* | [**delete_reward_v2_rewards_reward_id_delete**](docs/apis/tags/RewardsApi.md#delete_reward_v2_rewards_reward_id_delete) | **delete** /v2/rewards/{reward_id} | Delete reward
+*RewardsApi* | [**delete_reward_v2_rewards_reward_id_delete_0**](docs/apis/tags/RewardsApi.md#delete_reward_v2_rewards_reward_id_delete_0) | **delete** /v2/rewards/{reward_id} | Delete reward
+*RewardsApi* | [**get_reward_v2_rewards_reward_id_get**](docs/apis/tags/RewardsApi.md#get_reward_v2_rewards_reward_id_get) | **get** /v2/rewards/{reward_id} | Get reward
+*RewardsApi* | [**get_reward_v2_rewards_reward_id_get_0**](docs/apis/tags/RewardsApi.md#get_reward_v2_rewards_reward_id_get_0) | **get** /v2/rewards/{reward_id} | Get reward
+*RewardsApi* | [**list_rewards_v2_rewards_get**](docs/apis/tags/RewardsApi.md#list_rewards_v2_rewards_get) | **get** /v2/rewards | List rewards
+*RewardsApi* | [**list_rewards_v2_rewards_get_0**](docs/apis/tags/RewardsApi.md#list_rewards_v2_rewards_get_0) | **get** /v2/rewards | List rewards
+*RewardsApi* | [**search_rewards_v2_rewards_search_post**](docs/apis/tags/RewardsApi.md#search_rewards_v2_rewards_search_post) | **post** /v2/rewards/search | Search rewards
+*RewardsApi* | [**search_rewards_v2_rewards_search_post_0**](docs/apis/tags/RewardsApi.md#search_rewards_v2_rewards_search_post_0) | **post** /v2/rewards/search | Search rewards
+*RewardsApi* | [**update_reward_v2_rewards_reward_id_put**](docs/apis/tags/RewardsApi.md#update_reward_v2_rewards_reward_id_put) | **put** /v2/rewards/{reward_id} | Update reward
+*RewardsApi* | [**update_reward_v2_rewards_reward_id_put_0**](docs/apis/tags/RewardsApi.md#update_reward_v2_rewards_reward_id_put_0) | **put** /v2/rewards/{reward_id} | Update reward
+*TagsApi* | [**create_tag_v2_tags_post**](docs/apis/tags/TagsApi.md#create_tag_v2_tags_post) | **post** /v2/tags | Create tag
+*TagsApi* | [**create_tag_v2_tags_post_0**](docs/apis/tags/TagsApi.md#create_tag_v2_tags_post_0) | **post** /v2/tags | Create tag
+*TagsApi* | [**delete_tag_v2_tags_tag_id_delete**](docs/apis/tags/TagsApi.md#delete_tag_v2_tags_tag_id_delete) | **delete** /v2/tags/{tag_id} | Delete tag
+*TagsApi* | [**delete_tag_v2_tags_tag_id_delete_0**](docs/apis/tags/TagsApi.md#delete_tag_v2_tags_tag_id_delete_0) | **delete** /v2/tags/{tag_id} | Delete tag
+*TagsApi* | [**get_tag_v2_tags_tag_id_get**](docs/apis/tags/TagsApi.md#get_tag_v2_tags_tag_id_get) | **get** /v2/tags/{tag_id} | Get tag
+*TagsApi* | [**get_tag_v2_tags_tag_id_get_0**](docs/apis/tags/TagsApi.md#get_tag_v2_tags_tag_id_get_0) | **get** /v2/tags/{tag_id} | Get tag
+*TagsApi* | [**list_tags_v2_tags_get**](docs/apis/tags/TagsApi.md#list_tags_v2_tags_get) | **get** /v2/tags | List tags
+*TagsApi* | [**list_tags_v2_tags_get_0**](docs/apis/tags/TagsApi.md#list_tags_v2_tags_get_0) | **get** /v2/tags | List tags
+*TagsApi* | [**search_tags_v2_tags_search_post**](docs/apis/tags/TagsApi.md#search_tags_v2_tags_search_post) | **post** /v2/tags/search | Search tags
+*TagsApi* | [**search_tags_v2_tags_search_post_0**](docs/apis/tags/TagsApi.md#search_tags_v2_tags_search_post_0) | **post** /v2/tags/search | Search tags
+*TagsApi* | [**update_tag_v2_tags_tag_id_put**](docs/apis/tags/TagsApi.md#update_tag_v2_tags_tag_id_put) | **put** /v2/tags/{tag_id} | Update tag
+*TagsApi* | [**update_tag_v2_tags_tag_id_put_0**](docs/apis/tags/TagsApi.md#update_tag_v2_tags_tag_id_put_0) | **put** /v2/tags/{tag_id} | Update tag
+*WebhooksApi* | [**create_webhook_v2_webhooks_post**](docs/apis/tags/WebhooksApi.md#create_webhook_v2_webhooks_post) | **post** /v2/webhooks | Create webhook
+*WebhooksApi* | [**create_webhook_v2_webhooks_post_0**](docs/apis/tags/WebhooksApi.md#create_webhook_v2_webhooks_post_0) | **post** /v2/webhooks | Create webhook
+*WebhooksApi* | [**delete_webhook_v2_webhooks_webhook_id_delete**](docs/apis/tags/WebhooksApi.md#delete_webhook_v2_webhooks_webhook_id_delete) | **delete** /v2/webhooks/{webhook_id} | Delete webhook
+*WebhooksApi* | [**delete_webhook_v2_webhooks_webhook_id_delete_0**](docs/apis/tags/WebhooksApi.md#delete_webhook_v2_webhooks_webhook_id_delete_0) | **delete** /v2/webhooks/{webhook_id} | Delete webhook
+*WebhooksApi* | [**get_webhook_v2_webhooks_webhook_id_get**](docs/apis/tags/WebhooksApi.md#get_webhook_v2_webhooks_webhook_id_get) | **get** /v2/webhooks/{webhook_id} | Get webhook
+*WebhooksApi* | [**get_webhook_v2_webhooks_webhook_id_get_0**](docs/apis/tags/WebhooksApi.md#get_webhook_v2_webhooks_webhook_id_get_0) | **get** /v2/webhooks/{webhook_id} | Get webhook
+*WebhooksApi* | [**list_webhooks_v2_webhooks_get**](docs/apis/tags/WebhooksApi.md#list_webhooks_v2_webhooks_get) | **get** /v2/webhooks | List webhooks
+*WebhooksApi* | [**list_webhooks_v2_webhooks_get_0**](docs/apis/tags/WebhooksApi.md#list_webhooks_v2_webhooks_get_0) | **get** /v2/webhooks | List webhooks
+*WebhooksApi* | [**search_webhooks_v2_webhooks_search_post**](docs/apis/tags/WebhooksApi.md#search_webhooks_v2_webhooks_search_post) | **post** /v2/webhooks/search | Search webhooks
+*WebhooksApi* | [**search_webhooks_v2_webhooks_search_post_0**](docs/apis/tags/WebhooksApi.md#search_webhooks_v2_webhooks_search_post_0) | **post** /v2/webhooks/search | Search webhooks
+*WebhooksApi* | [**update_webhook_v2_webhooks_webhook_id_put**](docs/apis/tags/WebhooksApi.md#update_webhook_v2_webhooks_webhook_id_put) | **put** /v2/webhooks/{webhook_id} | Update webhook
+*WebhooksApi* | [**update_webhook_v2_webhooks_webhook_id_put_0**](docs/apis/tags/WebhooksApi.md#update_webhook_v2_webhooks_webhook_id_put_0) | **put** /v2/webhooks/{webhook_id} | Update webhook
 
 ## Documentation For Models
 
  - [Account](docs/models/Account.md)
+ - [AccountCreate](docs/models/AccountCreate.md)
+ - [AccountMetrics](docs/models/AccountMetrics.md)
  - [AccountStatus](docs/models/AccountStatus.md)
+ - [AccountUpdate](docs/models/AccountUpdate.md)
+ - [Action](docs/models/Action.md)
+ - [ActionConfig](docs/models/ActionConfig.md)
+ - [ActionType](docs/models/ActionType.md)
+ - [Address](docs/models/Address.md)
  - [ApiDeleteResponse](docs/models/ApiDeleteResponse.md)
  - [ApiListResponse](docs/models/ApiListResponse.md)
  - [ApiSearchResponse](docs/models/ApiSearchResponse.md)
@@ -213,17 +381,70 @@ Class | Method | HTTP request | Description
  - [AssetUpdate](docs/models/AssetUpdate.md)
  - [Billing](docs/models/Billing.md)
  - [BlockchainType](docs/models/BlockchainType.md)
+ - [BodyAccessTokenV2OauthAccessTokenPost](docs/models/BodyAccessTokenV2OauthAccessTokenPost.md)
+ - [BodyAuthenticateV2AuthAuthenticatePost](docs/models/BodyAuthenticateV2AuthAuthenticatePost.md)
  - [Brand](docs/models/Brand.md)
+ - [Claim](docs/models/Claim.md)
+ - [ClaimCreate](docs/models/ClaimCreate.md)
+ - [ClaimStatus](docs/models/ClaimStatus.md)
+ - [ClaimUpdate](docs/models/ClaimUpdate.md)
+ - [Collection](docs/models/Collection.md)
+ - [CollectionCreate](docs/models/CollectionCreate.md)
+ - [CollectionStatus](docs/models/CollectionStatus.md)
+ - [CollectionUpdate](docs/models/CollectionUpdate.md)
+ - [Contact](docs/models/Contact.md)
+ - [ContactCreate](docs/models/ContactCreate.md)
+ - [ContactUpdate](docs/models/ContactUpdate.md)
+ - [Event](docs/models/Event.md)
+ - [EventCreate](docs/models/EventCreate.md)
+ - [EventUpdate](docs/models/EventUpdate.md)
  - [HTTPValidationError](docs/models/HTTPValidationError.md)
+ - [IdentityProvider](docs/models/IdentityProvider.md)
+ - [Journey](docs/models/Journey.md)
+ - [JourneyCreate](docs/models/JourneyCreate.md)
+ - [JourneyUpdate](docs/models/JourneyUpdate.md)
+ - [Message](docs/models/Message.md)
+ - [MessageCreate](docs/models/MessageCreate.md)
+ - [MessageStatus](docs/models/MessageStatus.md)
+ - [MessageType](docs/models/MessageType.md)
+ - [MessageUpdate](docs/models/MessageUpdate.md)
+ - [Mint](docs/models/Mint.md)
+ - [MintCreate](docs/models/MintCreate.md)
+ - [MintStatus](docs/models/MintStatus.md)
+ - [MintUpdate](docs/models/MintUpdate.md)
+ - [Note](docs/models/Note.md)
+ - [NoteCreate](docs/models/NoteCreate.md)
+ - [NoteUpdate](docs/models/NoteUpdate.md)
  - [Operator](docs/models/Operator.md)
+ - [PersonName](docs/models/PersonName.md)
  - [Query](docs/models/Query.md)
+ - [Redemption](docs/models/Redemption.md)
+ - [RedemptionCreate](docs/models/RedemptionCreate.md)
+ - [RedemptionUpdate](docs/models/RedemptionUpdate.md)
+ - [Reward](docs/models/Reward.md)
+ - [RewardCreate](docs/models/RewardCreate.md)
+ - [RewardType](docs/models/RewardType.md)
+ - [RewardUpdate](docs/models/RewardUpdate.md)
  - [SearchQuery](docs/models/SearchQuery.md)
+ - [SocialProfile](docs/models/SocialProfile.md)
  - [SubscriptionPlan](docs/models/SubscriptionPlan.md)
  - [SubscriptionStatus](docs/models/SubscriptionStatus.md)
+ - [Tag](docs/models/Tag.md)
+ - [TagCreate](docs/models/TagCreate.md)
+ - [TagUpdate](docs/models/TagUpdate.md)
  - [TeamMember](docs/models/TeamMember.md)
  - [TeamMemberRole](docs/models/TeamMemberRole.md)
+ - [Trigger](docs/models/Trigger.md)
+ - [TriggerConfig](docs/models/TriggerConfig.md)
+ - [TriggerScheduleConfig](docs/models/TriggerScheduleConfig.md)
+ - [TriggerType](docs/models/TriggerType.md)
+ - [User](docs/models/User.md)
+ - [UserUpdate](docs/models/UserUpdate.md)
  - [ValidationError](docs/models/ValidationError.md)
  - [WalletPosition](docs/models/WalletPosition.md)
+ - [Webhook](docs/models/Webhook.md)
+ - [WebhookCreate](docs/models/WebhookCreate.md)
+ - [WebhookUpdate](docs/models/WebhookUpdate.md)
 
 ## Documentation For Authorization
 
@@ -234,6 +455,20 @@ Class | Method | HTTP request | Description
 
 
 ## Author
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

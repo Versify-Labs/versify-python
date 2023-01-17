@@ -20,7 +20,7 @@ Method | HTTP request | Description
 
 # **create_asset_v2_assets_post**
 <a name="create_asset_v2_assets_post"></a>
-> Asset create_asset_v2_assets_post(any_type)
+> AssetCreate create_asset_v2_assets_post(asset_create)
 
 Create asset
 
@@ -32,7 +32,6 @@ Create a asset
 ```python
 import versify
 from versify.apis.tags import assets_api
-from versify.model.asset import Asset
 from versify.model.asset_create import AssetCreate
 from versify.model.http_validation_error import HTTPValidationError
 from pprint import pprint
@@ -59,7 +58,16 @@ with versify.ApiClient(configuration) as api_client:
     # example passing only required values which don't have defaults set
     header_params = {
     }
-    body = None
+    body = AssetCreate(
+        active=True,
+        created=1,
+        description="description_example",
+        image="image_example",
+        metadata=None,
+        name="name_example",
+        properties=[],
+        updated=1,
+    )
     try:
         # Create asset
         api_response = api_instance.create_asset_v2_assets_post(
@@ -74,7 +82,16 @@ with versify.ApiClient(configuration) as api_client:
     header_params = {
         'Versify-Account': "act_123123123131231231",
     }
-    body = None
+    body = AssetCreate(
+        active=True,
+        created=1,
+        description="description_example",
+        image="image_example",
+        metadata=None,
+        name="name_example",
+        properties=[],
+        updated=1,
+    )
     try:
         # Create asset
         api_response = api_instance.create_asset_v2_assets_post(
@@ -100,19 +117,10 @@ skip_deserialization | bool | default is False | when True, headers and body wil
 ### body
 
 # SchemaForRequestBodyApplicationJson
+Type | Description  | Notes
+------------- | ------------- | -------------
+[**AssetCreate**](../../models/AssetCreate.md) |  | 
 
-Asset to create
-
-## Model Type Info
-Input Type | Accessed Type | Description | Notes
------------- | ------------- | ------------- | -------------
-dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | Asset to create | 
-
-### Composed Schemas (allOf/anyOf/oneOf/not)
-#### allOf
-Class Name | Input Type | Accessed Type | Description | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-[AssetCreate]({{complexTypePrefix}}AssetCreate.md) | [**AssetCreate**]({{complexTypePrefix}}AssetCreate.md) | [**AssetCreate**]({{complexTypePrefix}}AssetCreate.md) |  | 
 
 ### header_params
 #### RequestHeaderParams
@@ -148,7 +156,7 @@ headers | Unset | headers were not defined |
 # SchemaFor201ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Asset**](../../models/Asset.md) |  | 
+[**AssetCreate**](../../models/AssetCreate.md) |  | 
 
 
 #### create_asset_v2_assets_post.ApiResponseFor422
@@ -172,7 +180,7 @@ Type | Description  | Notes
 
 # **create_asset_v2_assets_post_0**
 <a name="create_asset_v2_assets_post_0"></a>
-> Asset create_asset_v2_assets_post_0(any_type)
+> AssetCreate create_asset_v2_assets_post_0(asset_create)
 
 Create asset
 
@@ -184,7 +192,6 @@ Create a asset
 ```python
 import versify
 from versify.apis.tags import assets_api
-from versify.model.asset import Asset
 from versify.model.asset_create import AssetCreate
 from versify.model.http_validation_error import HTTPValidationError
 from pprint import pprint
@@ -211,7 +218,16 @@ with versify.ApiClient(configuration) as api_client:
     # example passing only required values which don't have defaults set
     header_params = {
     }
-    body = None
+    body = AssetCreate(
+        active=True,
+        created=1,
+        description="description_example",
+        image="image_example",
+        metadata=None,
+        name="name_example",
+        properties=[],
+        updated=1,
+    )
     try:
         # Create asset
         api_response = api_instance.create_asset_v2_assets_post_0(
@@ -226,7 +242,16 @@ with versify.ApiClient(configuration) as api_client:
     header_params = {
         'Versify-Account': "act_123123123131231231",
     }
-    body = None
+    body = AssetCreate(
+        active=True,
+        created=1,
+        description="description_example",
+        image="image_example",
+        metadata=None,
+        name="name_example",
+        properties=[],
+        updated=1,
+    )
     try:
         # Create asset
         api_response = api_instance.create_asset_v2_assets_post_0(
@@ -252,19 +277,10 @@ skip_deserialization | bool | default is False | when True, headers and body wil
 ### body
 
 # SchemaForRequestBodyApplicationJson
+Type | Description  | Notes
+------------- | ------------- | -------------
+[**AssetCreate**](../../models/AssetCreate.md) |  | 
 
-Asset to create
-
-## Model Type Info
-Input Type | Accessed Type | Description | Notes
------------- | ------------- | ------------- | -------------
-dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader,  | frozendict.frozendict, str, decimal.Decimal, BoolClass, NoneClass, tuple, bytes, FileIO | Asset to create | 
-
-### Composed Schemas (allOf/anyOf/oneOf/not)
-#### allOf
-Class Name | Input Type | Accessed Type | Description | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-[AssetCreate]({{complexTypePrefix}}AssetCreate.md) | [**AssetCreate**]({{complexTypePrefix}}AssetCreate.md) | [**AssetCreate**]({{complexTypePrefix}}AssetCreate.md) |  | 
 
 ### header_params
 #### RequestHeaderParams
@@ -300,7 +316,7 @@ headers | Unset | headers were not defined |
 # SchemaFor201ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Asset**](../../models/Asset.md) |  | 
+[**AssetCreate**](../../models/AssetCreate.md) |  | 
 
 
 #### create_asset_v2_assets_post_0.ApiResponseFor422
@@ -1582,7 +1598,7 @@ Type | Description  | Notes
 
 # **update_asset_v2_assets_asset_id_put**
 <a name="update_asset_v2_assets_asset_id_put"></a>
-> Asset update_asset_v2_assets_asset_id_put(asset_idany_type)
+> AssetUpdate update_asset_v2_assets_asset_id_put(asset_idany_type)
 
 Update asset
 
@@ -1595,7 +1611,6 @@ Update an asset
 import versify
 from versify.apis.tags import assets_api
 from versify.model.asset_update import AssetUpdate
-from versify.model.asset import Asset
 from versify.model.http_validation_error import HTTPValidationError
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
@@ -1735,7 +1750,7 @@ headers | Unset | headers were not defined |
 # SchemaFor200ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Asset**](../../models/Asset.md) |  | 
+[**AssetUpdate**](../../models/AssetUpdate.md) |  | 
 
 
 #### update_asset_v2_assets_asset_id_put.ApiResponseFor422
@@ -1759,7 +1774,7 @@ Type | Description  | Notes
 
 # **update_asset_v2_assets_asset_id_put_0**
 <a name="update_asset_v2_assets_asset_id_put_0"></a>
-> Asset update_asset_v2_assets_asset_id_put_0(asset_idany_type)
+> AssetUpdate update_asset_v2_assets_asset_id_put_0(asset_idany_type)
 
 Update asset
 
@@ -1772,7 +1787,6 @@ Update an asset
 import versify
 from versify.apis.tags import assets_api
 from versify.model.asset_update import AssetUpdate
-from versify.model.asset import Asset
 from versify.model.http_validation_error import HTTPValidationError
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
@@ -1912,7 +1926,7 @@ headers | Unset | headers were not defined |
 # SchemaFor200ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Asset**](../../models/Asset.md) |  | 
+[**AssetUpdate**](../../models/AssetUpdate.md) |  | 
 
 
 #### update_asset_v2_assets_asset_id_put_0.ApiResponseFor422

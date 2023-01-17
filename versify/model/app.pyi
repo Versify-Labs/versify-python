@@ -31,7 +31,7 @@ class App(
 
     Do not edit the class manually.
 
-    Settings used to configure external integrations.
+    Settings used to configure external applications.
     """
 
 
@@ -40,16 +40,26 @@ class App(
         class properties:
             access_scope = schemas.StrSchema
             access_token = schemas.StrSchema
+            client_id = schemas.StrSchema
+            client_secret = schemas.StrSchema
+            creator = schemas.StrSchema
             id = schemas.StrSchema
+            logo_url = schemas.StrSchema
             name = schemas.StrSchema
+            redirect_url = schemas.StrSchema
             refresh_token = schemas.StrSchema
             url = schemas.StrSchema
             webhook_url = schemas.StrSchema
             __annotations__ = {
                 "access_scope": access_scope,
                 "access_token": access_token,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "creator": creator,
                 "id": id,
+                "logo_url": logo_url,
                 "name": name,
+                "redirect_url": redirect_url,
                 "refresh_token": refresh_token,
                 "url": url,
                 "webhook_url": webhook_url,
@@ -62,10 +72,25 @@ class App(
     def __getitem__(self, name: typing_extensions.Literal["access_token"]) -> MetaOapg.properties.access_token: ...
     
     @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["client_id"]) -> MetaOapg.properties.client_id: ...
+    
+    @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["client_secret"]) -> MetaOapg.properties.client_secret: ...
+    
+    @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["creator"]) -> MetaOapg.properties.creator: ...
+    
+    @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["id"]) -> MetaOapg.properties.id: ...
     
     @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["logo_url"]) -> MetaOapg.properties.logo_url: ...
+    
+    @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["name"]) -> MetaOapg.properties.name: ...
+    
+    @typing.overload
+    def __getitem__(self, name: typing_extensions.Literal["redirect_url"]) -> MetaOapg.properties.redirect_url: ...
     
     @typing.overload
     def __getitem__(self, name: typing_extensions.Literal["refresh_token"]) -> MetaOapg.properties.refresh_token: ...
@@ -79,7 +104,7 @@ class App(
     @typing.overload
     def __getitem__(self, name: str) -> schemas.UnsetAnyTypeSchema: ...
     
-    def __getitem__(self, name: typing.Union[typing_extensions.Literal["access_scope", "access_token", "id", "name", "refresh_token", "url", "webhook_url", ], str]):
+    def __getitem__(self, name: typing.Union[typing_extensions.Literal["access_scope", "access_token", "client_id", "client_secret", "creator", "id", "logo_url", "name", "redirect_url", "refresh_token", "url", "webhook_url", ], str]):
         # dict_instance[name] accessor
         return super().__getitem__(name)
     
@@ -91,10 +116,25 @@ class App(
     def get_item_oapg(self, name: typing_extensions.Literal["access_token"]) -> typing.Union[MetaOapg.properties.access_token, schemas.Unset]: ...
     
     @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["client_id"]) -> typing.Union[MetaOapg.properties.client_id, schemas.Unset]: ...
+    
+    @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["client_secret"]) -> typing.Union[MetaOapg.properties.client_secret, schemas.Unset]: ...
+    
+    @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["creator"]) -> typing.Union[MetaOapg.properties.creator, schemas.Unset]: ...
+    
+    @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["id"]) -> typing.Union[MetaOapg.properties.id, schemas.Unset]: ...
     
     @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["logo_url"]) -> typing.Union[MetaOapg.properties.logo_url, schemas.Unset]: ...
+    
+    @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["name"]) -> typing.Union[MetaOapg.properties.name, schemas.Unset]: ...
+    
+    @typing.overload
+    def get_item_oapg(self, name: typing_extensions.Literal["redirect_url"]) -> typing.Union[MetaOapg.properties.redirect_url, schemas.Unset]: ...
     
     @typing.overload
     def get_item_oapg(self, name: typing_extensions.Literal["refresh_token"]) -> typing.Union[MetaOapg.properties.refresh_token, schemas.Unset]: ...
@@ -108,7 +148,7 @@ class App(
     @typing.overload
     def get_item_oapg(self, name: str) -> typing.Union[schemas.UnsetAnyTypeSchema, schemas.Unset]: ...
     
-    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["access_scope", "access_token", "id", "name", "refresh_token", "url", "webhook_url", ], str]):
+    def get_item_oapg(self, name: typing.Union[typing_extensions.Literal["access_scope", "access_token", "client_id", "client_secret", "creator", "id", "logo_url", "name", "redirect_url", "refresh_token", "url", "webhook_url", ], str]):
         return super().get_item_oapg(name)
     
 
@@ -117,8 +157,13 @@ class App(
         *_args: typing.Union[dict, frozendict.frozendict, ],
         access_scope: typing.Union[MetaOapg.properties.access_scope, str, schemas.Unset] = schemas.unset,
         access_token: typing.Union[MetaOapg.properties.access_token, str, schemas.Unset] = schemas.unset,
+        client_id: typing.Union[MetaOapg.properties.client_id, str, schemas.Unset] = schemas.unset,
+        client_secret: typing.Union[MetaOapg.properties.client_secret, str, schemas.Unset] = schemas.unset,
+        creator: typing.Union[MetaOapg.properties.creator, str, schemas.Unset] = schemas.unset,
         id: typing.Union[MetaOapg.properties.id, str, schemas.Unset] = schemas.unset,
+        logo_url: typing.Union[MetaOapg.properties.logo_url, str, schemas.Unset] = schemas.unset,
         name: typing.Union[MetaOapg.properties.name, str, schemas.Unset] = schemas.unset,
+        redirect_url: typing.Union[MetaOapg.properties.redirect_url, str, schemas.Unset] = schemas.unset,
         refresh_token: typing.Union[MetaOapg.properties.refresh_token, str, schemas.Unset] = schemas.unset,
         url: typing.Union[MetaOapg.properties.url, str, schemas.Unset] = schemas.unset,
         webhook_url: typing.Union[MetaOapg.properties.webhook_url, str, schemas.Unset] = schemas.unset,
@@ -130,8 +175,13 @@ class App(
             *_args,
             access_scope=access_scope,
             access_token=access_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            creator=creator,
             id=id,
+            logo_url=logo_url,
             name=name,
+            redirect_url=redirect_url,
             refresh_token=refresh_token,
             url=url,
             webhook_url=webhook_url,
